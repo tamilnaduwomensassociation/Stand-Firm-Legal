@@ -22,7 +22,7 @@
  * cannot rasterise a node that isn't laid out.
  */
 import { useRef, useState } from "react";
-import { Download, IdCard as IdCardIcon, RotateCcw, Upload, X } from "lucide-react";
+import { Download, IdCard as IdCardIcon, Move, RotateCcw, Upload, X } from "lucide-react";
 import { site } from "@/config/site.config";
 import { useLang } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -61,8 +61,37 @@ export default function IdCardSection() {
   });
   const [photo, setPhoto] = useState<string | null>(null);
   const [signature, setSignature] = useState<string | null>(null);
-  const [face, setFace] = useState<"front" | "back">("front");
   const [busy, setBusy] = useState(false);
+
+  /* Free 3D rotation, driven by dragging the card.
+     rotY runs unbounded so the card can be spun through as many full
+     turns as you like; rotX is clamped because past ~70° you are looking
+     at the card edge-on and it just reads as a sliver. */
+  const [rot, setRot] = useState({ x: 0, y: 0 });
+  const [dragging, setDragging] = useState(false);
+  const drag = useRef<{ px: number; py: number; rx: number; ry: number } | null>(null);
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    drag.current = { px: e.clientX, py: e.clientY, rx: rot.x, ry: rot.y };
+    setDragging(true);
+  };
+  const onPointerMove = (e: React.PointerEvent) => {
+    const d = drag.current;
+    if (!d) return;
+    const y = d.ry + (e.clientX - d.px) * 0.55;
+    const x = Math.max(-70, Math.min(70, d.rx - (e.clientY - d.py) * 0.55));
+    setRot({ x, y });
+  };
+  const endDrag = (e: React.PointerEvent) => {
+    (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);
+    drag.current = null;
+    setDragging(false);
+  };
+
+  /* Flip snaps to the nearest half-turn that shows the other face */
+  const flip = () => setRot((r) => ({ x: 0, y: Math.round(r.y / 180) * 180 + 180 }));
+  const reset = () => setRot({ x: 0, y: 0 });
 
   const set = (k: keyof CardData, v: string) => setData((d) => ({ ...d, [k]: v }));
 
@@ -191,9 +220,13 @@ export default function IdCardSection() {
                   ? lang === "ta" ? "தயாராகிறது…" : "Preparing…"
                   : lang === "ta" ? "PNG பதிவிறக்கு" : "Download PNG"}
               </button>
-              <button onClick={() => setFace((f) => (f === "front" ? "back" : "front"))}
+              <button onClick={flip}
                 className="flex items-center gap-2 rounded-full gold-border px-6 py-3 font-sans text-xs uppercase tracking-widest text-gold transition-all hover:bg-gold hover:text-black">
-                <RotateCcw size={14} /> {face === "front" ? (lang === "ta" ? "பின் பக்கம்" : "Show back") : (lang === "ta" ? "முன் பக்கம்" : "Show front")}
+                <RotateCcw size={14} /> {lang === "ta" ? "திருப்பு" : "Flip"}
+              </button>
+              <button onClick={reset}
+                className="flex items-center gap-2 rounded-full border border-[var(--hairline)] px-6 py-3 font-sans text-xs uppercase tracking-widest text-ivory-dim transition-all hover:bg-white/10 hover:text-ivory">
+                {lang === "ta" ? "நேராக்கு" : "Reset view"}
               </button>
             </div>
           </div>
@@ -204,15 +237,52 @@ export default function IdCardSection() {
               {lang === "ta" ? "நேரடி முன்னோட்டம்" : "Live Preview"} · 85.6 × 54 mm
             </p>
 
-            {/* Both faces are always laid out; the inactive one is parked
-                off-screen so html2canvas can still rasterise it. */}
-            <div className="relative flex justify-center overflow-hidden" style={{ minHeight: CARD_H + 8 }}>
-              <div className={cn(face === "back" && "absolute -left-[9999px] top-0")}>
-                <CardFront data={data} photo={photo} signature={signature} cardRef={frontRef} />
+            {/* Grab it and spin it. The two faces sit back to back in 3D
+                with backface-visibility hidden, so whichever side is
+                turned towards you is the one you see. */}
+            <div
+              className="flex justify-center select-none"
+              style={{ perspective: 1500, minHeight: CARD_H + 20 }}
+            >
+              <div
+                onPointerDown={onPointerDown}
+                onPointerMove={onPointerMove}
+                onPointerUp={endDrag}
+                onPointerCancel={endDrag}
+                role="img"
+                aria-label="Membership card preview — drag to rotate"
+                style={{
+                  width: CARD_W,
+                  height: CARD_H,
+                  position: "relative",
+                  transformStyle: "preserve-3d",
+                  transform: `rotateX(${rot.x}deg) rotateY(${rot.y}deg)`,
+                  transition: dragging ? "none" : "transform 0.75s cubic-bezier(.2,.75,.2,1)",
+                  cursor: dragging ? "grabbing" : "grab",
+                  touchAction: "none",
+                  filter: "drop-shadow(0 22px 40px rgba(15,35,80,0.45))",
+                }}
+              >
+                <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}>
+                  <CardFront data={data} photo={photo} signature={signature} />
+                </div>
+                <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", transform: "rotateY(180deg)" }}>
+                  <CardBack data={data} />
+                </div>
               </div>
-              <div className={cn(face === "front" && "absolute -left-[9999px] top-0")}>
-                <CardBack data={data} cardRef={backRef} />
-              </div>
+            </div>
+
+            <p className="mt-4 flex items-center justify-center gap-2 font-sans text-[11px] text-ivory-faint">
+              <Move size={13} className="text-gold" />
+              {lang === "ta" ? "அட்டையை இழுத்து சுழற்றவும்" : "Drag the card to spin it in any direction"}
+            </p>
+
+            {/* The PNG export captures THESE copies — flat, untransformed and
+                parked off-screen. Rasterising the 3D preview would bake the
+                current rotation into the downloaded card. */}
+            <div className="pointer-events-none fixed -left-[9999px] top-0" aria-hidden>
+              <CardFront data={data} photo={photo} signature={signature} cardRef={frontRef} />
+              <CardBack data={data} cardRef={backRef} />
             </div>
 
             <p className="mx-auto mt-6 max-w-[480px] text-center font-sans text-[11px] leading-relaxed text-ivory-faint">
