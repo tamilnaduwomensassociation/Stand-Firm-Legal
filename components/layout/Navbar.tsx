@@ -68,6 +68,17 @@ export default function Navbar() {
 
   const ta = lang === "ta";
 
+  /**
+   * The header is transparent until you scroll, and the theme text
+   * colour is DARK in light mode — which is why the links washed out
+   * against the hero film. Anywhere the bar actually sits on something
+   * dark (the home hero, or the frosted obsidian bar once scrolled)
+   * the whole row goes pure white. On inner pages at scroll-0 the bar
+   * sits on the cream page background, so it keeps the theme colour —
+   * white there would be invisible.
+   */
+  const onDark = scrolled || pathname === "/";
+
   const underline =
     "relative whitespace-nowrap after:absolute after:left-0 after:-bottom-1 after:h-px after:w-0 after:bg-gold after:transition-all after:duration-500 hover:after:w-full hover:text-gold";
 
@@ -93,7 +104,10 @@ export default function Navbar() {
             <span className="font-serif text-base font-bold tracking-[0.12em] gold-text md:text-xl md:tracking-[0.14em]">
               TNWLA · MADRAS
             </span>
-            <span className="mt-1 whitespace-nowrap font-sans text-[7.5px] font-extrabold uppercase tracking-[0.18em] text-ivory-dim transition-colors group-hover:text-gold md:text-[9px] md:tracking-[0.2em]">
+            <span className={cn(
+              "mt-1 whitespace-nowrap font-sans text-[7.5px] font-extrabold uppercase tracking-[0.18em] transition-colors group-hover:text-gold md:text-[9px] md:tracking-[0.2em]",
+              onDark ? "text-white/80" : "text-ivory-dim"
+            )}>
               Tamilnadu Women Law Association
             </span>
           </span>
@@ -110,7 +124,8 @@ export default function Navbar() {
                1440px; the drawer takes over. It also never scales up: at
                2xl the old larger type and wider gaps cost more width than
                the extra viewport gave back. */
-            "hidden min-w-0 flex-1 items-center justify-center text-ivory/90 min-[1440px]:flex",
+            "hidden min-w-0 flex-1 items-center justify-center min-[1440px]:flex",
+            onDark ? "text-white" : "text-ivory/90",
             ta
               ? "gap-2.5 font-tamil text-[11px] normal-case tracking-normal"
               : "gap-3.5 font-sans text-[11px] uppercase tracking-[0.1em]"
@@ -164,7 +179,10 @@ export default function Navbar() {
 
           <button
             onClick={() => setLang(ta ? "en" : "ta")}
-            className="glass gold-border rounded-full px-3 py-1.5 text-xs tracking-widest text-ivory transition-colors hover:text-gold"
+            className={cn(
+              "glass gold-border rounded-full px-3 py-1.5 text-xs tracking-widest transition-colors hover:text-gold",
+              onDark ? "text-white" : "text-ivory"
+            )}
             aria-label="Switch language"
           >
             {ta ? "EN" : "தமிழ்"}
@@ -172,14 +190,20 @@ export default function Navbar() {
           {/* Light / dark toggle — right after the language chip */}
           <button
             onClick={toggleTheme}
-            className="glass gold-border rounded-full p-2 text-ivory transition-colors hover:text-gold"
+            className={cn(
+              "glass gold-border rounded-full p-2 transition-colors hover:text-gold",
+              onDark ? "text-white" : "text-ivory"
+            )}
             aria-label={light ? "Switch to dark theme" : "Switch to light theme"}
           >
             {light ? <Moon size={15} /> : <Sun size={15} />}
           </button>
           <button
             onClick={() => window.dispatchEvent(new CustomEvent("sf:search"))}
-            className="hidden text-ivory/80 transition-colors hover:text-gold sm:block"
+            className={cn(
+              "hidden transition-colors hover:text-gold sm:block",
+              onDark ? "text-white/90" : "text-ivory/80"
+            )}
             aria-label="Open search"
           >
             <Search size={19} />
@@ -193,7 +217,11 @@ export default function Navbar() {
           >
             <Phone size={16} />
           </a>
-          <button className="text-ivory min-[1440px]:hidden" onClick={() => setOpen(!open)} aria-label="Toggle menu">
+          <button
+            className={cn("min-[1440px]:hidden", onDark ? "text-white" : "text-ivory")}
+            onClick={() => setOpen(!open)}
+            aria-label="Toggle menu"
+          >
             {open ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>

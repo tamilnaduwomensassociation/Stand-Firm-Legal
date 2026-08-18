@@ -22,6 +22,7 @@ import { sflaMatters, sflaPanelNote, sflaPanelNoteTa, site } from "@/config/site
 import { useLang } from "@/lib/i18n";
 import SectionHeading from "@/components/ui/SectionHeading";
 import MagneticButton from "@/components/ui/MagneticButton";
+import DatePicker from "@/components/ui/DatePicker";
 import { cn } from "@/lib/utils";
 
 const inputCls =
@@ -31,17 +32,17 @@ const inputCls =
 const TODAY_ISO = new Date().toISOString().slice(0, 10);
 
 /* Facts common to every banking matter, plus per-type additions */
-const baseFields = [
+const baseFields: { id: string; en: string; ta: string; type?: "textarea" | "date" }[] = [
   { id: "clientName", en: "Client / Applicant Name", ta: "வாடிக்கையாளர் பெயர்" },
   { id: "phone", en: "Phone / WhatsApp", ta: "தொலைபேசி / வாட்ஸ்அப்" },
-  { id: "address", en: "Address", ta: "முகவரி", type: "textarea" as const },
+  { id: "address", en: "Address", ta: "முகவரி", type: "textarea" },
   { id: "bank", en: "Bank / Financial Institution", ta: "வங்கி / நிதி நிறுவனம்" },
   { id: "branch", en: "Branch", ta: "கிளை" },
   { id: "loanAcNo", en: "Loan / Account Number", ta: "கடன் / கணக்கு எண்" },
   { id: "amount", en: "Amount Involved (₹)", ta: "சம்பந்தப்பட்ட தொகை (₹)" },
-  { id: "noticeDate", en: "Date of Notice / Cause of Action", ta: "நோட்டீஸ் தேதி", type: "date" as const },
-  { id: "property", en: "Secured Asset / Property Description", ta: "சொத்து விவரம்", type: "textarea" as const },
-  { id: "facts", en: "Brief Facts of the Matter", ta: "வழக்கின் சுருக்க விவரம்", type: "textarea" as const },
+  { id: "noticeDate", en: "Date of Notice / Cause of Action", ta: "நோட்டீஸ் தேதி", type: "date" },
+  { id: "property", en: "Secured Asset / Property Description", ta: "சொத்து விவரம்", type: "textarea" },
+  { id: "facts", en: "Brief Facts of the Matter", ta: "வழக்கின் சுருக்க விவரம்", type: "textarea" },
 ];
 
 export default function SFLAServices() {
@@ -168,16 +169,21 @@ export default function SFLAServices() {
                         value={vals[f.id] ?? ""}
                         onChange={(e) => setVals((p) => ({ ...p, [f.id]: e.target.value }))}
                       />
+                    ) : f.type === "date" ? (
+                      <DatePicker
+                        ariaLabel={lang === "ta" ? f.ta : f.en}
+                        className={inputCls}
+                        value={vals[f.id] ?? ""}
+                        onChange={(v) => setVals((p) => ({ ...p, [f.id]: v }))}
+                        min="1920-01-01"
+                        max={TODAY_ISO}
+                      />
                     ) : (
                       <input
                         type={f.type ?? "text"}
                         className={cn(inputCls, "[color-scheme:light]")}
                         value={vals[f.id] ?? ""}
-                        {...(f.type === "date" ? { max: TODAY_ISO, min: "1920-01-01" } : {})}
-                        onChange={(e) => {
-                          if (f.type === "date" && e.target.value && e.target.value > TODAY_ISO) return;
-                          setVals((p) => ({ ...p, [f.id]: e.target.value }));
-                        }}
+                        onChange={(e) => setVals((p) => ({ ...p, [f.id]: e.target.value }))}
                       />
                     )}
                   </label>

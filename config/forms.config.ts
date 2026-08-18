@@ -12,6 +12,10 @@ export type Field = {
   en: string;          // label (EN)
   ta: string;          // label (தமிழ்)
   type?: "text" | "date" | "textarea" | "select";
+  /* Date fields are capped at today by default (a birth date or a notice
+     date cannot be in the future). Flag the ones that legitimately look
+     forward, or the field is unusable for what it is asking. */
+  future?: boolean;
   options?: string[];  // for select
   optional?: boolean;  // fields are mandatory unless flagged optional
 };
@@ -261,7 +265,7 @@ export const deedForms: Record<string, Field[]> = {
   "Will": [F("testator", "Testator Name & Age", "உயில் எழுதுபவர் பெயர் & வயது"), F("executor", "Executor Name", "நிறைவேற்றுபவர்"), F("beneficiaries", "Beneficiaries & Shares", "பயனாளிகள் & பங்குகள்", "textarea"), F("assets", "Assets Covered", "சொத்து விவரங்கள்", "textarea")],
   "Will Cancellation": [F("testator", "Testator Name", "உயில் எழுதியவர்"), F("willDate", "Original Will Date", "மூல உயில் தேதி", "date"), F("registered", "Was It Registered?", "பதிவு செய்யப்பட்டதா?", "select")],
   "Rectification Deed": [F("parties", "Parties to Original Deed", "மூல பத்திர தரப்புகள்", "textarea"), F("docNo", "Original Document No. & Year", "மூல ஆவண எண் & ஆண்டு"), F("error", "Error to Be Rectified", "திருத்த வேண்டிய பிழை", "textarea")],
-  "Promissory Note": [F("maker", "Maker (Borrower)", "கடன் பெறுபவர்"), F("payee", "Payee (Lender)", "கடன் தருபவர்"), F("amount", "Principal Amount (₹)", "அசல் தொகை (₹)"), F("interest", "Interest Rate (%)", "வட்டி விகிதம் (%)"), F("repayDate", "Repayment Date", "திருப்பிச் செலுத்தும் தேதி", "date")],
+  "Promissory Note": [F("maker", "Maker (Borrower)", "கடன் பெறுபவர்"), F("payee", "Payee (Lender)", "கடன் தருபவர்"), F("amount", "Principal Amount (₹)", "அசல் தொகை (₹)"), F("interest", "Interest Rate (%)", "வட்டி விகிதம் (%)"), { ...F("repayDate", "Repayment Date", "திருப்பிச் செலுத்தும் தேதி", "date"), future: true }],
   "Trust Deed": [F("settlor", "Settlor / Founder", "நிறுவனர்"), F("trustees", "Trustees (all names)", "அறங்காவலர்கள்", "textarea"), F("trustName", "Trust Name", "அறக்கட்டளை பெயர்"), F("objects", "Objects of the Trust", "நோக்கங்கள்", "textarea"), F("corpus", "Initial Corpus (₹)", "ஆரம்ப நிதி (₹)")],
   "Adoption Deed": [F("adoptiveParents", "Adoptive Parents", "தத்தெடுக்கும் பெற்றோர்", "textarea"), F("naturalParents", "Natural Parents / Guardian", "பெற்ற பெற்றோர் / பாதுகாவலர்", "textarea"), F("child", "Child Name & DOB", "குழந்தை பெயர் & பிறந்த தேதி"), F("consent", "Consent Details", "சம்மத விவரங்கள்", "textarea")],
   "Affidavit": [F("deponent", "Deponent Name", "சத்தியம் செய்பவர்"), F("purpose", "Purpose of Affidavit", "பிரமாணத்தின் நோக்கம்", "textarea"), F("facts", "Facts to Be Declared", "அறிவிக்க வேண்டிய உண்மைகள்", "textarea")],

@@ -33,6 +33,7 @@ import {
 import { useLang } from "@/lib/i18n";
 import SectionHeading from "@/components/ui/SectionHeading";
 import MagneticButton from "@/components/ui/MagneticButton";
+import DatePicker from "@/components/ui/DatePicker";
 import { cn } from "@/lib/utils";
 
 const icons: Record<string, LucideIcon> = { Scale, Briefcase, GraduationCap };
@@ -60,17 +61,21 @@ function FieldInput({ f, value, onChange, lang, invalid }: {
       </span>
       {f.type === "textarea" ? (
         <textarea className={cn(inputCls, "min-h-[84px] resize-none", ring)} value={value} onChange={(e) => onChange(e.target.value)} />
+      ) : f.type === "date" ? (
+        <DatePicker
+          ariaLabel={label}
+          className={cn(inputCls, ring)}
+          value={value}
+          onChange={onChange}
+          min={EARLIEST_ISO}
+          max={f.future ? undefined : TODAY_ISO}
+        />
       ) : (
         <input
           type={f.type ?? "text"}
           className={cn(inputCls, "[color-scheme:light]", ring)}
           value={value}
-          {...(f.type === "date" ? { max: TODAY_ISO, min: EARLIEST_ISO } : {})}
-          onChange={(e) => {
-            // Belt and braces: a typed-in future date is rejected too
-            if (f.type === "date" && e.target.value && e.target.value > TODAY_ISO) return;
-            onChange(e.target.value);
-          }}
+          onChange={(e) => onChange(e.target.value)}
         />
       )}
       {invalid && (

@@ -23,6 +23,7 @@ import { useLang } from "@/lib/i18n";
 import SectionHeading from "@/components/ui/SectionHeading";
 import MagneticButton from "@/components/ui/MagneticButton";
 import MembershipRegistration from "@/components/sections/MembershipRegistration";
+import DatePicker from "@/components/ui/DatePicker";
 import { cn } from "@/lib/utils";
 
 const inputCls =
@@ -41,6 +42,15 @@ function FieldInput({ f, value, onChange, lang }: { f: Field; value: string; onC
       <span className="mb-1.5 block font-sans text-xs uppercase tracking-widest text-ivory-dim">{label}</span>
       {f.type === "textarea" ? (
         <textarea className={cn(inputCls, "min-h-[84px] resize-none")} value={value} onChange={(e) => onChange(e.target.value)} />
+      ) : f.type === "date" ? (
+        <DatePicker
+          ariaLabel={label}
+          className={inputCls}
+          value={value}
+          onChange={onChange}
+          min="1920-01-01"
+          max={f.future ? undefined : TODAY_ISO}
+        />
       ) : f.type === "select" ? (
         <select className={inputCls} value={value} onChange={(e) => onChange(e.target.value)}>
           <option value="">—</option>
@@ -52,11 +62,7 @@ function FieldInput({ f, value, onChange, lang }: { f: Field; value: string; onC
           type={f.type ?? "text"}
           className={cn(inputCls, "[color-scheme:light]")}
           value={value}
-          {...(f.type === "date" ? { max: TODAY_ISO, min: "1920-01-01" } : {})}
-          onChange={(e) => {
-            if (f.type === "date" && e.target.value && e.target.value > TODAY_ISO) return;
-            onChange(e.target.value);
-          }}
+          onChange={(e) => onChange(e.target.value)}
         />
       )}
     </label>

@@ -15,9 +15,13 @@ import { site } from "@/config/site.config";
 import { useLang } from "@/lib/i18n";
 import SectionHeading from "@/components/ui/SectionHeading";
 import MagneticButton from "@/components/ui/MagneticButton";
+import DatePicker from "@/components/ui/DatePicker";
 import { cn } from "@/lib/utils";
 
 const SLOTS = ["10:00 AM", "11:30 AM", "1:00 PM", "3:00 PM", "4:30 PM", "6:00 PM"];
+
+/* An appointment cannot be booked into the past */
+const TODAY_ISO = new Date().toISOString().slice(0, 10);
 
 type Up = { name: string; size: number; pct: number; img?: string };
 
@@ -143,7 +147,14 @@ export default function Contact() {
               {/* Live appointment */}
               <div>
                 <p className="mb-3 flex items-center gap-2 kicker !tracking-[0.25em]"><CalendarDays size={14} /> {t("liveAppt")}</p>
-                <input aria-label="Preferred date" type="date" className={cn(inputCls, "[color-scheme:dark]")} value={date} onChange={(e) => setDate(e.target.value)} />
+                <DatePicker
+                  ariaLabel="Preferred date"
+                  className={inputCls}
+                  value={date}
+                  onChange={setDate}
+                  min={TODAY_ISO}
+                  placeholder={lang === "ta" ? "விருப்பமான தேதி" : "Preferred date"}
+                />
                 <div className="mt-3 flex flex-wrap gap-2">
                   {SLOTS.map((s) => (
                     <button
