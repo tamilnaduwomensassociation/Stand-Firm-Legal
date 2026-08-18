@@ -179,17 +179,83 @@ export const sflaPartners = [
   { name: "[PH: Partner Name]", nameTa: "[PH: பெயர்]", role: "Partner — Criminal & Family", roleTa: "பங்குதாரர் — குற்றவியல் & குடும்பம்", photo: "/media/stills/team-3.jpg" },
 ];
 
+/* ---------------- CLIENT VOICES ----------------
+ * Real Google reviews for the association, verbatim. Nothing here is
+ * written by us — the quotes are exactly as the reviewer left them,
+ * spelling and all. `meta` and `when` are the reviewer credential and
+ * age Google shows beside each one.
+ *
+ * NOTE: star values are deliberately NOT stored. Google does not
+ * expose the per-review rating in the text we were given, and putting
+ * an invented five stars on a real person's name would be a
+ * fabrication. Supply the ratings and the card will show them.
+ */
 export const testimonials = [
-  { name: "R. Karthik", area: "Property Registration", areaTa: "சொத்து பதிவு", text: "Our sale deed and registration were completed in days, not months. Transparent fees, constant updates.", textTa: "எங்கள் விற்பனை பத்திரமும் பதிவும் மாதங்களில் அல்ல, நாட்களில் முடிந்தது. வெளிப்படையான கட்டணம், தொடர்ச்சியான புதுப்பிப்புகள்." },
-  { name: "S. Meenakshi", area: "Family Case", areaTa: "குடும்ப வழக்கு", text: "They handled my case with such dignity and care. I always knew exactly where my matter stood.", textTa: "என் வழக்கை கண்ணியத்துடனும் அக்கறையுடனும் கையாண்டனர். என் விவகாரம் எங்கு உள்ளது என்பது எப்போதும் தெரிந்தது." },
-  { name: "A. Ibrahim", area: "Consumer Forum", areaTa: "நுகர்வோர் நீதிமன்றம்", text: "Won my consumer complaint with full compensation. They fought when others said settle.", textTa: "முழு இழப்பீட்டுடன் என் நுகர்வோர் புகார் வெற்றி. மற்றவர்கள் சமரசம் என்றபோது இவர்கள் போராடினர்." },
-  { name: "P. Lakshmi", area: "MSME Recovery", areaTa: "MSME மீட்பு", text: "Recovered dues our company had written off. Sharp strategy, relentless follow-up.", textTa: "நாங்கள் கைவிட்ட நிலுவைத் தொகையை மீட்டனர். கூர்மையான உத்தி, இடைவிடாத தொடர்பு." },
-  { name: "V. Senthil", area: "Accident Claim", areaTa: "விபத்து இழப்பீடு", text: "MACT compensation settled beyond expectation. They treated my family's case like their own.", textTa: "எதிர்பார்ப்பை மீறிய MACT இழப்பீடு. என் குடும்ப வழக்கை தங்கள் சொந்த வழக்காக நடத்தினர்." },
-  { name: "D. Priya", area: "Marriage Registration", areaTa: "திருமண பதிவு", text: "Registration done smoothly with zero running around. Everything handled at their office.", textTa: "எங்கும் அலையாமல் பதிவு சுமூகமாக முடிந்தது. அனைத்தும் அவர்கள் அலுவலகத்திலேயே." },
-  { name: "N. Rajendran", area: "SARFAESI Case", areaTa: "SARFAESI வழக்கு", text: "Our property was headed for auction under SARFAESI. They stayed the proceedings and negotiated a settlement we could actually meet.", textTa: "SARFAESI கீழ் எங்கள் சொத்து ஏலத்திற்கு சென்றது. நடவடிக்கைகளை நிறுத்தி, எங்களால் நிறைவேற்றக்கூடிய சமரசத்தை பேசி முடித்தனர்." },
-  { name: "K. Sundaram", area: "Cheque Bounce Case", areaTa: "காசோலை மறுப்பு வழக்கு", text: "Section 138 matter closed in our favour with the full cheque amount recovered. Clear advice at every hearing.", textTa: "பிரிவு 138 வழக்கு எங்களுக்கு சாதகமாக முடிந்தது, முழு காசோலை தொகையும் மீட்கப்பட்டது. ஒவ்வொரு விசாரணையிலும் தெளிவான ஆலோசனை." },
-  { name: "S. Abdul Rahman", area: "DRT Case", areaTa: "DRT வழக்கு", text: "Represented us before the Debts Recovery Tribunal with real command of the file. The outcome saved our business.", textTa: "கடன் மீட்பு தீர்ப்பாயத்தில் கோப்பின் மீது முழு பிடிப்புடன் வாதாடினர். அந்த தீர்ப்பு எங்கள் தொழிலை காப்பாற்றியது." },
+  {
+    name: "Jaya Rajendra",
+    meta: "9 reviews · 2 photos", metaTa: "9 மதிப்புரைகள் · 2 படங்கள்",
+    when: "a year ago", whenTa: "ஒரு ஆண்டு முன்",
+    text: "Excellent lawyer, you solve the case for the truth not money minded.",
+  },
+  {
+    name: "Reena Mettilda",
+    meta: "2 reviews", metaTa: "2 மதிப்புரைகள்",
+    when: "2 years ago", whenTa: "2 ஆண்டுகள் முன்",
+    text: "An excellent lawyer who defended my case so well and I highly recommend this law firm",
+  },
+  {
+    name: "M.K. Ramkumar",
+    meta: "5 reviews", metaTa: "5 மதிப்புரைகள்",
+    when: "7 months ago", whenTa: "7 மாதங்கள் முன்",
+    text: "Very good law Association",
+  },
+  {
+    name: "Revathi V",
+    meta: "4 reviews", metaTa: "4 மதிப்புரைகள்",
+    when: "2 years ago", whenTa: "2 ஆண்டுகள் முன்",
+    text: "Best law firm for all legal concerns..",
+  },
+  {
+    name: "Joel Isaac J",
+    meta: "2 reviews · 1 photo", metaTa: "2 மதிப்புரைகள் · 1 படம்",
+    when: "2 years ago", whenTa: "2 ஆண்டுகள் முன்",
+    text: "Right place Legal Concern!",
+  },
+  {
+    name: "Salvin Jones",
+    meta: "Local Guide · 84 reviews · 19 photos", metaTa: "லோக்கல் கைடு · 84 மதிப்புரைகள் · 19 படங்கள்",
+    when: "a year ago", whenTa: "ஒரு ஆண்டு முன்",
+    text: "On time & genuine",
+  },
+  {
+    name: "Miind Hunter International",
+    meta: "2 reviews", metaTa: "2 மதிப்புரைகள்",
+    when: "2 years ago", whenTa: "2 ஆண்டுகள் முன்",
+    text: "Good Law firm",
+  },
+  {
+    name: "Durga Heidi",
+    meta: "3 reviews", metaTa: "3 மதிப்புரைகள்",
+    when: "2 years ago", whenTa: "2 ஆண்டுகள் முன்",
+    text: "Best One",
+  },
+  {
+    name: "Lavan Sasti",
+    meta: "2 reviews", metaTa: "2 மதிப்புரைகள்",
+    when: "a year ago", whenTa: "ஒரு ஆண்டு முன்",
+    text: "Very useful",
+  },
 ];
+
+/* The nine above are the reviews that carry written text. The rest are
+   rating-only, so there is nothing to quote — they are counted here. */
+export const reviewsMeta = {
+  total: 30,
+  quoted: 9,
+  ratingOnly: 21,
+  source: "Google",
+  url: "https://www.google.com/maps/search/Tamilnadu+Women+Law+Association+Madras+Armenian+Street+Parrys+Chennai",
+};
 
 export const blogPosts = [
   { title: "Buying Property in Chennai? Verify These 7 Documents First", titleTa: "சென்னையில் சொத்து வாங்குகிறீர்களா? முதலில் இந்த 7 ஆவணங்களை சரிபார்க்கவும்", tag: "Property Law", tagTa: "சொத்து சட்டம்", date: "July 2026", excerpt: "Before any token advance, an EC, patta and parent-document chain review can save you from decades of litigation.", excerptTa: "முன்பணம் தருவதற்கு முன் — EC, பட்டா மற்றும் மூல ஆவண சங்கிலி சரிபார்ப்பு பல ஆண்டு வழக்குகளிலிருந்து காக்கும்.", image: "/media/stills/blog-property.jpg" },
@@ -312,6 +378,17 @@ export const navLinks = [
   { label: "Case Studies", ta: "வழக்கு ஆய்வுகள்", href: "#case-studies" },
   { label: "Contact", ta: "தொடர்பு", href: "#contact" },
 ];
+
+/* Header marks — circular, transparent-cornered, ~30-140 KB each.
+ * The full-size logos in /media stay where they are for letterheads,
+ * the Jeni page masthead and the printed PDFs; these small circles are
+ * only for the navigation bar, where the originals were both 1.5 MB+
+ * and had opaque white squares that broke the round crop. */
+export const brandMarks = {
+  start: "/media/marks/start-mark.png",
+  sfla: "/media/marks/sfla-mark.png",
+  jeni: "/media/marks/jeni-mark.png",
+};
 
 /* Sister brand — Jeni Enterprises. The header mark links to /jeni. */
 export const jeni = {

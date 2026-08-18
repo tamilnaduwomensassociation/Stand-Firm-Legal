@@ -53,7 +53,7 @@ export default function SearchOverlay() {
       /* Editorial */
       ...blogPosts.map((b) => ({ label: b.title, sub: `Legal Update · ${b.tag}`, href: "/#blog", keywords: `${b.titleTa} ${b.excerpt}` })),
       ...faqs.map((f) => ({ label: f.q, sub: "Frequently Asked", href: "/#faq", keywords: `${f.qTa} ${f.a}` })),
-      ...testimonials.map((t) => ({ label: `${t.name} — ${t.area}`, sub: "Client Voice", href: "/#testimonials", keywords: `${t.areaTa} ${t.text}` })),
+      ...testimonials.map((t) => ({ label: t.name, sub: "Client Voice · Google review", href: "/#testimonials", keywords: `${t.text} ${t.meta} review testimonial` })),
       /* Standalone pages */
       { label: "Gallery", sub: "Photographs from our chambers", href: "/gallery", keywords: "படத்தொகுப்பு photos moments" },
       { label: "Stand Firm Legal Associates", sub: "Services, deeds, registrations & banking", href: "/stand-firm", keywords: "SFLA store order property deed registration cart price" },

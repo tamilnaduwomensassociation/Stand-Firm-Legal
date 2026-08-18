@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "prebuild": "node scripts/fetch-news.mjs",
+    "news": "node scripts/fetch-news.mjs"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",

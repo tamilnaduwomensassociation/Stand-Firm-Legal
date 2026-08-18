@@ -3,24 +3,42 @@
 /**
  * Sticky navigation — transparent over the hero, frosted black on
  * scroll. Animated gold underlines, EN/தமிழ் toggle, light/dark
- * toggle, fullscreen search, and the two house marks: Stand Firm
- * Legal Associates (→ /stand-firm) and Jeni Enterprises (→ /jeni).
+ * toggle, fullscreen search, and the house marks: the association
+ * emblem beside the wordmark, then Stand Firm Legal Associates
+ * (→ /stand-firm) and Jeni Enterprises (→ /jeni) after Contact.
  *
- * The old Services mega-menu is gone — every service now lives on
- * the Stand Firm page, reachable from the gold badge after Contact.
+ * TWO THINGS THIS FILE IS CAREFUL ABOUT
+ *
+ * 1. Tamil. Tamil labels are far longer than their English
+ *    counterparts, and uppercase letter-spacing — which does nothing
+ *    for Tamil script anyway — pushed the row wider than its flex
+ *    box, so the overflow bled left and sat on top of the wordmark.
+ *    The nav therefore drops `uppercase` and all tracking in Tamil,
+ *    tightens its gaps, and the ID CARD label collapses to its icon
+ *    until there is genuinely room for the words.
+ *
+ * 2. Round marks. The logos are circular artwork on opaque white
+ *    squares. `rounded-full` clips the container's background but not
+ *    an unclipped child, so the white square painted straight over the
+ *    curve and the marks read as rectangles. Fixed at the source —
+ *    /media/marks/* are circular with transparent corners — and belt
+ *    and braces with `overflow-hidden` on the wrapper.
  */
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { IdCard, Menu, Moon, Phone, Search, Sun, X } from "lucide-react";
-import { navLinks, jeni, site } from "@/config/site.config";
+import { navLinks, brandMarks, jeni, site } from "@/config/site.config";
 import { useLang } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+
+/* One shape for every house mark, so they can never drift apart */
+const MARK =
+  "flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/95 ring-1 ring-gold/40 transition-all duration-300 hover:ring-gold hover:shadow-[0_0_22px_rgba(201,162,75,0.5)]";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const [light, setLight] = useState(true);
-  const [jeniOk, setJeniOk] = useState(true);
   const { lang, setLang } = useLang();
   const pathname = usePathname();
 
@@ -48,6 +66,8 @@ export default function Navbar() {
     localStorage.setItem("sf-theme", next ? "light" : "dark");
   };
 
+  const ta = lang === "ta";
+
   const underline =
     "relative whitespace-nowrap after:absolute after:left-0 after:-bottom-1 after:h-px after:w-0 after:bg-gold after:transition-all after:duration-500 hover:after:w-full hover:text-gold";
 
@@ -55,86 +75,99 @@ export default function Navbar() {
     <header
       className={cn(
         "fixed inset-x-0 top-0 z-[80] transition-all duration-700",
-        scrolled ? "glass !bg-obsidian/85 py-3 shadow-[0_10px_40px_rgba(0,0,0,0.35)]" : "bg-transparent py-6"
+        scrolled ? "glass !bg-obsidian/85 py-3 shadow-[0_10px_40px_rgba(0,0,0,0.35)]" : "bg-transparent py-5"
       )}
     >
-      <div className="mx-auto flex max-w-[1560px] items-center justify-between gap-5 px-5 xl:px-8">
-        {/* Wordmark — deliberately heavy, this is the house name */}
+      <div className="mx-auto flex max-w-[1560px] items-center justify-between gap-4 px-4 md:px-5 xl:gap-5 xl:px-8">
+        {/* ---------- Brand: association emblem + wordmark ---------- */}
         <a
           href={hrefFor("#home")}
-          className="group flex shrink-0 flex-col leading-none"
+          className="group flex shrink-0 items-center gap-2.5 md:gap-3.5"
           aria-label="Tamilnadu Women Law Association Madras — home"
         >
-          <span className="font-serif text-lg font-bold tracking-[0.14em] gold-text md:text-xl">
-            TNWLA · MADRAS
+          <span className={cn(MARK, "h-9 w-9 md:h-11 md:w-11")}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={brandMarks.start} alt="" className="h-full w-full object-cover" />
           </span>
-          <span className="mt-1 whitespace-nowrap font-sans text-[8px] font-extrabold uppercase tracking-[0.2em] text-ivory-dim transition-colors group-hover:text-gold md:text-[9px]">
-            Tamilnadu Women Law Association
+          <span className="flex flex-col leading-none">
+            <span className="font-serif text-base font-bold tracking-[0.12em] gold-text md:text-xl md:tracking-[0.14em]">
+              TNWLA · MADRAS
+            </span>
+            <span className="mt-1 whitespace-nowrap font-sans text-[7.5px] font-extrabold uppercase tracking-[0.18em] text-ivory-dim transition-colors group-hover:text-gold md:text-[9px] md:tracking-[0.2em]">
+              Tamilnadu Women Law Association
+            </span>
           </span>
         </a>
 
-        {/* Desktop links — full row only once there is genuinely room for it */}
+        {/* ---------- Desktop links ---------- */}
         <nav
-          className="hidden xl:flex flex-1 items-center justify-center gap-4 2xl:gap-6 font-sans text-[11px] 2xl:text-[12px] uppercase tracking-[0.12em] 2xl:tracking-widest text-ivory/90"
+          className={cn(
+            /* Measured, not guessed. The row needs ~757px in English and
+               ~668px in Tamil; below 1440px the flex box that holds it is
+               narrower than that, and a centred flex row spills out of its
+               box rather than shrinking — which is what put the links on
+               top of the wordmark. So the row simply does not appear below
+               1440px; the drawer takes over. It also never scales up: at
+               2xl the old larger type and wider gaps cost more width than
+               the extra viewport gave back. */
+            "hidden min-w-0 flex-1 items-center justify-center text-ivory/90 min-[1440px]:flex",
+            ta
+              ? "gap-2.5 font-tamil text-[11px] normal-case tracking-normal"
+              : "gap-3.5 font-sans text-[11px] uppercase tracking-[0.1em]"
+          )}
           aria-label="Primary"
         >
           {navLinks.map((l) => (
             <a key={l.href} href={hrefFor(l.href)} className={underline}>
-              {lang === "ta" ? l.ta : l.label}
+              {ta ? l.ta : l.label}
             </a>
           ))}
 
           {/* ---- House marks, immediately after Contact ---- */}
-          <span className="mx-1 hidden h-6 w-px bg-[var(--hairline)] 2xl:block" aria-hidden />
+          <span className="mx-0.5 hidden h-6 w-px shrink-0 bg-[var(--hairline)] min-[1600px]:block" aria-hidden />
 
           <a
             href="/stand-firm"
-            className="group/mark flex shrink-0 items-center rounded-full bg-white/90 p-1 ring-1 ring-gold/40 transition-all duration-300 hover:ring-gold hover:shadow-[0_0_22px_rgba(201,162,75,0.5)]"
+            className={cn(MARK, "h-8 w-8")}
             title="Stand Firm Legal Associates — services, deeds & registrations"
             aria-label="Stand Firm Legal Associates"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/media/sfla-logo.png" alt="Stand Firm Legal Associates" className="h-8 w-8 object-contain" />
+            <img src={brandMarks.sfla} alt="" className="h-full w-full object-cover" />
           </a>
 
           <a
             href="/jeni"
-            className="group/mark flex shrink-0 items-center rounded-full bg-white/90 p-1 ring-1 ring-gold/40 transition-all duration-300 hover:ring-gold hover:shadow-[0_0_22px_rgba(201,162,75,0.5)]"
+            className={cn(MARK, "h-8 w-8")}
             title={`${jeni.name} — ${jeni.tagline}`}
             aria-label={jeni.name}
           >
-            {jeniOk ? (
-              /* eslint-disable-next-line @next/next/no-img-element */
-              <img
-                src={jeni.logo}
-                alt={jeni.name}
-                className="h-8 w-8 object-contain"
-                onError={() => setJeniOk(false)}
-              />
-            ) : (
-              <span className="flex h-8 w-8 items-center justify-center font-serif text-sm font-bold text-[#12274f]">
-                J
-              </span>
-            )}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={brandMarks.jeni} alt="" className="h-full w-full object-cover" />
           </a>
         </nav>
 
-        {/* Right cluster */}
-        <div className="flex shrink-0 items-center gap-2.5">
-          {/* ID CARD — sits exactly where the Services menu used to */}
+        {/* ---------- Right cluster ---------- */}
+        <div className="flex shrink-0 items-center gap-2 xl:gap-2.5">
+          {/* ID CARD — sits exactly where the Services menu used to.
+              Label collapses to the icon until there is room for words. */}
           <a
             href="/id-card"
-            className="hidden items-center gap-2 rounded-full gold-border bg-gold-faint px-4 py-2 font-sans text-[10px] uppercase tracking-[0.16em] text-gold transition-all duration-300 hover:bg-gold hover:text-black lg:flex"
+            title={ta ? "அடையாள அட்டை" : "Member ID Card"}
+            className="hidden items-center gap-2 rounded-full gold-border bg-gold-faint px-3 py-2 font-sans text-[10px] uppercase tracking-[0.16em] text-gold transition-all duration-300 hover:bg-gold hover:text-black lg:flex min-[1600px]:px-4"
           >
-            <IdCard size={14} /> {lang === "ta" ? "அடையாள அட்டை" : "ID Card"}
+            <IdCard size={14} />
+            <span className={cn("hidden min-[1600px]:inline", ta && "font-tamil normal-case tracking-normal")}>
+              {ta ? "அடையாள அட்டை" : "ID Card"}
+            </span>
           </a>
 
           <button
-            onClick={() => setLang(lang === "en" ? "ta" : "en")}
+            onClick={() => setLang(ta ? "en" : "ta")}
             className="glass gold-border rounded-full px-3 py-1.5 text-xs tracking-widest text-ivory transition-colors hover:text-gold"
             aria-label="Switch language"
           >
-            {lang === "en" ? "தமிழ்" : "EN"}
+            {ta ? "EN" : "தமிழ்"}
           </button>
           {/* Light / dark toggle — right after the language chip */}
           <button
@@ -146,7 +179,7 @@ export default function Navbar() {
           </button>
           <button
             onClick={() => window.dispatchEvent(new CustomEvent("sf:search"))}
-            className="text-ivory/80 transition-colors hover:text-gold"
+            className="hidden text-ivory/80 transition-colors hover:text-gold sm:block"
             aria-label="Open search"
           >
             <Search size={19} />
@@ -160,20 +193,26 @@ export default function Navbar() {
           >
             <Phone size={16} />
           </a>
-          <button className="text-ivory xl:hidden" onClick={() => setOpen(!open)} aria-label="Toggle menu">
+          <button className="text-ivory min-[1440px]:hidden" onClick={() => setOpen(!open)} aria-label="Toggle menu">
             {open ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
       </div>
 
-      {/* Mobile drawer */}
+      {/* ---------- Mobile drawer ---------- */}
       <div
         className={cn(
-          "overflow-hidden transition-all duration-500 glass !bg-obsidian/95 xl:hidden",
+          "overflow-hidden transition-all duration-500 glass !bg-obsidian/95 min-[1440px]:hidden",
           open ? "max-h-[80vh] border-t border-gold/20" : "max-h-0"
         )}
       >
-        <nav className="flex flex-col gap-1 px-8 py-6 font-sans text-sm uppercase tracking-widest" aria-label="Mobile">
+        <nav
+          className={cn(
+            "flex flex-col gap-1 px-8 py-6 text-sm",
+            ta ? "font-tamil tracking-normal" : "uppercase tracking-widest"
+          )}
+          aria-label="Mobile"
+        >
           {navLinks.map((l) => (
             <a
               key={l.href}
@@ -181,37 +220,32 @@ export default function Navbar() {
               onClick={() => setOpen(false)}
               className="border-b border-white/5 py-3 text-ivory/90 transition-colors hover:text-gold"
             >
-              {lang === "ta" ? l.ta : l.label}
+              {ta ? l.ta : l.label}
             </a>
           ))}
-          <a
-            href="/stand-firm"
-            onClick={() => setOpen(false)}
-            className="flex items-center gap-3 border-b border-white/5 py-3 text-gold"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/media/sfla-logo.png" alt="" className="h-7 w-7 rounded-full bg-white/90 object-contain p-0.5" />
+
+          <a href="/stand-firm" onClick={() => setOpen(false)} className="flex items-center gap-3 border-b border-white/5 py-3 text-gold">
+            <span className={cn(MARK, "h-7 w-7")}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={brandMarks.sfla} alt="" className="h-full w-full object-cover" />
+            </span>
             Stand Firm Legal
           </a>
-          <a
-            href="/jeni"
-            onClick={() => setOpen(false)}
-            className="flex items-center gap-3 border-b border-white/5 py-3 text-gold"
-          >
-            {jeniOk ? (
-              /* eslint-disable-next-line @next/next/no-img-element */
-              <img src={jeni.logo} alt="" className="h-7 w-7 rounded-full bg-white/90 object-contain p-0.5" onError={() => setJeniOk(false)} />
-            ) : (
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/90 font-serif text-xs font-bold text-[#12274f]">J</span>
-            )}
+
+          <a href="/jeni" onClick={() => setOpen(false)} className="flex items-center gap-3 border-b border-white/5 py-3 text-gold">
+            <span className={cn(MARK, "h-7 w-7")}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={brandMarks.jeni} alt="" className="h-full w-full object-cover" />
+            </span>
             {jeni.name}
           </a>
+
           <a
             href="/id-card"
             onClick={() => setOpen(false)}
             className="mt-3 flex items-center justify-center gap-2 rounded-full gold-border bg-gold-faint px-5 py-3 text-xs text-gold"
           >
-            <IdCard size={15} /> {lang === "ta" ? "அடையாள அட்டை" : "ID Card"}
+            <IdCard size={15} /> {ta ? "அடையாள அட்டை" : "ID Card"}
           </a>
         </nav>
       </div>

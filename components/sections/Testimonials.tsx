@@ -1,32 +1,56 @@
 "use client";
 
 /**
- * TESTIMONIALS — two counter-flowing rows of glass cards, driven by
- * scroll position rather than a fixed timer. Scrolling down pulls the
- * top row right→left and the bottom row left→right; scrolling back up
- * reverses both. Fully bilingual.
+ * CLIENT VOICES — real Google reviews, verbatim.
+ *
+ * Two counter-flowing rows of glass cards driven by scroll position
+ * rather than a timer: scrolling down pulls the top row right→left and
+ * the bottom row left→right; scrolling back up reverses both.
+ *
+ * The quotes are exactly as the reviewers wrote them. Star ratings are
+ * not shown because Google does not give us the per-review value and
+ * inventing one against a real person's name would be dishonest — the
+ * card carries the reviewer's own Google credential instead.
  */
 import { useRef } from "react";
 import { useGSAP } from "@gsap/react";
-import { Quote, Star } from "lucide-react";
+import { ExternalLink, Quote } from "lucide-react";
 import { gsap } from "@/lib/gsap";
-import { testimonials } from "@/config/site.config";
+import { reviewsMeta, testimonials } from "@/config/site.config";
 import { useLang } from "@/lib/i18n";
 import SectionHeading from "@/components/ui/SectionHeading";
 
+/* Google's four-colour "G", inline so it needs no network request */
+function GoogleG({ size = 13 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 48 48" aria-hidden focusable="false">
+      <path fill="#4285F4" d="M45.1 24.5c0-1.6-.1-3.2-.4-4.7H24v8.9h11.8c-.5 2.7-2 5-4.4 6.6v5.5h7.1c4.2-3.8 6.6-9.5 6.6-16.3z" />
+      <path fill="#34A853" d="M24 46c5.9 0 10.9-2 14.5-5.2l-7.1-5.5c-2 1.3-4.5 2.1-7.4 2.1-5.7 0-10.5-3.8-12.2-9H4.5v5.7C8.1 41.3 15.5 46 24 46z" />
+      <path fill="#FBBC05" d="M11.8 28.4c-.4-1.3-.7-2.7-.7-4.4s.3-3.1.7-4.4v-5.7H4.5C2.9 17.1 2 20.4 2 24s.9 6.9 2.5 10.1l7.3-5.7z" />
+      <path fill="#EA4335" d="M24 10.7c3.2 0 6.1 1.1 8.4 3.3l6.3-6.3C34.9 4.1 29.9 2 24 2 15.5 2 8.1 6.7 4.5 13.9l7.3 5.7c1.7-5.2 6.5-8.9 12.2-8.9z" />
+    </svg>
+  );
+}
+
 function Card({ tst, lang }: { tst: (typeof testimonials)[number]; lang: "en" | "ta" }) {
   return (
-    <figure className="glass gold-border relative w-[340px] md:w-[400px] shrink-0 rounded-2xl p-7">
-      <Quote className="absolute right-6 top-6 text-gold/20" size={36} />
-      <div className="mb-4 flex gap-1 text-gold">
-        {Array.from({ length: 5 }).map((_, i) => <Star key={i} size={13} fill="currentColor" />)}
-      </div>
+    <figure className="glass gold-border relative w-[340px] shrink-0 rounded-2xl p-7 md:w-[400px]">
+      <Quote className="absolute right-6 top-6 text-gold/20" size={34} />
+
+      <span className="mb-4 inline-flex items-center gap-1.5 rounded-full bg-white/[0.06] px-2.5 py-1 font-sans text-[9px] uppercase tracking-[0.16em] text-ivory-dim">
+        <GoogleG /> {lang === "ta" ? "கூகுள் மதிப்புரை" : "Google Review"}
+      </span>
+
+      {/* Verbatim — never translated, never rewritten */}
       <blockquote className="prose-justify font-sans text-sm leading-relaxed text-ivory/90">
-        “{lang === "ta" ? tst.textTa : tst.text}”
+        &ldquo;{tst.text}&rdquo;
       </blockquote>
-      <figcaption className="mt-5">
+
+      <figcaption className="mt-5 border-t border-[var(--hairline)] pt-4">
         <span className="font-serif text-lg text-ivory">{tst.name}</span>
-        <span className="block text-xs text-gold/80 font-sans mt-0.5">{lang === "ta" ? tst.areaTa : tst.area}</span>
+        <span className="mt-0.5 block font-sans text-[11px] text-ivory-faint">
+          {lang === "ta" ? tst.metaTa : tst.meta} · {lang === "ta" ? tst.whenTa : tst.when}
+        </span>
       </figcaption>
     </figure>
   );
@@ -60,6 +84,13 @@ export default function Testimonials() {
   return (
     <section id="testimonials" ref={root} className="overflow-hidden bg-obsidian-deep py-16 md:py-24">
       <SectionHeading kicker={t("testiKicker")} title={t("testiTitle")} />
+
+      <p className="mx-auto mt-5 max-w-2xl px-6 text-center font-sans text-sm leading-relaxed text-ivory-dim">
+        {lang === "ta"
+          ? `கூகுளில் எங்கள் வாடிக்கையாளர்கள் எழுதிய ${reviewsMeta.total} மதிப்புரைகள். கீழே உள்ளவை அவர்களின் சொந்த வார்த்தைகளில், அப்படியே.`
+          : `${reviewsMeta.total} reviews on Google. The ${reviewsMeta.quoted} below are quoted exactly as our clients wrote them — the remaining ${reviewsMeta.ratingOnly} are ratings without written text.`}
+      </p>
+
       <div className="mt-10 space-y-6" aria-label="Client testimonials carousel">
         <div className="testi-row-a flex w-max gap-6 will-change-transform">
           {rowA.map((tst, i) => <Card key={`a${i}`} tst={tst} lang={lang} />)}
@@ -67,6 +98,19 @@ export default function Testimonials() {
         <div className="testi-row-b flex w-max gap-6 will-change-transform">
           {rowB.map((tst, i) => <Card key={`b${i}`} tst={tst} lang={lang} />)}
         </div>
+      </div>
+
+      <div className="mt-10 flex justify-center px-6">
+        <a
+          href={reviewsMeta.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2.5 rounded-full gold-border px-6 py-3 font-sans text-[11px] uppercase tracking-luxe text-gold transition-all duration-300 hover:bg-gold hover:text-black"
+        >
+          <GoogleG size={14} />
+          {lang === "ta" ? "கூகுளில் அனைத்தையும் காண" : "Read all reviews on Google"}
+          <ExternalLink size={12} />
+        </a>
       </div>
     </section>
   );

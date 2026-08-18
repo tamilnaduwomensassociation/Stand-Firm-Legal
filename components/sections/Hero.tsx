@@ -56,7 +56,26 @@ export default function Hero() {
       window.addEventListener("sf:loaded", play);
       const fallback = setTimeout(play, 4200);
 
-      /* ---------- SCROLL = FILM PROJECTOR ---------- */
+      /* ---------- SCROLL = FILM PROJECTOR ----------
+       * Scroll position never writes to video.currentTime directly.
+       * It only moves a target; a requestAnimationFrame loop applies
+       * that target, and only when the decoder is idle. Writing a new
+       * currentTime while a seek is still in flight is exactly what
+       * makes a high-resolution scrub stutter and stick — this drops
+       * the intermediate seeks instead of queueing them, so the film
+       * always lands on the frame your scroll is actually asking for.
+       */
+      let targetTime = 0;
+      let rafId = 0;
+      const pump = () => {
+        rafId = requestAnimationFrame(pump);
+        if (!v || !v.duration || v.readyState < 2) return;
+        if (v.seeking) return;                       // decoder busy — skip, don't queue
+        if (Math.abs(v.currentTime - targetTime) < 1 / 50) return;  // already on frame
+        v.currentTime = targetTime;
+      };
+      rafId = requestAnimationFrame(pump);
+
       const proxy = { p: 0 };
       const tl = gsap.timeline({
         scrollTrigger: {
@@ -75,9 +94,7 @@ export default function Hero() {
           ease: "none",
           duration: 1,
           onUpdate: () => {
-            if (v && v.readyState >= 1 && v.duration) {
-              v.currentTime = Math.min(proxy.p * v.duration, v.duration - 0.05);
-            }
+            if (v?.duration) targetTime = Math.min(proxy.p * v.duration, v.duration - 0.05);
           },
         }, 0)
         // Headline hands over to the film early
@@ -90,6 +107,7 @@ export default function Hero() {
         .to(".hero-shade", { opacity: 0.4, duration: 0.06 }, 0.94);
 
       return () => {
+        cancelAnimationFrame(rafId);
         window.removeEventListener("sf:loaded", play);
         window.removeEventListener("pointerdown", prime);
         window.removeEventListener("touchstart", prime);
