@@ -39,9 +39,15 @@ export default function CaseStudies() {
 
       <div className="relative">
         <SectionHeading
-          kicker={lang === "ta" ? "வழக்கு ஆய்வுகள்" : "Case Studies"}
-          title={lang === "ta" ? "முடிவுகள் பேசுகின்றன" : "Matters That Speak"}
+          kicker={lang === "ta" ? "பெண்களும் சட்டமும்" : "Women & The Law"}
+          title={lang === "ta" ? "இன்று பெண்களுக்காக" : "Standing With Women Today"}
         />
+
+        <p className="mx-auto mt-6 max-w-3xl text-center font-sans text-sm leading-relaxed text-ivory-dim">
+          {lang === "ta"
+            ? "பெண்கள் இன்று எதிர்கொள்ளும் ஆறு நிலைமைகள் — செயற்கை நுண்ணறிவு உருவாக்கிய புதிய தீங்குகள் உட்பட. ஒவ்வொன்றிலும் சட்டம் என்ன வழங்குகிறது, எப்படி நடவடிக்கை எடுப்பது என்பதை விளக்கியுள்ளோம்."
+            : "Six situations women are actually walking into right now — including the harms that exist only because generative AI now exists. Each one sets out what the law gives you and how the remedy is actually pursued."}
+        </p>
 
         <div className="mx-auto mt-12 max-w-5xl">
           {caseStudies.map((c) => (
@@ -63,7 +69,7 @@ export default function CaseStudies() {
                   {c.result}
                 </p>
                 <span className="mt-4 inline-flex items-center gap-1.5 font-sans text-[10px] uppercase tracking-luxe text-gold">
-                  {lang === "ta" ? "முழு வழக்கைப் படிக்க" : "Read the full case"}
+                  {lang === "ta" ? "முழு விவரம் படிக்க" : "Read the full guide"}
                   <ArrowUpRight size={13} className="transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1" />
                 </span>
               </div>
@@ -78,8 +84,8 @@ export default function CaseStudies() {
 
         <p className="mx-auto mt-10 max-w-2xl text-center font-sans text-[11px] leading-relaxed text-ivory-faint">
           {lang === "ta"
-            ? "வாடிக்கையாளர் ரகசியத்தை பாதுகாக்க பெயர்கள் மற்றும் அடையாளங்கள் நீக்கப்பட்டுள்ளன. முந்தைய முடிவுகள் எதிர்கால வழக்குகளுக்கு உத்தரவாதம் அல்ல."
-            : "Names and identifying details are withheld to preserve client confidentiality. Past outcomes are not a guarantee of results in future matters."}
+            ? "இது பொது சட்ட விழிப்புணர்வுக்கானது; உங்கள் வழக்குக்கான ஆலோசனை அல்ல. ஒவ்வொரு வழக்கும் அதன் சொந்த உண்மைகளைப் பொறுத்தது. தயவுசெய்து எங்களை நேரடியாக அணுகவும்."
+            : "Written for general legal awareness, not as advice on a live matter. Every case turns on its own facts and on the law as it stands on the day you act — speak to us before you rely on any of it."}
         </p>
       </div>
     </section>

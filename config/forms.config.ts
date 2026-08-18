@@ -126,7 +126,7 @@ export const membershipCategories: MemberCategory[] = [
     blurb: "Enrolled advocates in active practice before any court in Tamil Nadu, Pondicherry or Andhra Pradesh.",
     blurbTa: "தமிழ்நாடு, புதுச்சேரி அல்லது ஆந்திராவில் எந்த நீதிமன்றத்திலும் தற்போது வழக்காடும் பதிவுபெற்ற வழக்கறிஞர்கள்.",
     icon: "Scale",
-    joiningFee: 100,
+    joiningFee: 1000,
     renewalFee: 100,
     formHeading: "TNWLA-M New Membership Registration — Practising Advocates",
     formHeadingTa: "TNWLA-M புதிய உறுப்பினர் பதிவு — வழக்காடும் வழக்கறிஞர்கள்",

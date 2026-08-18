@@ -225,76 +225,79 @@ export const sflaPanelNote =
 export const sflaPanelNoteTa =
   "நாங்கள் ரெப்கோ வங்கி மற்றும் ரெப்கோ பந்தன் ஆகியவற்றின் பேனல் வழக்கறிஞர்கள். மொத்த வாய்ப்புகளை எங்கள் நிறுவனம் கையாள முடியும்.";
 
-/* ---------------- CASE STUDIES ----------------
- * Each entry has its own page at /case-studies/<slug>.
- * Facts are anonymised and illustrative of the firm's practice.
+/* ---------------- WOMEN & THE LAW ----------------
+ * Replaces the old anonymised case studies. Six subjects that
+ * reflect what women in Tamil Nadu are actually walking into in
+ * 2026 — including the harms that only exist because generative
+ * AI now exists. Each entry has its own page at
+ * /case-studies/<slug>. Educational: not advice on a live matter.
  */
 export const caseStudies = [
   {
-    no: "01", slug: "sarfaesi-auction-stayed",
-    en: "SARFAESI — Auction Stayed, Settlement Secured",
-    ta: "SARFAESI — ஏலம் நிறுத்தம், சமரசம் உறுதி",
-    area: "Banking & Recovery", areaTa: "வங்கி & மீட்பு",
-    result: "Possession notice set aside; one-time settlement negotiated within the borrower's means.",
-    forum: "Debts Recovery Tribunal, Chennai",
-    background: "A family-run manufacturing unit had pledged its factory premises against a working capital facility. After two seasons of delayed receivables the account slipped into NPA classification, and the bank issued notice under Section 13(2) of the SARFAESI Act followed by a possession notice. The family approached us with the auction already advertised.",
-    approach: "We examined the service of the demand notice and the classification date, and raised the procedural objections available under Section 13(3A), which obliges the secured creditor to consider and respond to the borrower's representation. In parallel we prepared a realistic repayment proposal supported by the unit's order book, so the tribunal was presented not only with an objection but with a workable alternative.",
-    outcome: "The possession notice was set aside and the auction did not proceed. A one-time settlement was negotiated on terms the family could actually meet, and the unit continued operating with its workforce intact.",
+    no: "01", slug: "ai-deepfake-and-image-abuse",
+    en: "Deepfakes & AI-Generated Image Abuse",
+    ta: "டீப்·பேக் & செயற்கை நுண்ணறிவு உருவ துஷ்பிரயோகம்",
+    area: "Digital Safety", areaTa: "இணைய பாதுகாப்பு",
+    result: "Synthetic media is still an offence. Take it down fast, preserve the evidence, and the law reaches the uploader — and often the platform.",
+    framework: "BNS s.79 & s.356 · IT Act s.66E, s.67, s.67A · IT Rules 2021, Rule 3(2)(b) — 24-hour takedown",
+    background: "A face can now be lifted from a wedding photograph and placed into a video that never happened, by anyone with a phone and a free model. In the last two years we have seen morphed images used to break off marriages, to extort money from students, and to silence women who spoke up at work. The most common reaction is the most damaging one: delete everything and hope it disappears. It does not disappear, and deleting destroys the evidence that would have proved the image was fabricated in the first place.",
+    approach: "The first hour matters more than the first month. We preserve before we protest — full-page screenshots with the URL and timestamp visible, the profile handle, and where possible the file itself with its metadata intact. A written grievance then goes to the platform's Grievance Officer, who is bound by Rule 3(2)(b) of the IT Rules to remove non-consensual sexual imagery, including artificially generated imagery, within twenty-four hours. In parallel we file the complaint on the National Cyber Crime Reporting Portal and at the local cyber cell, and where the woman does not want her name in a public record we press for the protections available to her identity. Where the image is used to demand money or compliance, extortion is charged alongside the IT Act offences, which changes the seriousness of the file entirely.",
+    outcome: "Removal is usually achievable in days rather than months when the notice is drafted correctly and cites the rule. Beyond takedown, the record you build supports a criminal complaint, a civil claim in damages, and — where an employer, college or spouse acted on the fake — an answer to the consequence that followed. No woman should have to prove a video of herself is false; the law puts the burden where it belongs.",
   },
   {
-    no: "02", slug: "section-138-cheque-recovered",
-    en: "Section 138 — Full Cheque Value Recovered",
-    ta: "பிரிவு 138 — முழு காசோலை தொகை மீட்பு",
-    area: "Cheque Bounce", areaTa: "காசோலை மறுப்பு",
-    result: "Conviction secured with compensation equal to the entire dishonoured amount.",
-    forum: "Judicial Magistrate, Chennai",
-    background: "Our client supplied goods on credit against a post-dated cheque. The cheque was returned unpaid for insufficiency of funds, and the drawer stopped responding once the statutory notice period began to run.",
-    approach: "Timeliness decides these matters. We issued the demand notice within the thirty-day window under the proviso to Section 138, established service, and filed the complaint within the limitation period. At trial we relied on the statutory presumptions under Sections 118 and 139 and led the invoices and delivery records that established consideration, which the defence was unable to rebut.",
-    outcome: "The complaint succeeded. The court directed compensation equal to the entire dishonoured amount under Section 357 of the Criminal Procedure Code, and recovery followed without a separate civil suit.",
+    no: "02", slug: "cyber-stalking-doxxing-harassment",
+    en: "Cyber Stalking, Doxxing & Online Harassment",
+    ta: "இணைய தொடர்தல், தனிநபர் தகவல் கசிவு & துன்புறுத்தல்",
+    area: "Cyber Crime", areaTa: "இணையக் குற்றம்",
+    result: "Blocking ends the message. It does not end the offence — and it should not end your complaint.",
+    framework: "BNS s.78 (stalking) · s.351 (criminal intimidation) · s.79 · IT Act s.66C, s.66D · National Cyber Crime Reporting Portal",
+    background: "Harassment has moved from the street to the notification tray. It arrives as a burner account that reappears the moment you block it, as your phone number and address posted into a group of strangers, as an AI chatbot trained on your photographs, as a hundred small messages that are individually deniable and collectively terrifying. Women are routinely told this is not serious enough for the police. It is. Following a woman online, monitoring her digital footprint against her wishes, is stalking under Section 78 of the Bharatiya Nyaya Sanhita in the same way following her home is.",
+    approach: "We build a chronology, because a pattern is what converts a pile of unpleasant messages into a prosecutable offence. Every account, every timestamp, every reappearance after a block goes into a single dated log. Impersonation accounts attract Section 66C and 66D of the IT Act, which carry their own teeth. Where the harasser is anonymous we seek preservation and disclosure from the platform through the investigating officer before the data ages out — most platforms retain subscriber logs for a limited window, and a complaint filed six months late frequently cannot be traced at all. Where the woman is a lawyer, journalist, doctor or public servant, we raise the aggravating context, because targeted campaigns are treated differently from a single abusive message.",
+    outcome: "Realistically: identification of the account holder where the complaint is filed early, removal of the impersonating profiles, and a restraining direction where the harasser is known to the woman. Equally important is what a properly documented cyber complaint does inside a divorce, custody or workplace proceeding — it becomes independent corroboration that the harassment happened.",
   },
   {
-    no: "03", slug: "drt-recovery-certificate-resisted",
-    en: "DRT — Recovery Certificate Successfully Resisted",
-    ta: "DRT — மீட்பு சான்றிதழ் எதிர்ப்பு வெற்றி",
-    area: "Debts Recovery Tribunal", areaTa: "கடன் மீட்பு தீர்ப்பாயம்",
-    result: "Securitisation application allowed; the business continued trading.",
-    forum: "Debts Recovery Tribunal",
-    background: "A trading concern faced an original application before the Tribunal after a term loan was recalled. The bank's computation included compounded penal interest that materially inflated the claimed dues.",
-    approach: "We filed a securitisation application challenging both the enforcement measures and the quantum. The interest computation was reconstructed line by line against the sanction letter and the applicable circulars, which disclosed charges the sanction terms did not support.",
-    outcome: "The application was allowed. The claim was restated on a corrected basis and the enforcement measures were lifted, allowing the business to continue trading and service the corrected liability.",
+    no: "03", slug: "posh-workplace-harassment-and-ai-monitoring",
+    en: "Workplace Harassment, POSH & Algorithmic Bias",
+    ta: "பணியிட துன்புறுத்தல், POSH & வழிமுறை பாரபட்சம்",
+    area: "Workplace Rights", areaTa: "பணியிட உரிமைகள்",
+    result: "The POSH Act follows the work, not the building — remote, hybrid, gig and WhatsApp-group conduct is all covered.",
+    framework: "Sexual Harassment of Women at Workplace (Prevention, Prohibition and Redressal) Act 2013 · Internal Committee · Local Committee · 90-day inquiry",
+    background: "Two things have changed since 2013 and the statute has absorbed both. The first is that the workplace stopped being a place — harassment now happens on a video call, in a project group at midnight, in a direct message from a manager who is technically off duty. The Act's definition is wide enough to reach all of it, and an employer who says 'it did not happen on our premises' is misreading their own obligation. The second is that hiring, appraisal and rostering decisions are increasingly made or shaded by automated systems trained on historical data, and historical data in most Indian workplaces under-promoted women. A model that learns from that record will reproduce it while appearing neutral.",
+    approach: "On harassment we move on the statutory timeline, because it is short: a written complaint to the Internal Committee within three months of the last incident, extendable for recorded reasons. Where the organisation has fewer than ten workers, or where the respondent is the employer himself, the complaint goes to the District Local Committee instead — a route very few women are told about. We prepare the complainant for the inquiry itself, which is where most cases are actually lost: it is a quasi-judicial proceeding with a right to cross-examine, and an unprepared complainant facing a company's counsel is at a serious disadvantage. On automated decisions we ask for the criteria in writing. An employer who cannot explain the basis of an adverse decision is in a materially weaker position before a labour authority than one who can.",
+    outcome: "A properly conducted inquiry must conclude within ninety days and the employer must act on the recommendation within sixty. Where the committee is not constituted at all, or is constituted improperly, that failure is itself actionable and carries a penalty on the employer. Interim relief — transfer of the respondent, paid leave for the complainant, a bar on the respondent writing her appraisal — is available from the day the complaint is filed and is very often the relief that matters most.",
   },
   {
-    no: "04", slug: "property-title-chain-cleared",
-    en: "Property Title — Three-Generation Chain Cleared",
-    ta: "சொத்து உரிமை — மூன்று தலைமுறை சங்கிலி தெளிவு",
-    area: "Property & Registration", areaTa: "சொத்து & பதிவு",
-    result: "Defective parent documents rectified and clean title conveyed to the purchaser.",
-    forum: "Sub-Registrar & Civil Court, Chennai",
-    background: "A purchaser sought a legal opinion before paying advance on a residential plot. The encumbrance certificate appeared clean, but the parent documents disclosed an unreleased settlement in favour of a predeceased sibling three transactions back.",
-    approach: "We traced the chain across three generations, identified every person whose consent was legally necessary, and obtained a rectification deed together with releases from the surviving legal heirs. Where a signatory could not be traced, the position was regularised through the appropriate declaratory route rather than left as a latent defect.",
-    outcome: "Clean, marketable title was conveyed. The purchaser proceeded with certainty, and a defect that would have surfaced on the next resale was closed permanently.",
+    no: "04", slug: "domestic-violence-and-digital-coercive-control",
+    en: "Domestic Violence & Digital Coercive Control",
+    ta: "குடும்ப வன்முறை & இணைய கட்டுப்பாடு",
+    area: "Protection Orders", areaTa: "பாதுகாப்பு உத்தரவுகள்",
+    result: "Economic and digital control are recognised forms of domestic violence — and a residence order can be obtained without leaving the marriage.",
+    framework: "Protection of Women from Domestic Violence Act 2005 — s.3 (economic abuse) · s.17 (right to reside) · s.18–22 (protection, residence, monetary, custody & compensation orders) · BNS s.85",
+    background: "Control inside a marriage now runs through devices. Tracking apps installed on a wife's phone in the name of safety. Her salary account operated by someone else. Her UPI blocked so she cannot leave the house with money. Her passwords, her cloud photographs, her Aadhaar and her passport held by the family. Recordings taken during an argument and kept for leverage. None of this leaves a mark, and women therefore assume none of it counts. Section 3 of the Domestic Violence Act says otherwise: economic abuse and emotional abuse are domestic violence in law, and the Act has never required a woman to prove a physical injury before she is entitled to protection.",
+    approach: "The Act is a civil remedy that moves faster than most people expect, and it does not require a woman to file for divorce or to leave the shared household. We seek what the situation needs, not a standard bundle: a protection order restraining contact and interference, a residence order securing her right to remain in the shared household under Section 17, a monetary order covering maintenance and the expenses already incurred, and where relevant a direction to return documents, devices and account access. Where stalkerware is suspected, we advise on evidence capture before removal — uninstalling the application first destroys the proof that it was ever there. The Protection Officer and the service providers under the Act are used properly, because a domestic incident report prepared early is worth a great deal later.",
+    outcome: "Interim orders are frequently obtained at the first or second hearing, and breach of a protection order is a cognisable offence — which is precisely the point of obtaining one. Women who feared that raising the matter meant losing the house most often find that the residence order does the opposite: it secures the roof while everything else is worked out.",
   },
   {
-    no: "05", slug: "family-custody-maintenance",
-    en: "Family — Custody with Maintenance Enhanced",
-    ta: "குடும்பம் — காப்பகம் மற்றும் ஜீவனாம்சம் உயர்வு",
+    no: "05", slug: "daughters-property-and-streedhan-rights",
+    en: "Property, Streedhan & a Daughter's Equal Share",
+    ta: "சொத்து, சீதனம் & மகளின் சம உரிமை",
+    area: "Property & Inheritance", areaTa: "சொத்து & வாரிசுரிமை",
+    result: "A daughter is a coparcener by birth — whether or not her father was alive in 2005, and whether or not the family agrees.",
+    framework: "Hindu Succession (Amendment) Act 2005, s.6 · Vineeta Sharma v. Rakesh Sharma (2020) · s.14 (absolute ownership) · s.27 Dowry Prohibition Act (streedhan)",
+    background: "The Supreme Court settled this in 2020, and families across Tamil Nadu are still settling partitions as though it had not. A daughter takes a coparcenary interest in ancestral property by birth. Her right does not depend on her father being alive when the 2005 amendment came into force, it does not depend on her being unmarried, and it is not extinguished by a partition deed she never signed. Separately and just as often ignored: streedhan — the gold, cash and gifts given to a woman at and around her marriage — is her absolute property under Section 14. It is not the household's, it is not her husband's, and refusing to return it is not a family matter.",
+    approach: "Most of this work is documentary before it is ever contentious. We trace the chain of title, identify whether the property is genuinely ancestral or self-acquired — the distinction decides the case — and check whether any purported partition was registered, when, and who was actually party to it. Where an oral partition is alleged to defeat a daughter's share, the burden on the family is a heavy one and the contemporaneous records rarely support them. On streedhan we build the inventory early: wedding photographs, jeweller's invoices, gift lists, insurance and locker records. Where the property has already been sold to a third party we advise honestly about what is recoverable and what is realistically compensation rather than restoration.",
+    outcome: "A declared and recorded share, or a negotiated settlement that reflects it — and in many families, a partition finally registered correctly so that the next generation does not litigate it again. On streedhan, recovery of the articles or their value, pursued as a civil claim and, where retention is wrongful, alongside a criminal complaint.",
+  },
+  {
+    no: "06", slug: "maintenance-custody-and-financial-independence",
+    en: "Maintenance, Custody & Financial Independence",
+    ta: "ஜீவனாம்சம், குழந்தை காப்பகம் & நிதி சுதந்திரம்",
     area: "Family Court", areaTa: "குடும்ப நீதிமன்றம்",
-    result: "Custody granted to the mother with maintenance revised upward on appeal.",
-    forum: "Family Court & High Court of Madras",
-    background: "A mother sought custody of two school-age children following a prolonged separation, alongside maintenance for herself and the children. The initial maintenance order was set at a figure that did not meet school fees and rent.",
-    approach: "The custody case was built around continuity of schooling and the children's settled routine rather than allegation. On maintenance, we placed the respondent's actual earning capacity before the court through documentary proof rather than relying on the figures disclosed in the counter.",
-    outcome: "Custody was granted to the mother with structured visitation preserving the father's relationship with the children. On appeal the maintenance was revised upward to a figure reflecting genuine need.",
-  },
-  {
-    no: "06", slug: "mact-compensation-beyond-claim",
-    en: "MACT — Compensation Beyond Claim",
-    ta: "MACT — கோரிக்கையை மீறிய இழப்பீடு",
-    area: "Accident Claims", areaTa: "விபத்து இழப்பீடு",
-    result: "Tribunal awarded above the amount originally claimed, with interest from date of petition.",
-    forum: "Motor Accident Claims Tribunal",
-    background: "The family's sole earning member suffered permanent disability in a road accident. The claim petition had been drafted before the full extent of the disability and the loss of future earning capacity was medically assessed.",
-    approach: "We obtained a fresh disability assessment and led evidence on the claimant's occupation and earning trajectory, applying the multiplier method and the settled principles on future prospects. Contributory negligence alleged by the insurer was met with the site plan and the investigation record.",
-    outcome: "The Tribunal awarded compensation exceeding the amount originally claimed, together with interest from the date of the petition — a tribunal is not confined to the sum claimed where the evidence supports a higher figure.",
+    result: "Maintenance is assessed on real earning capacity, not on the figure a salary slip is arranged to show.",
+    framework: "BNSS s.144 · Hindu Marriage Act s.24 & s.25 · Domestic Violence Act s.20 · Rajnesh v. Neha (2020) — mandatory affidavit of assets & disclosure",
+    background: "The oldest defence in a maintenance case is a small salary certificate, and it is now easier to manufacture than ever. The Supreme Court's directions in Rajnesh v. Neha changed the arithmetic: both parties must file an affidavit of assets, income and expenditure in a prescribed form, and the court is entitled to draw an adverse inference where the disclosure is evasive. Custody, meanwhile, is decided on the welfare of the child and nothing else — not on who earns more, and not on a mother's employment, which is still argued against women far more often than it should be.",
+    approach: "We do not rely on what the other side files. Income tax returns, GST filings, bank statements, credit card spending, vehicle and property records, business registrations and lifestyle evidence are placed before the court so that the real capacity is visible and the affidavit can be tested against it. Interim maintenance is pressed at the earliest hearing rather than at the end, because a woman without money in month one cannot litigate through to month thirty. On custody we build around the child's continuity — school, medical care, routine, the people already caring for them — and we prepare visitation arrangements that will actually hold, since an unworkable schedule returns to court within the year.",
+    outcome: "Interim maintenance from an early stage, a final figure that reflects genuine capacity, and arrears enforced through the recovery mechanisms the statute provides. On custody, an arrangement built around the child rather than around the dispute, with the other parent's relationship preserved wherever it is safe to do so.",
   },
 ];
 
@@ -302,14 +305,27 @@ export const navLinks = [
   { label: "Home", ta: "முகப்பு", href: "#home" },
   { label: "About", ta: "எங்களை பற்றி", href: "#about" },
   { label: "Practice Areas", ta: "சட்டத் துறைகள்", href: "#practice" },
-  { label: "Services", ta: "சேவைகள்", href: "#property" },
-  { label: "Form", ta: "படிவம்", href: "#form" },
   { label: "Team", ta: "அணி", href: "#team" },
   { label: "Blog", ta: "வலைப்பதிவு", href: "#blog" },
   { label: "Gallery", ta: "படத்தொகுப்பு", href: "/gallery" },
+  { label: "Legal News", ta: "சட்ட செய்திகள்", href: "/legal-news" },
   { label: "Case Studies", ta: "வழக்கு ஆய்வுகள்", href: "#case-studies" },
   { label: "Contact", ta: "தொடர்பு", href: "#contact" },
 ];
+
+/* Sister brand — Jeni Enterprises. The header mark links to /jeni. */
+export const jeni = {
+  name: "Jeni Enterprises",
+  tagline: "One Stop Solution For All Your Needs",
+  logo: "/media/jeni-logo.png",
+  verticals: [
+    { id: "foods", en: "Foods", ta: "உணவு", icon: "UtensilsCrossed", desc: "Home-style catering, bulk orders and event food service across Chennai." },
+    { id: "books", en: "Books", ta: "புத்தகங்கள்", icon: "BookOpen", desc: "Law, academic and competitive-examination titles — supply, sourcing and bulk institutional orders." },
+    { id: "it", en: "IT Services", ta: "தகவல் தொழில்நுட்ப சேவைகள்", icon: "Laptop", desc: "Websites, business software, digital presence and annual maintenance for small and growing firms." },
+    { id: "auction", en: "Bank Auction Property", ta: "வங்கி ஏல சொத்துக்கள்", icon: "Landmark", desc: "Sourcing, title verification and end-to-end assistance on properties sold under bank auction." },
+    { id: "esevai", en: "E-Sevai", ta: "இ-சேவை", icon: "MousePointerClick", desc: "Certificates, government applications and every online citizen service, handled at the counter." },
+  ],
+};
 
 /**
  * GALLERY — 36 tiles (6 × 6). Drop new photographs into

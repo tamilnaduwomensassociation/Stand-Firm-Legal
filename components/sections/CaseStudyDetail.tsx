@@ -15,9 +15,9 @@ export default function CaseStudyDetail({ study }: { study: Study }) {
   const others = caseStudies.filter((c) => c.slug !== study.slug).slice(0, 3);
 
   const blocks = [
-    { icon: Scale, title: lang === "ta" ? "பின்னணி" : "Background", body: study.background },
-    { icon: Gavel, title: lang === "ta" ? "அணுகுமுறை" : "How We Approached It", body: study.approach },
-    { icon: Trophy, title: lang === "ta" ? "முடிவு" : "Outcome", body: study.outcome },
+    { icon: Scale, title: lang === "ta" ? "இன்றைய நிலை" : "Where This Stands Today", body: study.background },
+    { icon: Gavel, title: lang === "ta" ? "நாங்கள் எப்படி அணுகுகிறோம்" : "How We Approach It", body: study.approach },
+    { icon: Trophy, title: lang === "ta" ? "நீங்கள் பெறுவது" : "What You Can Expect", body: study.outcome },
   ];
 
   return (
@@ -28,7 +28,7 @@ export default function CaseStudyDetail({ study }: { study: Study }) {
           className="group inline-flex items-center gap-2.5 rounded-full border border-gold/50 bg-gold-faint px-6 py-3 font-sans text-xs uppercase tracking-luxe text-gold transition-all duration-300 hover:bg-gold hover:text-black"
         >
           <ArrowLeft size={15} className="transition-transform duration-300 group-hover:-translate-x-1" />
-          {lang === "ta" ? "வழக்கு ஆய்வுகள்" : "All Case Studies"}
+          {lang === "ta" ? "அனைத்து தலைப்புகள்" : "All Topics"}
         </a>
 
         <header className="mt-10 border-b border-[var(--hairline)] pb-8">
@@ -39,8 +39,11 @@ export default function CaseStudyDetail({ study }: { study: Study }) {
           <h1 className="mt-3 font-serif text-3xl leading-tight text-ivory md:text-5xl">
             {lang === "ta" ? study.ta : study.en}
           </h1>
-          <p className="mt-5 font-sans text-sm text-ivory-faint">
-            <span className="uppercase tracking-widest">{lang === "ta" ? "மன்றம்" : "Forum"}:</span> {study.forum}
+          <p className="mt-5 font-sans text-sm leading-relaxed text-ivory-faint">
+            <span className="uppercase tracking-widest text-gold/70">
+              {lang === "ta" ? "சட்ட கட்டமைப்பு" : "Legal Framework"}:
+            </span>{" "}
+            {study.framework}
           </p>
         </header>
 
@@ -58,19 +61,19 @@ export default function CaseStudyDetail({ study }: { study: Study }) {
 
         {/* Result strip */}
         <div className="mt-12 rounded-2xl border border-gold/40 bg-gold-faint p-7">
-          <p className="kicker !tracking-[0.25em] mb-3">{lang === "ta" ? "முடிவு" : "Result"}</p>
+          <p className="kicker !tracking-[0.25em] mb-3">{lang === "ta" ? "சுருக்கமாக" : "In Short"}</p>
           <p className="font-serif text-xl leading-relaxed text-ivory md:text-2xl">{study.result}</p>
         </div>
 
         <p className="mt-8 font-sans text-[11px] leading-relaxed text-ivory-faint">
           {lang === "ta"
-            ? "வாடிக்கையாளர் ரகசியத்தை பாதுகாக்க பெயர்கள் மற்றும் அடையாளங்கள் நீக்கப்பட்டுள்ளன. முந்தைய முடிவுகள் எதிர்கால வழக்குகளுக்கு உத்தரவாதம் அல்ல."
-            : "Names and identifying details are withheld to preserve client confidentiality. Every matter turns on its own facts, and past outcomes are not a guarantee of results in future matters."}
+            ? "இது பொது சட்ட விழிப்புணர்வுக்காக எழுதப்பட்டது; உங்கள் வழக்குக்கான சட்ட ஆலோசனை அல்ல. நடவடிக்கை எடுப்பதற்கு முன் எங்களை அணுகவும்."
+            : "Written for general legal awareness — it is not advice on your matter. Statutes, rules and platform obligations change; every case turns on its own facts. Speak to us before you act on any of it."}
         </p>
 
         {/* Further reading */}
         <div className="mt-14 border-t border-[var(--hairline)] pt-8">
-          <p className="kicker !tracking-[0.25em] mb-5">{lang === "ta" ? "மேலும் வழக்குகள்" : "More Matters"}</p>
+          <p className="kicker !tracking-[0.25em] mb-5">{lang === "ta" ? "மேலும் தலைப்புகள்" : "More Topics"}</p>
           <div className="grid gap-4 sm:grid-cols-3">
             {others.map((o) => (
               <a

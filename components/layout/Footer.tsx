@@ -28,10 +28,6 @@ export default function Footer() {
             {/* Both marks, shown together */}
             <div className="mb-5 flex items-center gap-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/media/sfla-logo.png" alt="Stand Firm Legal Associates" className="h-14 w-auto" />
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <span className="h-10 w-px bg-[var(--hairline)]" />
-              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/media/tnwla-logo.png" alt="Tamilnadu Women Law Association — Madras" className="h-14 w-14 rounded-full" />
             </div>
             <p className="font-serif text-xl tracking-[0.12em] gold-text leading-snug">TAMILNADU WOMEN<br />LAW ASSOCIATION</p>
@@ -68,8 +64,12 @@ export default function Footer() {
                 <li key={p.en}><a href={hrefFor("#practice")} className="text-ivory-dim hover:text-gold transition-colors">{lang === "ta" ? p.ta : p.en}</a></li>
               ))}
               {propertyServices.slice(0, 3).map((p) => (
-                <li key={p.en}><a href={hrefFor("#property")} className="text-ivory-dim hover:text-gold transition-colors">{lang === "ta" ? p.ta : p.en}</a></li>
+                <li key={p.en}><a href="/stand-firm#services" className="text-ivory-dim hover:text-gold transition-colors">{lang === "ta" ? p.ta : p.en}</a></li>
               ))}
+              <li><a href="/stand-firm" className="text-gold/90 hover:text-gold transition-colors">Stand Firm Legal Associates →</a></li>
+              <li><a href="/legal-news" className="text-gold/90 hover:text-gold transition-colors">{lang === "ta" ? "சட்ட செய்திகள்" : "Legal News"} →</a></li>
+              <li><a href="/id-card" className="text-gold/90 hover:text-gold transition-colors">{lang === "ta" ? "அடையாள அட்டை" : "Member ID Card"} →</a></li>
+              <li><a href="/jeni" className="text-gold/90 hover:text-gold transition-colors">Jeni Enterprises →</a></li>
             </ul>
           </div>
 

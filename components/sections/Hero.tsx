@@ -18,7 +18,7 @@
  */
 import { useRef, useState } from "react";
 import { useGSAP } from "@gsap/react";
-import { ChevronDown, MessageCircle, Phone, UserPlus } from "lucide-react";
+import { ChevronDown, UserPlus } from "lucide-react";
 import { gsap } from "@/lib/gsap";
 import { site } from "@/config/site.config";
 import { useLang } from "@/lib/i18n";
@@ -173,16 +173,6 @@ export default function Hero() {
             </MagneticButton>
           </span>
           <span className="hero-cta"><MagneticButton variant="ghost" href="#contact">{t("bookConsult")}</MagneticButton></span>
-          <span className="hero-cta">
-            <MagneticButton variant="ghost" href={`tel:${site.phones[0].replace(/\s/g, "")}`}>
-              <Phone size={15} /> {t("callNow")}
-            </MagneticButton>
-          </span>
-          <span className="hero-cta">
-            <MagneticButton variant="ghost" href={`https://wa.me/${site.whatsapp}`}>
-              <MessageCircle size={15} /> {t("whatsapp")}
-            </MagneticButton>
-          </span>
         </div>
       </div>
 

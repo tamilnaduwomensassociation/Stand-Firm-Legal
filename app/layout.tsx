@@ -14,7 +14,7 @@ const serif = Cormorant_Garamond({
 });
 const sans = Manrope({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600"],
+  weight: ["300", "400", "500", "600", "700", "800"],
   variable: "--font-sans",
   display: "swap",
 });

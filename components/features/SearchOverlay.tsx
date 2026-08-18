@@ -28,34 +28,38 @@ export default function SearchOverlay() {
 
   const index: Item[] = useMemo(
     () => [
-      ...navLinks.map((n) => ({ label: n.label, sub: "Page section", href: n.href, keywords: n.ta })),
-      ...practiceAreas.map((p) => ({ label: p.en, sub: "Practice Area", href: "#practice", keywords: `${p.ta} ${p.desc}` })),
-      ...propertyServices.map((p) => ({ label: p.en, sub: "Property E-Service", href: "#property", keywords: p.ta })),
+      ...navLinks.map((n) => ({ label: n.label, sub: "Page section", href: n.href.startsWith("#") ? `/${n.href}` : n.href, keywords: n.ta })),
+      ...practiceAreas.map((p) => ({ label: p.en, sub: "Practice Area", href: "/#practice", keywords: `${p.ta} ${p.desc}` })),
+      ...propertyServices.map((p) => ({ label: p.en, sub: "Property E-Service · Stand Firm", href: "/stand-firm#services", keywords: p.ta })),
       ...deeds.map((d, i) => ({
-        label: d.en, sub: "Deed Form — opens the form", href: "#form",
+        label: d.en, sub: "Deed — order & form", href: "/stand-firm#deed-forms",
         keywords: `${d.ta} deed preparation agreement`,
         open: { mode: "deed" as const, deedIndex: i },
       })),
-      ...businessServices.map((b) => ({ label: b.en, sub: "Registration & Online Service", href: "#business", keywords: b.ta })),
+      ...businessServices.map((b) => ({ label: b.en, sub: "Registration & Online Service · Stand Firm", href: "/stand-firm#services", keywords: b.ta })),
       /* Membership */
       ...membershipCategories.map((m) => ({
         label: `${m.en} — Membership`, sub: `Joining ₹${m.joiningFee} · Renewal ₹${m.renewalFee}/yr`,
-        href: "#form", keywords: `${m.ta} membership registration join TNWLA form ${m.blurb}`,
+        href: "/#form", keywords: `${m.ta} membership registration join TNWLA form ${m.blurb}`,
         open: { mode: "member" as const },
       })),
       /* Stand Firm Legal Associates */
-      ...sflaMatters.map((m) => ({ label: m.en, sub: "Stand Firm Legal Associates · Banking & Recovery", href: "#sfla", keywords: `${m.ta} ${m.desc} SFLA` })),
-      ...sflaPartners.map((p) => ({ label: p.name, sub: p.role, href: "#team", keywords: `${p.nameTa} ${p.roleTa} partner SFLA` })),
+      ...sflaMatters.map((m) => ({ label: m.en, sub: "Stand Firm Legal Associates · Banking & Recovery", href: "/stand-firm#sfla", keywords: `${m.ta} ${m.desc} SFLA` })),
+      ...sflaPartners.map((p) => ({ label: p.name, sub: p.role, href: "/#team", keywords: `${p.nameTa} ${p.roleTa} partner SFLA` })),
       /* People */
-      ...leadersPanel.map((l) => ({ label: l.name, sub: l.position, href: "#team", keywords: `${l.nameTa} ${l.positionTa} leaders panel advocate` })),
+      ...leadersPanel.map((l) => ({ label: l.name, sub: l.position, href: "/#team", keywords: `${l.nameTa} ${l.positionTa} leaders panel advocate` })),
       /* Case studies — link to their own pages */
-      ...caseStudies.map((c) => ({ label: c.en, sub: `Case Study · ${c.area}`, href: `/case-studies/${c.slug}`, keywords: `${c.ta} ${c.result} ${c.forum} ${c.background}` })),
+      ...caseStudies.map((c) => ({ label: c.en, sub: `Women & Law · ${c.area}`, href: `/case-studies/${c.slug}`, keywords: `${c.ta} ${c.result} ${c.framework} ${c.background}` })),
       /* Editorial */
-      ...blogPosts.map((b) => ({ label: b.title, sub: `Legal Update · ${b.tag}`, href: "#blog", keywords: `${b.titleTa} ${b.excerpt}` })),
-      ...faqs.map((f) => ({ label: f.q, sub: "Frequently Asked", href: "#faq", keywords: `${f.qTa} ${f.a}` })),
-      ...testimonials.map((t) => ({ label: `${t.name} — ${t.area}`, sub: "Client Voice", href: "#testimonials", keywords: `${t.areaTa} ${t.text}` })),
+      ...blogPosts.map((b) => ({ label: b.title, sub: `Legal Update · ${b.tag}`, href: "/#blog", keywords: `${b.titleTa} ${b.excerpt}` })),
+      ...faqs.map((f) => ({ label: f.q, sub: "Frequently Asked", href: "/#faq", keywords: `${f.qTa} ${f.a}` })),
+      ...testimonials.map((t) => ({ label: `${t.name} — ${t.area}`, sub: "Client Voice", href: "/#testimonials", keywords: `${t.areaTa} ${t.text}` })),
       /* Standalone pages */
       { label: "Gallery", sub: "Photographs from our chambers", href: "/gallery", keywords: "படத்தொகுப்பு photos moments" },
+      { label: "Stand Firm Legal Associates", sub: "Services, deeds, registrations & banking", href: "/stand-firm", keywords: "SFLA store order property deed registration cart price" },
+      { label: "Legal News & Judgments", sub: "Live feed — courts, rules, notifications", href: "/legal-news", keywords: "சட்ட செய்திகள் live law bar and bench judgment update" },
+      { label: "Member ID Card", sub: "Generate & download your card", href: "/id-card", keywords: "அடையாள அட்டை identity card member" },
+      { label: "Jeni Enterprises", sub: "Foods · Books · IT · Auction Property · E-Sevai", href: "/jeni", keywords: "jeni enterprises foods books it services bank auction esevai" },
     ],
     []
   );

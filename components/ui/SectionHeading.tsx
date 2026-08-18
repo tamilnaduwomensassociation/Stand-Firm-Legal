@@ -46,7 +46,7 @@ export default function SectionHeading({ kicker, title, className, align = "cent
 
   return (
     <div ref={ref} className={cn(align === "center" ? "text-center" : "text-left", className)}>
-      <p className="sh-kicker kicker mb-5">{kicker}</p>
+      {kicker ? <p className="sh-kicker kicker mb-5">{kicker}</p> : null}
       <h2 className="font-serif text-4xl md:text-6xl leading-[1.08]">
         {/* Manual word split — each word clipped for the rise reveal.
             The gold gradient is applied to the moving span itself: a

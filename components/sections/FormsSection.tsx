@@ -63,11 +63,17 @@ function FieldInput({ f, value, onChange, lang }: { f: Field; value: string; onC
   );
 }
 
-export default function FormsSection() {
+/**
+ * `only` locks the section to a single form family:
+ *   only="member" → TNWLA membership only (home page)
+ *   only="deed"   → the 26 deed forms only (/stand-firm)
+ * Omitting it keeps the original two-tab behaviour.
+ */
+export default function FormsSection({ only }: { only?: "member" | "deed" } = {}) {
   const root = useRef<HTMLElement>(null);
   const docRef = useRef<HTMLDivElement>(null);
   const { lang, t } = useLang();
-  const [mode, setMode] = useState<"member" | "deed">("member");
+  const [mode, setMode] = useState<"member" | "deed">(only ?? "member");
 
 
   const [deedIdx, setDeedIdx] = useState(0);
@@ -93,6 +99,8 @@ export default function FormsSection() {
     const onOpenForm = (e: Event) => {
       const d = (e as CustomEvent<{ mode: "deed" | "member"; deedIndex?: number }>).detail;
       if (!d) return;
+      /* A locked section only answers for its own form family */
+      if (only && d.mode !== only) return;
       setMode(d.mode);
       if (d.mode === "deed" && typeof d.deedIndex === "number") {
         setDeedIdx(d.deedIndex);
@@ -104,7 +112,7 @@ export default function FormsSection() {
     };
     window.addEventListener("sf:openForm", onOpenForm);
     return () => window.removeEventListener("sf:openForm", onOpenForm);
-  }, []);
+  }, [only]);
 
   /* ---------- Preview builder ---------- */
   const openDeedPreview = () =>
@@ -194,12 +202,35 @@ export default function FormsSection() {
 
 
   return (
-    <section id="form" ref={root} className="bg-obsidian-deep section-pad overflow-hidden">
-      <SectionHeading kicker={t("formKicker")} title={t("formTitle")} />
-      <p className="mx-auto mt-5 max-w-2xl text-center font-sans text-ivory-dim">{t("formIntro")}</p>
+    <section
+      id={only === "deed" ? "deed-forms" : "form"}
+      ref={root}
+      className="bg-obsidian-deep section-pad overflow-hidden"
+    >
+      <SectionHeading
+        kicker={only === "deed" ? t("deedsTab") : t("formKicker")}
+        title={
+          only === "deed"
+            ? lang === "ta" ? "பத்திர விவரப் படிவங்கள்" : "Deed Detail Forms"
+            : only === "member"
+              ? t("memberRegister")
+              : t("formTitle")
+        }
+      />
+      <p className="mx-auto mt-5 max-w-2xl text-center font-sans text-ivory-dim">
+        {only === "deed"
+          ? lang === "ta"
+            ? "ஆர்டர் செய்த பத்திரத்தைத் தேர்ந்தெடுத்து விவரங்களை நிரப்பவும் — வரைவு உடனடியாக எங்கள் மேசைக்கு வரும்."
+            : "Pick the deed you have ordered and fill in the particulars — the drafting instructions reach our desk immediately."
+          : only === "member"
+            ? lang === "ta"
+              ? "உங்கள் உறுப்பினர் பிரிவைத் தேர்ந்தெடுத்து, விண்ணப்பத்தை ஆன்லைனில் நிரப்பி, உடனடியாக சமர்ப்பிக்கவும்."
+              : "Choose your membership category, complete the application online, and it reaches our desk the moment you submit."
+            : t("formIntro")}
+      </p>
 
-      {/* Mode switch */}
-      <div className="mt-8 flex justify-center gap-3">
+      {/* Mode switch — hidden when the section is locked to one family */}
+      <div className={cn("mt-8 flex justify-center gap-3", only && "hidden")}>
         {([
           { id: "member", icon: BadgeCheck, label: t("membershipTab") },
           { id: "deed", icon: ScrollText, label: t("deedsTab") },
