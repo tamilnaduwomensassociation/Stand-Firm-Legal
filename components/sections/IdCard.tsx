@@ -1,32 +1,41 @@
 "use client";
 
 /**
- * MEMBER ID CARD.
+ * MEMBER ID CARD — build, preview, print.
  *
- * PLACEHOLDER LAYOUT — the association's approved artwork has not
- * been supplied yet. Everything below is driven by the `card` object
- * and the two <IdFace> blocks, so when the final structure arrives
- * only those two blocks need to change; the form, the PDF export and
- * the page around them stay exactly as they are.
+ * The card itself lives in components/ui/IdCardFaces.tsx. This section
+ * is the workbench around it: the field form, the photograph and
+ * signature uploads, the live flip preview and the PDF export.
  *
- * Front: seal, association name, photograph, name, member number,
- * category, blood group, validity, signature line.
- * Back: address, phone, declaration, return-if-found notice.
+ * The export writes PNG — always, both faces, as two files. A card is
+ * an image, not a document: PNG drops into a card-printer template, a
+ * WhatsApp message or a Word merge without anyone having to crop a page
+ * first. Each face is rasterised at 4× the 480 px working width, which
+ * is 1920 × 1212 px — about 570 dpi at the physical 85.6 × 54 mm card,
+ * comfortably past the 300 dpi print shops ask for.
+ *
+ * The canvas is captured on a transparent backdrop, so the rounded
+ * corners come out rounded instead of sitting on a white square.
+ *
+ * Both faces stay mounted at all times and the inactive one is parked
+ * off-screen rather than hidden with display:none, because html2canvas
+ * cannot rasterise a node that isn't laid out.
  */
 import { useRef, useState } from "react";
-import { Download, IdCard as IdCardIcon, RotateCcw, Upload, User } from "lucide-react";
-import { membershipCategories } from "@/config/forms.config";
+import { Download, IdCard as IdCardIcon, RotateCcw, Upload, X } from "lucide-react";
 import { site } from "@/config/site.config";
 import { useLang } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { CardBack, CardFront, CARD_H, CARD_W, type CardData } from "@/components/ui/IdCardFaces";
 
 const inputCls =
-  "w-full rounded-xl bg-obsidian-soft/60 border border-[var(--hairline)] px-5 py-3.5 font-sans text-sm text-ivory placeholder:text-ivory-faint focus:border-gold/60 focus:outline-none focus:ring-1 focus:ring-gold/30 transition-all";
+  "w-full rounded-xl bg-obsidian-soft/60 border border-[var(--hairline)] px-4 py-3 font-sans text-sm text-ivory placeholder:text-ivory-faint focus:border-gold/60 focus:outline-none focus:ring-1 focus:ring-gold/30 transition-all";
 
-const todayPlusYear = () => {
+/* "June 2027" — a year out, which is when the annual renewal falls due */
+const defaultValidity = () => {
   const d = new Date();
   d.setFullYear(d.getFullYear() + 1);
-  return d.toLocaleDateString("en-IN");
+  return `${["January","February","March","April","May","June","July","August","September","October","November","December"][d.getMonth()]} ${d.getFullYear()}`;
 };
 
 export default function IdCardSection() {
@@ -34,51 +43,81 @@ export default function IdCardSection() {
   const frontRef = useRef<HTMLDivElement>(null);
   const backRef = useRef<HTMLDivElement>(null);
 
-  const [card, setCard] = useState({
-    memberNo: "",
-    name: "",
-    category: membershipCategories[0].en,
-    designation: "",
-    barNo: "",
+  const [data, setData] = useState<CardData>({
+    cardNo: "",
+    memberName: "",
+    membershipNo: "",
+    enrollmentNo: "",
+    designation: "Member",
+    district: "Chennai",
     blood: "",
-    phone: "",
-    address: "",
-    valid: todayPlusYear(),
+    mobile: "",
+    validUpTo: defaultValidity(),
+    address: site.address,
+    phone: site.phones[0],
+    email: site.email,
+    emergency: "",
+    verifyUrl: `${site.url}/id-card`,
   });
   const [photo, setPhoto] = useState<string | null>(null);
-  const [flip, setFlip] = useState(false);
+  const [signature, setSignature] = useState<string | null>(null);
+  const [face, setFace] = useState<"front" | "back">("front");
+  const [busy, setBusy] = useState(false);
 
-  const set = (k: keyof typeof card, v: string) => setCard((c) => ({ ...c, [k]: v }));
+  const set = (k: keyof CardData, v: string) => setData((d) => ({ ...d, [k]: v }));
 
-  const pickPhoto = (file?: File | null) => {
+  const readImage = (file: File | undefined | null, to: (v: string) => void) => {
     if (!file) return;
     const r = new FileReader();
-    r.onload = () => setPhoto(String(r.result));
+    r.onload = () => to(String(r.result));
     r.readAsDataURL(file);
   };
 
+  /* toBlob rather than a data URI: a 1920px card is a few megabytes and
+     an anchor href that long is refused by some browsers. */
+  const savePng = (canvas: HTMLCanvasElement, filename: string) =>
+    new Promise<void>((resolve) => {
+      canvas.toBlob((blob) => {
+        if (!blob) return resolve();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        /* let the download commit before the next one starts */
+        window.setTimeout(() => { URL.revokeObjectURL(url); resolve(); }, 450);
+      }, "image/png");
+    });
+
   const download = async () => {
-    const html2canvas = (await import("html2canvas")).default;
-    const { jsPDF } = await import("jspdf");
-    const pdf = new jsPDF({ unit: "mm", format: [54, 86], orientation: "portrait" });
-    for (const [i, node] of [frontRef.current, backRef.current].entries()) {
-      if (!node) continue;
-      const canvas = await html2canvas(node, { scale: 3, backgroundColor: "#ffffff" });
-      if (i > 0) pdf.addPage([54, 86], "portrait");
-      pdf.addImage(canvas.toDataURL("image/jpeg", 0.95), "JPEG", 0, 0, 54, 86);
+    setBusy(true);
+    try {
+      const html2canvas = (await import("html2canvas")).default;
+      const stem = (data.membershipNo || data.memberName || "card")
+        .replace(/[^\w.-]+/g, "-")
+        .replace(/^-+|-+$/g, "") || "card";
+
+      const faces: [HTMLDivElement | null, string][] = [
+        [frontRef.current, "front"],
+        [backRef.current, "back"],
+      ];
+      for (const [node, side] of faces) {
+        if (!node) continue;
+        const canvas = await html2canvas(node, { scale: 4, backgroundColor: null, logging: false });
+        await savePng(canvas, `TNWLA-ID-${stem}-${side}.png`);
+      }
+    } finally {
+      setBusy(false);
     }
-    pdf.save(`TNWLA-ID-${card.memberNo || card.name || "card"}.pdf`);
   };
 
   return (
     <>
       {/* ---------------- MASTHEAD ---------------- */}
       <section className="force-dark relative overflow-hidden bg-obsidian-deep">
-        <div
-          className="absolute inset-0 bg-cover bg-center opacity-20"
-          style={{ backgroundImage: "url(/media/stills/scene-4.jpg)" }}
-          aria-hidden
-        />
+        <div className="absolute inset-0 bg-cover bg-center opacity-20" style={{ backgroundImage: "url(/media/stills/scene-4.jpg)" }} aria-hidden />
         <div className="absolute inset-0 bg-gradient-to-b from-obsidian-deep/95 via-obsidian/90 to-obsidian" />
         <div className="vignette absolute inset-0" />
         <div className="relative section-pad mx-auto max-w-3xl text-center">
@@ -86,103 +125,101 @@ export default function IdCardSection() {
             <IdCardIcon size={15} /> {lang === "ta" ? "உறுப்பினர் அட்டை" : "Member Identity"}
           </p>
           <h1 className="font-serif text-4xl leading-tight gold-text md:text-6xl">
-            {lang === "ta" ? "அடையாள அட்டை" : "ID Card"}
+            {lang === "ta" ? "அடையாள அட்டை" : "Membership ID Card"}
           </h1>
           <p className="mx-auto mt-6 max-w-2xl font-sans text-[15px] leading-relaxed text-ivory-dim">
             {lang === "ta"
-              ? "உங்கள் விவரங்களை நிரப்பினால் அட்டை உடனடியாக உருவாகும். இரு பக்கமும் PDF ஆக பதிவிறக்கலாம்."
-              : "Fill in the details and the card renders live. Both faces download as a print-ready PDF at true card size (54 × 86 mm)."}
+              ? "விவரங்களை நிரப்பினால் அட்டை உடனடியாக உருவாகும். இரு பக்கமும் சரியான அட்டை அளவில் (85.6 × 54 மி.மீ) PNG படங்களாக பதிவிறக்கலாம்."
+              : "Fill in the details and the card renders as you type. Both faces download as print-ready PNG images at true card proportions — 85.6 × 54 mm, the same CR80 blank a card printer expects."}
           </p>
         </div>
       </section>
 
-      {/* ---------------- BUILDER ---------------- */}
+      {/* ---------------- WORKBENCH ---------------- */}
       <section className="bg-obsidian section-pad">
-        <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[1fr_360px]">
+        <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[1fr_520px]">
           {/* ---- form ---- */}
-          <div className="rounded-2xl glass gold-border p-8">
-            <p className="kicker !tracking-[0.25em] mb-6">
-              {lang === "ta" ? "அட்டை விவரங்கள்" : "Card Details"}
-            </p>
+          <div className="rounded-2xl glass gold-border p-7">
+            <p className="kicker !tracking-[0.25em] mb-6">{lang === "ta" ? "அட்டை விவரங்கள்" : "Card Details"}</p>
 
             <div className="grid gap-5 sm:grid-cols-2">
-              <L label={lang === "ta" ? "உறுப்பினர் எண்" : "Membership Number"}>
-                <input className={inputCls} value={card.memberNo} onChange={(e) => set("memberNo", e.target.value)} placeholder="TNWLA-M/2026/0001" />
-              </L>
-              <L label={lang === "ta" ? "முழு பெயர்" : "Full Name"}>
-                <input className={inputCls} value={card.name} onChange={(e) => set("name", e.target.value)} />
-              </L>
-              <L label={lang === "ta" ? "பிரிவு" : "Category"}>
-                <select className={inputCls} value={card.category} onChange={(e) => set("category", e.target.value)}>
-                  {membershipCategories.map((c) => (
-                    <option key={c.id} value={c.en}>{lang === "ta" ? c.ta : c.en}</option>
-                  ))}
-                </select>
-              </L>
-              <L label={lang === "ta" ? "பதவி" : "Designation"}>
-                <input className={inputCls} value={card.designation} onChange={(e) => set("designation", e.target.value)} placeholder="Member" />
-              </L>
-              <L label={lang === "ta" ? "பார் கவுன்சில் எண்" : "Bar Council / Enrolment No."}>
-                <input className={inputCls} value={card.barNo} onChange={(e) => set("barNo", e.target.value)} />
-              </L>
-              <L label={lang === "ta" ? "இரத்தப் பிரிவு" : "Blood Group"}>
-                <input className={inputCls} value={card.blood} onChange={(e) => set("blood", e.target.value)} placeholder="O+" />
-              </L>
-              <L label={lang === "ta" ? "தொலைபேசி" : "Phone"}>
-                <input className={inputCls} value={card.phone} onChange={(e) => set("phone", e.target.value)} />
-              </L>
-              <L label={lang === "ta" ? "செல்லுபடி வரை" : "Valid Until"}>
-                <input className={inputCls} value={card.valid} onChange={(e) => set("valid", e.target.value)} />
-              </L>
+              <Field data={data} set={set} k="memberName" label={lang === "ta" ? "உறுப்பினர் பெயர்" : "Member Name"} placeholder="M Jenifer Arokia Mary" />
+              <Field data={data} set={set} k="membershipNo" label={lang === "ta" ? "உறுப்பினர் எண்" : "Membership No."} placeholder="TNWLA/2026/01" />
+              <Field data={data} set={set} k="enrollmentNo" label={lang === "ta" ? "பதிவு எண்" : "Enrollment No."} placeholder="1080/2024" />
+              <Field data={data} set={set} k="designation" label={lang === "ta" ? "பதவி" : "Designation"} placeholder="President" />
+              <Field data={data} set={set} k="district" label={lang === "ta" ? "மாவட்டம்" : "District"} placeholder="Chennai" />
+              <Field data={data} set={set} k="blood" label={lang === "ta" ? "இரத்தப் பிரிவு" : "Blood Group"} placeholder="B+ve" />
+              <Field data={data} set={set} k="mobile" label={lang === "ta" ? "கைபேசி எண்" : "Mobile No."} placeholder="99625 02244" />
+              <Field data={data} set={set} k="validUpTo" label={lang === "ta" ? "செல்லுபடி வரை" : "Valid Up To"} placeholder="June 2027" />
+              <Field data={data} set={set} k="cardNo" label={lang === "ta" ? "அட்டை வரிசை எண்" : "Card Serial"} placeholder="08" />
+              <Field data={data} set={set} k="emergency" label={lang === "ta" ? "அவசர தொடர்பு" : "Emergency Contact"} placeholder="98404 11223" />
+            </div>
+
+            <p className="kicker !tracking-[0.25em] mb-4 mt-8">{lang === "ta" ? "பின் பக்கம்" : "Reverse"}</p>
+            <div className="grid gap-5 sm:grid-cols-2">
               <div className="sm:col-span-2">
-                <L label={lang === "ta" ? "முகவரி" : "Address"}>
-                  <textarea className={cn(inputCls, "min-h-[80px] resize-none")} value={card.address} onChange={(e) => set("address", e.target.value)} />
-                </L>
+                <label className="block">
+                  <span className="mb-1.5 block font-sans text-[11px] uppercase tracking-widest text-ivory-dim">
+                    {lang === "ta" ? "முகவரி" : "Address"}
+                  </span>
+                  <textarea className={cn(inputCls, "min-h-[74px] resize-none")} value={data.address} onChange={(e) => set("address", e.target.value)} />
+                </label>
+              </div>
+              <Field data={data} set={set} k="phone" label={lang === "ta" ? "தொலைபேசி" : "Phone"} />
+              <Field data={data} set={set} k="email" label={lang === "ta" ? "மின்னஞ்சல்" : "Email"} />
+              <div className="sm:col-span-2">
+                <Field data={data} set={set} k="verifyUrl" label={lang === "ta" ? "QR சரிபார்ப்பு இணைப்பு" : "QR verification link"} />
               </div>
             </div>
 
-            <label className="mt-6 flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 px-6 py-8 text-center transition-all hover:border-gold/50">
-              <Upload size={24} className="text-ivory-faint" />
-              <span className="font-sans text-xs text-ivory-dim">
-                {lang === "ta" ? "புகைப்படத்தை பதிவேற்றவும் (பாஸ்போர்ட் அளவு)" : "Upload photograph — passport size, portrait"}
-              </span>
-              <input type="file" accept="image/*" className="hidden" onChange={(e) => pickPhoto(e.target.files?.[0])} />
-            </label>
-
-            <div className="mt-7 flex flex-wrap gap-3">
-              <button onClick={download}
-                className="flex items-center gap-2 rounded-full bg-gold px-6 py-3 font-sans text-xs uppercase tracking-widest text-black transition-all hover:bg-gold-bright">
-                <Download size={14} /> {lang === "ta" ? "PDF பதிவிறக்கு" : "Download PDF"}
-              </button>
-              <button onClick={() => setFlip((f) => !f)}
-                className="flex items-center gap-2 rounded-full gold-border px-6 py-3 font-sans text-xs uppercase tracking-widest text-gold transition-all hover:bg-gold hover:text-black">
-                <RotateCcw size={14} /> {flip ? (lang === "ta" ? "முன் பக்கம்" : "Show front") : (lang === "ta" ? "பின் பக்கம்" : "Show back")}
-              </button>
+            <div className="mt-7 grid gap-4 sm:grid-cols-2">
+              <Drop
+                label={lang === "ta" ? "புகைப்படம் (பாஸ்போர்ட் அளவு)" : "Photograph — passport size, portrait"}
+                value={photo} onPick={(f) => readImage(f, setPhoto)} onClear={() => setPhoto(null)}
+              />
+              <Drop
+                label={lang === "ta" ? "கையொப்பம் (வெளிப்படை PNG சிறந்தது)" : "Signature — transparent PNG works best"}
+                value={signature} onPick={(f) => readImage(f, setSignature)} onClear={() => setSignature(null)}
+              />
             </div>
 
-            <p className="mt-6 font-sans text-[11px] leading-relaxed text-ivory-faint">
-              {lang === "ta"
-                ? "இது தற்காலிக வடிவமைப்பு. சங்கத்தின் இறுதி அட்டை வடிவம் கிடைத்ததும் இதே பக்கத்தில் பதிலீடு செய்யப்படும்."
-                : "This is a working layout. When the association's approved card artwork is supplied it replaces the two card faces here — the form, the live preview and the PDF export all stay as they are."}
-            </p>
+            <div className="mt-7 flex flex-wrap gap-3">
+              <button onClick={download} disabled={busy}
+                className="flex items-center gap-2 rounded-full bg-gold px-6 py-3 font-sans text-xs uppercase tracking-widest text-black transition-all hover:bg-gold-bright disabled:opacity-50">
+                <Download size={14} />{" "}
+                {busy
+                  ? lang === "ta" ? "தயாராகிறது…" : "Preparing…"
+                  : lang === "ta" ? "PNG பதிவிறக்கு" : "Download PNG"}
+              </button>
+              <button onClick={() => setFace((f) => (f === "front" ? "back" : "front"))}
+                className="flex items-center gap-2 rounded-full gold-border px-6 py-3 font-sans text-xs uppercase tracking-widest text-gold transition-all hover:bg-gold hover:text-black">
+                <RotateCcw size={14} /> {face === "front" ? (lang === "ta" ? "பின் பக்கம்" : "Show back") : (lang === "ta" ? "முன் பக்கம்" : "Show front")}
+              </button>
+            </div>
           </div>
 
           {/* ---- live preview ---- */}
           <div className="lg:sticky lg:top-32 lg:self-start">
             <p className="kicker !tracking-[0.25em] mb-5 text-center">
-              {lang === "ta" ? "நேரடி முன்னோட்டம்" : "Live Preview"}
+              {lang === "ta" ? "நேரடி முன்னோட்டம்" : "Live Preview"} · 85.6 × 54 mm
             </p>
-            {/* BOTH faces stay mounted and laid out at all times — the
-                inactive one is parked off-screen rather than display:none,
-                because html2canvas cannot capture a hidden node. */}
-            <div className="relative flex min-h-[344px] justify-center">
-              <div className={cn(flip && "absolute -left-[9999px] top-0")}>
-                <IdFace side="front" cardRef={frontRef} card={card} photo={photo} />
+
+            {/* Both faces are always laid out; the inactive one is parked
+                off-screen so html2canvas can still rasterise it. */}
+            <div className="relative flex justify-center overflow-hidden" style={{ minHeight: CARD_H + 8 }}>
+              <div className={cn(face === "back" && "absolute -left-[9999px] top-0")}>
+                <CardFront data={data} photo={photo} signature={signature} cardRef={frontRef} />
               </div>
-              <div className={cn(!flip && "absolute -left-[9999px] top-0")}>
-                <IdFace side="back" cardRef={backRef} card={card} photo={photo} />
+              <div className={cn(face === "front" && "absolute -left-[9999px] top-0")}>
+                <CardBack data={data} cardRef={backRef} />
               </div>
             </div>
+
+            <p className="mx-auto mt-6 max-w-[480px] text-center font-sans text-[11px] leading-relaxed text-ivory-faint">
+              {lang === "ta"
+                ? "முன் மற்றும் பின் பக்கம் தனித்தனி PNG கோப்புகளாக, அச்சுத் தரத்தில் பதிவிறக்கப்படும். அட்டை எப்போதும் நேவி/வெள்ளை நிறத்திலேயே இருக்கும் — தளத்தின் இருள் பயன்முறை இதை பாதிக்காது."
+                : `Downloads as two PNG files — front and back — at ${CARD_W * 4} × ${CARD_H * 4} px, roughly 570 dpi on an 85.6 × 54 mm card. Artwork is fixed navy-on-white and ignores the site's light/dark theme, because a card has to print the same way every time.`}
+            </p>
           </div>
         </div>
       </section>
@@ -190,117 +227,64 @@ export default function IdCardSection() {
   );
 }
 
-function L({ label, children }: { label: string; children: React.ReactNode }) {
+/**
+ * Field and Drop live at MODULE level, not inside IdCardSection.
+ * A component declared inside a render is a new component *type* on
+ * every render, so React unmounts and remounts its subtree — which
+ * means an <input> loses focus after a single keystroke. Hoisting them
+ * keeps the identity stable and the caret where the typist left it.
+ */
+function Field({
+  data, set, k, label, placeholder,
+}: {
+  data: CardData;
+  set: (k: keyof CardData, v: string) => void;
+  k: keyof CardData;
+  label: string;
+  placeholder?: string;
+}) {
   return (
     <label className="block">
-      <span className="mb-1.5 block font-sans text-xs uppercase tracking-widest text-ivory-dim">{label}</span>
-      {children}
+      <span className="mb-1.5 block font-sans text-[11px] uppercase tracking-widest text-ivory-dim">{label}</span>
+      <input
+        className={inputCls}
+        value={data[k]}
+        placeholder={placeholder}
+        onChange={(e) => set(k, e.target.value)}
+      />
     </label>
   );
 }
 
-type Card = {
-  memberNo: string; name: string; category: string; designation: string;
-  barNo: string; blood: string; phone: string; address: string; valid: string;
-};
-
-function IdFace({
-  side, cardRef, card, photo,
+function Drop({
+  label, value, onPick, onClear,
 }: {
-  side: "front" | "back";
-  cardRef: React.RefObject<HTMLDivElement | null>;
-  card: Card;
-  photo: string | null;
+  label: string;
+  value: string | null;
+  onPick: (f?: File | null) => void;
+  onClear: () => void;
 }) {
-  /* True ID-1 proportions, portrait: 54 × 86 mm → 216 × 344 px at 4×/mm */
-  const shell =
-    "relative h-[344px] w-[216px] overflow-hidden rounded-[10px] bg-white text-black shadow-[0_20px_50px_-18px_rgba(0,0,0,0.6)]";
-
-  if (side === "front") {
-    return (
-      <div ref={cardRef} className={shell}>
-        <div className="h-[6px] w-full bg-[#c9a24b]" />
-        <div className="px-3 pt-3 text-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/media/tnwla-logo.png" alt="" className="mx-auto h-11 w-11 rounded-full object-cover" />
-          <p className="mt-1.5 font-serif text-[11px] font-bold leading-tight">
-            TAMILNADU WOMEN LAW ASSOCIATION
-          </p>
-          <p className="text-[8px] tracking-[0.14em]">MADRAS · TN GOVT REG 194/2023</p>
-        </div>
-
-        <div className="mx-auto mt-2.5 flex h-[86px] w-[70px] items-center justify-center overflow-hidden rounded border-2 border-[#c9a24b] bg-neutral-100">
-          {photo ? (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img src={photo} alt="" className="h-full w-full object-cover" />
-          ) : (
-            <User size={30} className="text-neutral-400" />
-          )}
-        </div>
-
-        <div className="mt-2 px-3 text-center">
-          <p className="truncate font-serif text-[13px] font-bold leading-tight">{card.name || "Member Name"}</p>
-          <p className="text-[8.5px] uppercase tracking-[0.12em] text-[#8a6d24]">
-            {card.designation || "Member"} · {card.category}
-          </p>
-        </div>
-
-        <div className="mt-2 space-y-[3px] px-3.5 text-[8.5px] leading-snug">
-          <Row k="Member No" v={card.memberNo || "—"} />
-          <Row k="Enrolment" v={card.barNo || "—"} />
-          <Row k="Blood Group" v={card.blood || "—"} />
-          <Row k="Valid Until" v={card.valid || "—"} />
-        </div>
-
-        <div className="absolute inset-x-0 bottom-0">
-          <div className="mx-3.5 mb-1 border-t border-black/40 pt-0.5 text-right text-[7.5px]">
-            Authorised Signatory
-          </div>
-          <div className="h-[5px] w-full bg-[#c9a24b]" />
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div ref={cardRef} className={shell}>
-      <div className="h-[6px] w-full bg-[#c9a24b]" />
-      <div className="px-3.5 pt-4">
-        <p className="text-center font-serif text-[11px] font-bold">CONDITIONS OF USE</p>
-        <ul className="mt-2.5 list-disc space-y-1.5 pl-3.5 text-[7.5px] leading-snug">
-          <li>This card is the property of the Tamilnadu Women Law Association — Madras and must be surrendered on demand.</li>
-          <li>It is valid only while the holder&rsquo;s membership subsists and the annual renewal stands paid.</li>
-          <li>It is not a Bar Council enrolment certificate and does not by itself authorise appearance before any court.</li>
-          <li>Loss or misuse must be reported to the association immediately.</li>
-        </ul>
-
-        <div className="mt-3 border-t border-black/15 pt-2 text-[7.5px] leading-snug">
-          <p className="font-bold">HOLDER</p>
-          <p className="mt-0.5">{card.name || "—"}</p>
-          <p className="whitespace-pre-wrap">{card.address || "—"}</p>
-          <p className="mt-0.5">{card.phone || "—"}</p>
-        </div>
-
-        <div className="mt-2.5 border-t border-black/15 pt-2 text-[7.5px] leading-snug">
-          <p className="font-bold">IF FOUND, RETURN TO</p>
-          <p className="mt-0.5">{site.address}</p>
-          <p>{site.phones[0]} · {site.email}</p>
-        </div>
-      </div>
-
-      <div className="absolute inset-x-0 bottom-0">
-        <p className="pb-1 text-center text-[7px] italic">In association with Stand Firm Legal Associates</p>
-        <div className="h-[5px] w-full bg-[#c9a24b]" />
-      </div>
-    </div>
-  );
-}
-
-function Row({ k, v }: { k: string; v: string }) {
-  return (
-    <div className="flex justify-between gap-2">
-      <span className="shrink-0 font-semibold">{k}</span>
-      <span className="truncate text-right">{v}</span>
+    <div className="relative">
+      <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 px-4 py-6 text-center transition-all hover:border-gold/50">
+        {value ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img src={value} alt="" className="max-h-16 rounded object-contain" />
+        ) : (
+          <Upload size={20} className="text-ivory-faint" />
+        )}
+        <span className="font-sans text-[11px] text-ivory-dim">{label}</span>
+        <input type="file" accept="image/*" className="hidden" onChange={(e) => onPick(e.target.files?.[0])} />
+      </label>
+      {value && (
+        <button
+          onClick={onClear}
+          aria-label="Remove"
+          className="absolute right-2 top-2 rounded-full bg-black/60 p-1 text-ivory-dim hover:text-gold"
+        >
+          <X size={12} />
+        </button>
+      )}
     </div>
   );
 }
