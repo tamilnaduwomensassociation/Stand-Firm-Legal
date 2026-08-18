@@ -66,10 +66,17 @@ function FieldInput({ f, value, onChange, lang }: { f: Field; value: string; onC
 /**
  * `only` locks the section to a single form family:
  *   only="member" → TNWLA membership only (home page)
- *   only="deed"   → the 26 deed forms only (/stand-firm)
+ *   only="deed"   → the 26 deed forms only
  * Omitting it keeps the original two-tab behaviour.
+ *
+ * `headless` renders NOTHING except the popups. Used on /stand-firm,
+ * where the deed catalogue is the store itself — the store's
+ * "Fill details" button fires `sf:openForm` and this mounted-but-
+ * invisible instance opens the matching deed form over the page.
  */
-export default function FormsSection({ only }: { only?: "member" | "deed" } = {}) {
+export default function FormsSection(
+  { only, headless }: { only?: "member" | "deed"; headless?: boolean } = {}
+) {
   const root = useRef<HTMLElement>(null);
   const docRef = useRef<HTMLDivElement>(null);
   const { lang, t } = useLang();
@@ -86,6 +93,7 @@ export default function FormsSection({ only }: { only?: "member" | "deed" } = {}
 
   useGSAP(
     () => {
+      if (!root.current) return;
       gsap.from(".forms-panel", {
         y: 80, opacity: 0, duration: 1, ease: "power3.out",
         scrollTrigger: { trigger: root.current, start: "top 75%" },
@@ -103,8 +111,9 @@ export default function FormsSection({ only }: { only?: "member" | "deed" } = {}
       if (only && d.mode !== only) return;
       setMode(d.mode);
       if (d.mode === "deed" && typeof d.deedIndex === "number") {
+        /* Reopening the same deed keeps the draft; switching deeds clears it */
+        if (d.deedIndex !== deedIdx) setDVals({});
         setDeedIdx(d.deedIndex);
-        setDVals({});
         setDeedOpen(true);
       } else {
         setDeedOpen(false);
@@ -112,10 +121,23 @@ export default function FormsSection({ only }: { only?: "member" | "deed" } = {}
     };
     window.addEventListener("sf:openForm", onOpenForm);
     return () => window.removeEventListener("sf:openForm", onOpenForm);
-  }, [only]);
+  }, [only, deedIdx]);
 
   /* ---------- Preview builder ---------- */
-  const openDeedPreview = () =>
+  const openDeedPreview = () => {
+    /* The store listens for this and marks the deed card "Details ✓",
+       then carries the particulars through to the order. */
+    window.dispatchEvent(
+      new CustomEvent("sf:deedFilled", {
+        detail: {
+          deedIndex: deedIdx,
+          deedEn: deed.en,
+          values: deedFields.map((f) => ({ label: f.en, value: dVals[f.id] || "" })),
+          name: dVals.__name ?? "",
+          phone: dVals.__phone ?? "",
+        },
+      })
+    );
     setPreview({
       title: `${t("deedReq")} — ${lang === "ta" ? deed.ta : deed.en}`,
       rows: [
@@ -124,6 +146,7 @@ export default function FormsSection({ only }: { only?: "member" | "deed" } = {}
         { label: t("phPhone").replace(" *", ""), value: dVals.__phone || "—" },
       ],
     });
+  };
 
   /* Render the preview node to an A4 PDF and return it as a File,
      so it can be handed to the share sheet rather than only saved. */
@@ -201,81 +224,10 @@ export default function FormsSection({ only }: { only?: "member" | "deed" } = {}
   };
 
 
-  return (
-    <section
-      id={only === "deed" ? "deed-forms" : "form"}
-      ref={root}
-      className="bg-obsidian-deep section-pad overflow-hidden"
-    >
-      <SectionHeading
-        kicker={only === "deed" ? t("deedsTab") : t("formKicker")}
-        title={
-          only === "deed"
-            ? lang === "ta" ? "பத்திர விவரப் படிவங்கள்" : "Deed Detail Forms"
-            : only === "member"
-              ? t("memberRegister")
-              : t("formTitle")
-        }
-      />
-      <p className="mx-auto mt-5 max-w-2xl text-center font-sans text-ivory-dim">
-        {only === "deed"
-          ? lang === "ta"
-            ? "ஆர்டர் செய்த பத்திரத்தைத் தேர்ந்தெடுத்து விவரங்களை நிரப்பவும் — வரைவு உடனடியாக எங்கள் மேசைக்கு வரும்."
-            : "Pick the deed you have ordered and fill in the particulars — the drafting instructions reach our desk immediately."
-          : only === "member"
-            ? lang === "ta"
-              ? "உங்கள் உறுப்பினர் பிரிவைத் தேர்ந்தெடுத்து, விண்ணப்பத்தை ஆன்லைனில் நிரப்பி, உடனடியாக சமர்ப்பிக்கவும்."
-              : "Choose your membership category, complete the application online, and it reaches our desk the moment you submit."
-            : t("formIntro")}
-      </p>
-
-      {/* Mode switch — hidden when the section is locked to one family */}
-      <div className={cn("mt-8 flex justify-center gap-3", only && "hidden")}>
-        {([
-          { id: "member", icon: BadgeCheck, label: t("membershipTab") },
-          { id: "deed", icon: ScrollText, label: t("deedsTab") },
-        ] as const).map((m) => (
-          <button
-            key={m.id}
-            onClick={() => setMode(m.id)}
-            className={cn(
-              "flex items-center gap-2 rounded-full px-6 py-3 font-sans text-sm tracking-wider transition-all duration-500",
-              mode === m.id ? "bg-gold text-black shadow-[0_0_30px_rgba(201,162,75,0.35)]" : "glass gold-border text-ivory-dim hover:text-gold"
-            )}
-          >
-            <m.icon size={16} /> {m.label}
-          </button>
-        ))}
-      </div>
-
-      <div className="forms-panel mx-auto mt-8 max-w-5xl">
-        {/* ===== TNWLA MEMBERSHIP — registration lives inside this tab ===== */}
-        {mode === "member" && <MembershipRegistration embedded />}
-        {/* ================= 26 DEED TABS ================= */}
-        {/* Every deed on show as its own tile — the form opens in a popup */}
-        {mode === "deed" && (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {deeds.map((d, i) => (
-              <button
-                key={d.en}
-                onClick={() => { setDeedIdx(i); setDVals({}); setDeedOpen(true); }}
-                className="group relative flex flex-col overflow-hidden rounded-xl glass gold-border p-6 text-left transition-all duration-500 hover:border-gold/70 hover:shadow-[0_20px_50px_-20px_rgba(201,162,75,0.35)]"
-              >
-                <span className="absolute right-5 top-4 font-serif text-3xl text-gold/15 transition-colors duration-500 group-hover:text-gold/30">
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <FileSignature size={20} className="mb-4 text-gold transition-transform duration-500 group-hover:-translate-y-1" />
-                <span className="pr-10 font-serif text-lg leading-snug text-ivory">{lang === "ta" ? d.ta : d.en}</span>
-                <span className="mt-4 inline-flex items-center gap-1.5 text-[10px] uppercase tracking-luxe text-gold">
-                  {lang === "ta" ? "படிவத்தைத் திற" : "Open form"}
-                  <ChevronRight size={12} className="transition-transform duration-300 group-hover:translate-x-1" />
-                </span>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
+  /* Popups are shared by both renders — the full section and the
+     headless instance the Stand Firm store drives. */
+  const popups = (
+    <>
       {/* ================= DEED FORM — POPUP ================= */}
       {deedOpen && mode === "deed" && (
         <div className="fixed inset-0 z-[96] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm" role="dialog">
@@ -417,6 +369,87 @@ export default function FormsSection({ only }: { only?: "member" | "deed" } = {}
           </div>
         </div>
       )}
+    </>
+  );
+
+  if (headless) return popups;
+
+  return (
+    <section
+      id={only === "deed" ? "deed-forms" : "form"}
+      ref={root}
+      className="bg-obsidian-deep section-pad overflow-hidden"
+    >
+      <SectionHeading
+        kicker={only === "deed" ? t("deedsTab") : t("formKicker")}
+        title={
+          only === "deed"
+            ? lang === "ta" ? "பத்திர விவரப் படிவங்கள்" : "Deed Detail Forms"
+            : only === "member"
+              ? t("memberRegister")
+              : t("formTitle")
+        }
+      />
+      <p className="mx-auto mt-5 max-w-2xl text-center font-sans text-ivory-dim">
+        {only === "deed"
+          ? lang === "ta"
+            ? "ஆர்டர் செய்த பத்திரத்தைத் தேர்ந்தெடுத்து விவரங்களை நிரப்பவும் — வரைவு உடனடியாக எங்கள் மேசைக்கு வரும்."
+            : "Pick the deed you have ordered and fill in the particulars — the drafting instructions reach our desk immediately."
+          : only === "member"
+            ? lang === "ta"
+              ? "உங்கள் உறுப்பினர் பிரிவைத் தேர்ந்தெடுத்து, விண்ணப்பத்தை ஆன்லைனில் நிரப்பி, உடனடியாக சமர்ப்பிக்கவும்."
+              : "Choose your membership category, complete the application online, and it reaches our desk the moment you submit."
+            : t("formIntro")}
+      </p>
+
+      {/* Mode switch — hidden when the section is locked to one family */}
+      <div className={cn("mt-8 flex justify-center gap-3", only && "hidden")}>
+        {([
+          { id: "member", icon: BadgeCheck, label: t("membershipTab") },
+          { id: "deed", icon: ScrollText, label: t("deedsTab") },
+        ] as const).map((m) => (
+          <button
+            key={m.id}
+            onClick={() => setMode(m.id)}
+            className={cn(
+              "flex items-center gap-2 rounded-full px-6 py-3 font-sans text-sm tracking-wider transition-all duration-500",
+              mode === m.id ? "bg-gold text-black shadow-[0_0_30px_rgba(201,162,75,0.35)]" : "glass gold-border text-ivory-dim hover:text-gold"
+            )}
+          >
+            <m.icon size={16} /> {m.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="forms-panel mx-auto mt-8 max-w-5xl">
+        {/* ===== TNWLA MEMBERSHIP — registration lives inside this tab ===== */}
+        {mode === "member" && <MembershipRegistration embedded />}
+        {/* ================= 26 DEED TABS ================= */}
+        {/* Every deed on show as its own tile — the form opens in a popup */}
+        {mode === "deed" && (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {deeds.map((d, i) => (
+              <button
+                key={d.en}
+                onClick={() => { setDeedIdx(i); setDVals({}); setDeedOpen(true); }}
+                className="group relative flex flex-col overflow-hidden rounded-xl glass gold-border p-6 text-left transition-all duration-500 hover:border-gold/70 hover:shadow-[0_20px_50px_-20px_rgba(201,162,75,0.35)]"
+              >
+                <span className="absolute right-5 top-4 font-serif text-3xl text-gold/15 transition-colors duration-500 group-hover:text-gold/30">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <FileSignature size={20} className="mb-4 text-gold transition-transform duration-500 group-hover:-translate-y-1" />
+                <span className="pr-10 font-serif text-lg leading-snug text-ivory">{lang === "ta" ? d.ta : d.en}</span>
+                <span className="mt-4 inline-flex items-center gap-1.5 text-[10px] uppercase tracking-luxe text-gold">
+                  {lang === "ta" ? "படிவத்தைத் திற" : "Open form"}
+                  <ChevronRight size={12} className="transition-transform duration-300 group-hover:translate-x-1" />
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {popups}
     </section>
   );
 }

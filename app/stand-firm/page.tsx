@@ -2,9 +2,9 @@
  * STAND FIRM LEGAL ASSOCIATES — the firm's own page.
  *
  * Everything the firm sells or files on a client's behalf lives here:
- * the priced service store (property e-services, deed preparation,
- * registrations & online services), the deed intake forms, and the
- * banking & recovery practice. The TNWLA home page keeps the
+ * the priced service store (property e-services, deed preparation
+ * with its particulars form built into each card, registrations &
+ * online services), and the banking & recovery practice. The TNWLA home page keeps the
  * association's own work — membership, practice areas, the team.
  */
 import type { Metadata } from "next";
@@ -33,8 +33,10 @@ export default function StandFirmPage() {
       <main className="pt-24 md:pt-28">
         <StoreHero />
         <ServiceStore />
-        {/* Deed detail forms — the drafting instructions behind a deed order */}
-        <FormsSection only="deed" />
+        {/* The deed particulars form has no section of its own any more —
+            it is merged into the Deed Preparation cards above and opens
+            as a popup from each card's "Fill details" action. */}
+        <FormsSection only="deed" headless />
         {/* Banking, SARFAESI, DRT, cheque bounce */}
         <SFLAServices />
       </main>

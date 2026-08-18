@@ -18,8 +18,8 @@
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Building2, CheckCircle2, ChevronRight, Download, FileSignature, LandPlot,
-  Mail, MessageCircle, Minus, Plus, Search, ShoppingBag, Smartphone, Trash2, X,
+  Building2, Check, CheckCircle2, ChevronRight, Download, FileSignature, LandPlot,
+  Mail, MessageCircle, Minus, PenLine, Plus, Search, ShoppingBag, Smartphone, Trash2, X,
   type LucideIcon,
 } from "lucide-react";
 import { storeCategories, storeNotice, type StoreItem } from "@/config/store.config";
@@ -33,7 +33,15 @@ const catIcons: Record<string, LucideIcon> = { LandPlot, FileSignature, Building
 const inputCls =
   "w-full rounded-xl bg-obsidian-soft/60 border border-[var(--hairline)] px-5 py-3.5 font-sans text-sm text-ivory placeholder:text-ivory-faint focus:border-gold/60 focus:outline-none focus:ring-1 focus:ring-gold/30 transition-all";
 
-type Line = { id: string; en: string; ta: string; price: number; qty: number; cat: string };
+type Line = { id: string; en: string; ta: string; price: number; qty: number; cat: string; deedIndex?: number };
+
+type DeedDetail = {
+  deedIndex: number;
+  deedEn: string;
+  values: { label: string; value: string }[];
+  name: string;
+  phone: string;
+};
 
 const STORAGE_KEY = "sfla-cart-v1";
 const inr = (n: number) => n.toLocaleString("en-IN");
@@ -51,6 +59,10 @@ export default function ServiceStore() {
   const [qrOk, setQrOk] = useState(true);
   const [orderNo, setOrderNo] = useState("");
 
+  /* Deed particulars captured by the (headless) deed form on this page,
+     keyed by the deed's index in `deeds`. They ride along with the order. */
+  const [deedDetails, setDeedDetails] = useState<Record<number, DeedDetail>>({});
+
   const [buyer, setBuyer] = useState({ name: "", phone: "", email: "", address: "", notes: "" });
   const [txn, setTxn] = useState("");
   const [showErrors, setShowErrors] = useState(false);
@@ -65,6 +77,20 @@ export default function ServiceStore() {
   useEffect(() => {
     try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(cart)); } catch { /* ignore */ }
   }, [cart]);
+
+  /* The headless FormsSection on this page announces a completed deed form */
+  useEffect(() => {
+    const onFilled = (e: Event) => {
+      const d = (e as CustomEvent<DeedDetail>).detail;
+      if (!d || typeof d.deedIndex !== "number") return;
+      setDeedDetails((prev) => ({ ...prev, [d.deedIndex]: d }));
+    };
+    window.addEventListener("sf:deedFilled", onFilled);
+    return () => window.removeEventListener("sf:deedFilled", onFilled);
+  }, []);
+
+  const openDeedForm = (deedIndex: number) =>
+    window.dispatchEvent(new CustomEvent("sf:openForm", { detail: { mode: "deed", deedIndex } }));
 
   const category = storeCategories.find((c) => c.id === activeCat) ?? storeCategories[0];
 
@@ -83,7 +109,8 @@ export default function ServiceStore() {
   const add = (item: StoreItem, catEn: string) =>
     setCart((prev) => {
       const at = prev.findIndex((l) => l.id === item.id);
-      if (at === -1) return [...prev, { id: item.id, en: item.en, ta: item.ta, price: item.price, qty: 1, cat: catEn }];
+      if (at === -1)
+        return [...prev, { id: item.id, en: item.en, ta: item.ta, price: item.price, qty: 1, cat: catEn, deedIndex: item.deedIndex }];
       const next = [...prev];
       next[at] = { ...next[at], qty: next[at].qty + 1 };
       return next;
@@ -125,7 +152,16 @@ export default function ServiceStore() {
     cart.map((l) => `• ${l.en} × ${l.qty} — ₹${inr(l.price * l.qty)}`).join("\n") +
     `\n\nTotal: ₹${inr(total)}\nPayment reference: ${txn || "-"}\n` +
     (buyer.notes ? `\nNotes: ${buyer.notes}\n` : "") +
+    (filledForCart().length
+      ? `\nDeed particulars supplied for: ${filledForCart().map((d) => d.deedEn).join(", ")} — full details are in the attached PDF.\n`
+      : "") +
     `\nGovernment fees, stamp duty and statutory charges are extra.`;
+
+  /* Particulars for the deeds actually in the cart, in cart order */
+  const filledForCart = () =>
+    cart
+      .filter((l) => typeof l.deedIndex === "number" && deedDetails[l.deedIndex])
+      .map((l) => deedDetails[l.deedIndex as number]);
 
   const buildPdf = async () => {
     const node = docRef.current;
@@ -250,6 +286,30 @@ export default function ServiceStore() {
                   </div>
                 )}
               </div>
+
+              {/* Deeds carry their own particulars form — merged in here so
+                  ordering and instructing happen on the same card. */}
+              {typeof item.deedIndex === "number" && (
+                <button
+                  onClick={() => openDeedForm(item.deedIndex as number)}
+                  className={cn(
+                    "mt-3 flex items-center justify-center gap-1.5 rounded-full border px-4 py-2 font-sans text-[10px] uppercase tracking-[0.16em] transition-all duration-300",
+                    deedDetails[item.deedIndex]
+                      ? "border-gold/70 bg-gold-faint text-gold"
+                      : "border-[var(--hairline)] text-ivory-dim hover:border-gold/60 hover:text-gold"
+                  )}
+                >
+                  {deedDetails[item.deedIndex] ? (
+                    <>
+                      <Check size={12} /> {lang === "ta" ? "விவரங்கள் நிரப்பப்பட்டது" : "Details captured"}
+                    </>
+                  ) : (
+                    <>
+                      <PenLine size={12} /> {lang === "ta" ? "விவரங்களை நிரப்பு" : "Fill details"}
+                    </>
+                  )}
+                </button>
+              )}
             </div>
           );
         })}
@@ -268,10 +328,14 @@ export default function ServiceStore() {
       {count > 0 && !cartOpen && !checkout && (
         <button
           onClick={() => setCartOpen(true)}
-          className="fixed bottom-24 right-6 z-[86] flex items-center gap-3 rounded-full bg-gold px-6 py-4 font-sans text-xs uppercase tracking-widest text-black shadow-[0_16px_40px_-10px_rgba(201,162,75,0.65)] transition-all hover:bg-gold-bright"
+          aria-label={`Open order — ${count} items, ₹${inr(total)}`}
+          className="fixed right-4 top-[96px] z-[86] flex items-center gap-2.5 rounded-full bg-gold px-5 py-3 font-sans text-xs uppercase tracking-widest text-black shadow-[0_16px_40px_-10px_rgba(201,162,75,0.65)] transition-all hover:bg-gold-bright md:right-8 md:top-[112px]"
         >
-          <ShoppingBag size={17} />
-          <span>{count} · ₹{inr(total)}</span>
+          <ShoppingBag size={16} />
+          <span className="flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-black/85 px-1.5 text-[10px] font-bold text-gold">
+            {count}
+          </span>
+          <span>₹{inr(total)}</span>
         </button>
       )}
 
@@ -548,6 +612,27 @@ export default function ServiceStore() {
           </table>
 
           <p className="mt-2 text-[10px]">Payment reference: {txn || "—"}</p>
+
+          {filledForCart().length > 0 && (
+            <div className="mt-5 border-t border-black/20 pt-3">
+              <p className="text-[11px] font-bold uppercase tracking-wide">Deed particulars supplied</p>
+              {filledForCart().map((d) => (
+                <div key={d.deedIndex} className="mt-2">
+                  <p className="text-[10px] font-semibold underline">{d.deedEn}</p>
+                  <table className="mt-1 w-full text-[9.5px]">
+                    <tbody>
+                      {d.values.filter((v) => v.value).map((v) => (
+                        <tr key={v.label} className="border-b border-black/10">
+                          <td className="w-[40%] py-1 pr-2 align-top font-semibold">{v.label}</td>
+                          <td className="py-1 align-top whitespace-pre-wrap">{v.value}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ))}
+            </div>
+          )}
           {buyer.notes ? <p className="mt-3 text-[11px]"><b>Notes:</b> {buyer.notes}</p> : null}
 
           <p className="mt-6 text-[10px] italic leading-relaxed text-black/70">
