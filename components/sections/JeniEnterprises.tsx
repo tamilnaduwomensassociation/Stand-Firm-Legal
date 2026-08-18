@@ -8,10 +8,12 @@
 import { useState } from "react";
 import {
   BookOpen, CheckCircle2, Landmark, Laptop, Mail, MessageCircle, MousePointerClick,
-  Phone, UtensilsCrossed, type LucideIcon,
+  Phone, ShoppingBag, UtensilsCrossed, type LucideIcon,
 } from "lucide-react";
 import { jeni, site } from "@/config/site.config";
 import { useLang } from "@/lib/i18n";
+import ScrubHero from "@/components/ui/ScrubHero";
+import FoodShop from "@/components/store/FoodShop";
 import { cn } from "@/lib/utils";
 
 const icons: Record<string, LucideIcon> = {
@@ -23,7 +25,6 @@ const inputCls =
 
 export default function JeniEnterprises() {
   const { lang } = useLang();
-  const [logoOk, setLogoOk] = useState(true);
   const [vertical, setVertical] = useState("");
   const [form, setForm] = useState({ name: "", phone: "", message: "" });
   const [sent, setSent] = useState(false);
@@ -40,42 +41,32 @@ export default function JeniEnterprises() {
 
   return (
     <>
-      {/* ---------------- MASTHEAD ---------------- */}
-      <section className="force-dark relative overflow-hidden bg-obsidian-deep">
-        <div
-          className="absolute inset-0 bg-cover bg-center opacity-20"
-          style={{ backgroundImage: "url(/media/stills/blog-business.jpg)" }}
-          aria-hidden
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-obsidian-deep/95 via-obsidian/90 to-obsidian" />
-        <div className="vignette absolute inset-0" />
-
-        <div className="relative section-pad mx-auto max-w-5xl text-center">
-          {logoOk ? (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
-              src={jeni.logo}
-              alt={jeni.name}
-              className="mx-auto h-32 w-auto rounded-2xl bg-white/95 p-3 md:h-40"
-              onError={() => setLogoOk(false)}
-            />
-          ) : (
-            <div className="mx-auto flex h-32 w-32 items-center justify-center rounded-2xl bg-white/95 md:h-40 md:w-40">
-              <span className="font-serif text-5xl font-bold text-[#12274f]">Jeni</span>
-            </div>
-          )}
-
-          <h1 className="mt-8 font-serif text-4xl leading-tight gold-text md:text-6xl">{jeni.name}</h1>
-          <p className="mt-4 font-sans text-xs uppercase tracking-luxe text-ivory-dim md:text-sm">
-            {jeni.tagline}
-          </p>
-          <p className="mx-auto mt-7 max-w-2xl font-sans text-[15px] leading-relaxed text-ivory-dim">
-            {lang === "ta"
-              ? "உணவு, புத்தகங்கள், தகவல் தொழில்நுட்ப சேவைகள், வங்கி ஏல சொத்துக்கள் மற்றும் இ-சேவை — ஐந்து பிரிவுகள், ஒரே அலுவலகம். ஸ்டாண்ட் ஃபர்ம் லீகல் அசோசியேட்ஸின் சகோதர நிறுவனம்."
-              : "Foods, books, IT services, bank auction property and e-sevai — five verticals, one counter. The sister enterprise to Stand Firm Legal Associates, run from the same office at Parrys."}
-          </p>
-        </div>
-      </section>
+      {/* ---------------- MASTHEAD ----------------
+          The brand film. Scroll drives it frame by frame — see
+          components/ui/ScrubHero.tsx for why it is built that way. */}
+      <ScrubHero
+        src="/media/jeni-scrub.mp4"
+        poster="/media/stills/jeni-poster.jpg"
+        freeze="/media/stills/jeni-freeze.jpg"
+        runway="+=300%"
+        scrollHint={lang === "ta" ? "உருட்டவும்" : "Scroll — the film follows your hand"}
+      >
+        <h1 className="font-serif text-4xl leading-tight gold-text md:text-6xl lg:text-7xl">{jeni.name}</h1>
+        <p className="mt-4 font-sans text-[11px] uppercase tracking-luxe text-ivory-dim md:text-sm">
+          {jeni.tagline}
+        </p>
+        <p className="mx-auto mt-7 max-w-2xl font-sans text-[15px] leading-relaxed text-ivory-dim">
+          {lang === "ta"
+            ? "உணவு, புத்தகங்கள், தகவல் தொழில்நுட்ப சேவைகள், வங்கி ஏல சொத்துக்கள் மற்றும் இ-சேவை — ஐந்து பிரிவுகள், ஒரே அலுவலகம். ஸ்டாண்ட் ஃபர்ம் லீகல் அசோசியேட்ஸின் சகோதர நிறுவனம்."
+            : "Foods, books, IT services, bank auction property and e-sevai — five verticals, one counter. The sister enterprise to Stand Firm Legal Associates, run from the same office at Parrys."}
+        </p>
+        <a
+          href="#foods"
+          className="mt-9 inline-flex items-center gap-2.5 rounded-full bg-gold px-8 py-4 font-sans text-xs uppercase tracking-widest text-black transition-all hover:bg-gold-bright"
+        >
+          <ShoppingBag size={15} /> {lang === "ta" ? "உணவுப் பொருட்களை வாங்க" : "Shop Foods"}
+        </a>
+      </ScrubHero>
 
       {/* ---------------- VERTICALS ---------------- */}
       <section id="verticals" className="bg-obsidian section-pad">
@@ -88,13 +79,25 @@ export default function JeniEnterprises() {
           {jeni.verticals.map((v) => {
             const Icon = icons[v.icon] ?? Landmark;
             const active = vertical === v.id;
+
+            /* Foods is the only vertical that actually sells online, so
+               its card opens the shop instead of ticking an enquiry box.
+               The others still route to the WhatsApp enquiry form. */
+            const isShop = v.id === "foods";
+
             return (
               <button
                 key={v.id}
-                onClick={() => setVertical(active ? "" : v.id)}
+                onClick={() => {
+                  if (isShop) {
+                    document.getElementById("foods")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    return;
+                  }
+                  setVertical(active ? "" : v.id);
+                }}
                 className={cn(
                   "group flex flex-col rounded-2xl glass p-7 text-left transition-all duration-500",
-                  active
+                  active || isShop
                     ? "border border-gold/70 shadow-[0_20px_60px_-20px_rgba(201,162,75,0.45)]"
                     : "gold-border hover:border-gold/70"
                 )}
@@ -103,17 +106,36 @@ export default function JeniEnterprises() {
                 <h3 className="font-serif text-2xl text-ivory">{lang === "ta" ? v.ta : v.en}</h3>
                 {lang === "ta" && <p className="mt-1 font-sans text-[11px] text-gold/70">{v.en}</p>}
                 <p className="prose-justify mt-3 flex-1 font-sans text-sm leading-relaxed text-ivory-dim">{v.desc}</p>
-                <span className="mt-5 inline-flex items-center gap-1.5 text-[10px] uppercase tracking-luxe text-gold">
-                  {active
-                    ? lang === "ta" ? "தேர்ந்தெடுக்கப்பட்டது" : "Selected"
-                    : lang === "ta" ? "விசாரிக்க தேர்ந்தெடு" : "Select to enquire"}
-                  {active && <CheckCircle2 size={13} />}
-                </span>
+
+                {isShop ? (
+                  <span className="mt-5 inline-flex items-center gap-2 rounded-full bg-gold px-5 py-2.5 font-sans text-[10px] uppercase tracking-widest text-black transition-all group-hover:bg-gold-bright">
+                    <ShoppingBag size={13} />
+                    {lang === "ta" ? "கடையைத் திற" : "Shop 10 products"}
+                  </span>
+                ) : (
+                  <span className="mt-5 inline-flex items-center gap-1.5 text-[10px] uppercase tracking-luxe text-gold">
+                    {active
+                      ? lang === "ta" ? "தேர்ந்தெடுக்கப்பட்டது" : "Selected"
+                      : lang === "ta" ? "விசாரிக்க தேர்ந்தெடு" : "Select to enquire"}
+                    {active && <CheckCircle2 size={13} />}
+                  </span>
+                )}
               </button>
             );
           })}
         </div>
       </section>
+
+      {/* ---------------- FOODS SHOP ----------------
+          Ten products, one cart, Google Pay checkout. Opened by the
+          Foods card above; also reachable at /jeni#foods. */}
+      <div className="bg-obsidian pt-4 text-center">
+        <p className="kicker">{lang === "ta" ? "ஆன்லைன் கடை" : "Shop Online"}</p>
+        <h2 className="mt-3 font-serif text-3xl gold-text md:text-5xl">
+          {lang === "ta" ? "ஜெனி உணவுப் பொருட்கள்" : "Jeni Foods"}
+        </h2>
+      </div>
+      <FoodShop />
 
       {/* ---------------- ENQUIRY ---------------- */}
       <section id="enquiry" className="bg-obsidian-deep section-pad">

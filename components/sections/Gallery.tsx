@@ -99,10 +99,14 @@ export default function Gallery() {
               {/* Revealed face — the photograph */}
               <span className="flip-face flip-back block gold-border">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
+                {/* Tile shows the 480px crop; the lightbox loads the
+                    original. See the note in site.config.ts. */}
                 <img
-                  src={g.src}
+                  src={g.thumb}
                   alt={lang === "ta" ? g.ta : g.en}
                   className="h-full w-full object-cover"
+                  width={480}
+                  height={480}
                   loading="lazy"
                   decoding="async"
                 />

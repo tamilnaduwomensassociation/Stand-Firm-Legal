@@ -60,10 +60,27 @@ export default function Testimonials() {
   const root = useRef<HTMLElement>(null);
   const { lang, t } = useLang();
 
-  /* Tripled so there is always overflow to travel through */
-  const base = [...testimonials, ...testimonials, ...testimonials];
-  const rowA = base;
-  const rowB = [...base.slice(3), ...base.slice(0, 3)];
+  /**
+   * The two rows carry DISJOINT sets of reviews.
+   *
+   * Previously both rows were cut from one repeated array offset by a
+   * few cards, so the same reviewer appeared in the top and bottom row
+   * at the same time and the wall read as a zigzag of duplicates. Now
+   * the reviews are split down the middle first — the top row only
+   * ever shows the first half, the bottom row only the second — and
+   * each half is repeated on its own to give the scroll something to
+   * travel through. Nothing is ever on screen twice.
+   */
+  const half = Math.ceil(testimonials.length / 2);
+  const setA = testimonials.slice(0, half);
+  const setB = testimonials.slice(half);
+
+  /* Repeat each half until it comfortably overruns the viewport */
+  const repeat = <T,>(arr: T[], times: number) =>
+    Array.from({ length: times }, () => arr).flat();
+
+  const rowA = repeat(setA, 4);
+  const rowB = repeat(setB, Math.ceil((setA.length * 4) / Math.max(setB.length, 1)));
 
   useGSAP(
     () => {

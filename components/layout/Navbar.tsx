@@ -71,9 +71,10 @@ export default function Navbar() {
   /**
    * WHEN IS THE BAR ACTUALLY ON SOMETHING DARK?
    *
-   * Exactly once: on the home page before you scroll, where it floats
-   * over the hero film. That film is dark in both themes, so the row
-   * is forced white there — otherwise the links wash out against it.
+   * Only where the bar floats, unscrolled, over one of the scrubbed
+   * hero films. Those sections carry `force-dark` and a black shade, so
+   * they are dark in BOTH themes and the row must be forced white or
+   * the links wash out against them.
    *
    * Nowhere else. `bg-obsidian` is NOT a fixed dark colour — it reads
    * `--c-bg`, which is cream (247 244 237) in light theme. So the
@@ -83,8 +84,13 @@ export default function Navbar() {
    * `ivory` token, which is built to contrast with `--c-bg` — dark ink
    * on cream, warm white on black. Forcing white there is what made
    * the links vanish against the light bar.
+   *
+   * Keep this list in step with the pages that open on a ScrubHero. A
+   * page added here that does NOT start with a dark film gets white
+   * links on a cream bar — a 1.2:1 contrast ratio, i.e. invisible.
    */
-  const onHeroFilm = pathname === "/" && !scrolled;
+  const FILM_PAGES = ["/", "/jeni", "/stand-firm"];
+  const onHeroFilm = FILM_PAGES.includes(pathname) && !scrolled;
 
   const underline =
     "relative whitespace-nowrap after:absolute after:left-0 after:-bottom-1 after:h-px after:w-0 after:bg-gold after:transition-all after:duration-500 hover:after:w-full hover:text-gold";
@@ -145,12 +151,15 @@ export default function Navbar() {
             </a>
           ))}
 
-          {/* ---- House marks, immediately after Contact ---- */}
+          {/* ---- House marks, immediately after Contact ----
+               Grouped in their own tighter flex so the pair reads as one
+               lockup rather than two stray dots with nav-sized gaps. */}
           <span className="mx-0.5 hidden h-6 w-px shrink-0 bg-[var(--hairline)] min-[1600px]:block" aria-hidden />
 
+          <span className="flex shrink-0 items-center gap-2">
           <a
             href="/stand-firm"
-            className={cn(MARK, "h-8 w-8")}
+            className={cn(MARK, "h-10 w-10")}
             title="Stand Firm Legal Associates — services, deeds & registrations"
             aria-label="Stand Firm Legal Associates"
           >
@@ -160,13 +169,14 @@ export default function Navbar() {
 
           <a
             href="/jeni"
-            className={cn(MARK, "h-8 w-8")}
+            className={cn(MARK, "h-10 w-10")}
             title={`${jeni.name} — ${jeni.tagline}`}
             aria-label={jeni.name}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={brandMarks.jeni} alt="" className="h-full w-full object-cover" />
           </a>
+          </span>
         </nav>
 
         {/* ---------- Right cluster ---------- */}

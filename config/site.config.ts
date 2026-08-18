@@ -113,9 +113,9 @@ export const businessServices = [
 
 export const stats = [
   { value: 10, suffix: "+", label: "Years of Practice", labelTa: "ஆண்டுகள் அனுபவம்" },
-  { value: 5000, suffix: "+", label: "Clients Served", labelTa: "வாடிக்கையாளர்கள்" },
-  { value: 10000, suffix: "+", label: "Registrations Completed", labelTa: "பதிவுகள் நிறைவு" },
-  { value: 3000, suffix: "+", label: "Cases Handled", labelTa: "வழக்குகள் கையாளப்பட்டவை" },
+  { value: 500, suffix: "+", label: "Clients Served", labelTa: "வாடிக்கையாளர்கள்" },
+  { value: 5500, suffix: "+", label: "Registrations Completed", labelTa: "பதிவுகள் நிறைவு" },
+  { value: 490, suffix: "+", label: "Cases Handled", labelTa: "வழக்குகள் கையாளப்பட்டவை" },
   { value: 100, suffix: "%", label: "Client Satisfaction", labelTa: "வாடிக்கையாளர் திருப்தி" },
 ];
 
@@ -373,10 +373,10 @@ export const navLinks = [
   { label: "Practice Areas", ta: "சட்டத் துறைகள்", href: "#practice" },
   { label: "Team", ta: "அணி", href: "#team" },
   { label: "Blog", ta: "வலைப்பதிவு", href: "#blog" },
-  { label: "Gallery", ta: "படத்தொகுப்பு", href: "/gallery" },
-  { label: "Legal News", ta: "சட்ட செய்திகள்", href: "/legal-news" },
   { label: "Case Studies", ta: "வழக்கு ஆய்வுகள்", href: "#case-studies" },
   { label: "Contact", ta: "தொடர்பு", href: "#contact" },
+  { label: "Gallery", ta: "படத்தொகுப்பு", href: "/gallery" },
+  { label: "Legal News", ta: "சட்ட செய்திகள்", href: "/legal-news" },
 ];
 
 /* Header marks — circular, transparent-cornered, ~30-140 KB each.
@@ -396,7 +396,7 @@ export const jeni = {
   tagline: "One Stop Solution For All Your Needs",
   logo: "/media/jeni-logo.png",
   verticals: [
-    { id: "foods", en: "Foods", ta: "உணவு", icon: "UtensilsCrossed", desc: "Home-style catering, bulk orders and event food service across Chennai." },
+    { id: "foods", en: "Foods", ta: "உணவு", icon: "UtensilsCrossed", desc: "Cold-pressed Kerala coconut oil, Burma Special curry masalas and the Deva health range — order online, delivered across India." },
     { id: "books", en: "Books", ta: "புத்தகங்கள்", icon: "BookOpen", desc: "Law, academic and competitive-examination titles — supply, sourcing and bulk institutional orders." },
     { id: "it", en: "IT Services", ta: "தகவல் தொழில்நுட்ப சேவைகள்", icon: "Laptop", desc: "Websites, business software, digital presence and annual maintenance for small and growing firms." },
     { id: "auction", en: "Bank Auction Property", ta: "வங்கி ஏல சொத்துக்கள்", icon: "Landmark", desc: "Sourcing, title verification and end-to-end assistance on properties sold under bank auction." },
@@ -405,26 +405,75 @@ export const jeni = {
 };
 
 /**
- * GALLERY — 36 tiles (6 × 6). Drop new photographs into
- * /public/media/gallery and point `src` at them; captions are
- * bilingual and shown on the reverse of each flip tile.
+ * GALLERY — 36 real photographs from the association's own records,
+ * held in /public/media/New. Each tile rests on its caption and turns
+ * to show the photograph.
+ *
+ * Captions describe what is visible in the frame. They deliberately do
+ * not name individuals, put dates on undated photographs, or claim an
+ * occasion the picture does not itself show — if you know the specific
+ * event behind a frame, edit its caption here and nowhere else.
+ *
+ * To add or replace a photograph: drop the file into
+ * /public/media/New, put a 480 × 480 square crop of the same name in
+ * /public/media/New/thumbs, and add a line below. The grid is 6 × 6,
+ * so keep the list a multiple of six for a full wall.
+ *
+ * Two files per photograph is deliberate. The wall shows 36 tiles at
+ * roughly 180px each; serving the full-resolution originals there
+ * would cost about 6 MB for pictures nobody has clicked yet. The tiles
+ * load the thumbnails (~1.4 MB for all 36) and the lightbox loads the
+ * original only when a tile is actually opened.
  */
+const NEW = "/media/New/IMG-20260818-WA";
+const THUMB = "/media/New/thumbs/IMG-20260818-WA";
+
 const galleryPool = [
-  { src: "/media/stills/scene-1.jpg", en: "Our Chambers", ta: "எங்கள் அலுவலகம்" },
-  { src: "/media/stills/scene-2.jpg", en: "Madras High Court", ta: "சென்னை உயர்நீதிமன்றம்" },
-  { src: "/media/stills/scene-3.jpg", en: "In Session", ta: "விசாரணையில்" },
-  { src: "/media/stills/scene-4.jpg", en: "Case Conference", ta: "வழக்கு ஆலோசனை" },
-  { src: "/media/stills/scene-5.jpg", en: "The Library", ta: "நூலகம்" },
-  { src: "/media/stills/hero-freeze.jpg", en: "Armenian Street", ta: "ஆர்மேனியன் தெரு" },
-  { src: "/media/stills/blog-property.jpg", en: "Property Desk", ta: "சொத்து பிரிவு" },
-  { src: "/media/stills/blog-business.jpg", en: "Business Desk", ta: "வணிக பிரிவு" },
-  { src: "/media/stills/blog-docs.jpg", en: "Documentation", ta: "ஆவணமாக்கல்" },
-  { src: "/media/stills/team-1.jpg", en: "Our Advocates", ta: "எங்கள் வழக்கறிஞர்கள்" },
-  { src: "/media/stills/team-2.jpg", en: "Client Meeting", ta: "வாடிக்கையாளர் சந்திப்பு" },
-  { src: "/media/stills/team-3.jpg", en: "Legal Aid Camp", ta: "சட்ட உதவி முகாம்" },
+  { src: `${NEW}0026.jpg`, en: "Appreciation Presented", ta: "பாராட்டு வழங்கல்" },
+  { src: `${NEW}0027.jpg`, en: "Certificate Handover", ta: "சான்றிதழ் வழங்கல்" },
+  { src: `${NEW}0028.jpg`, en: "Members in Session", ta: "உறுப்பினர் கூட்டம்" },
+  { src: `${NEW}0029.jpg`, en: "The Association Assembled", ta: "சங்கம் ஒன்றுகூடல்" },
+  { src: `${NEW}0030.jpg`, en: "At the Association Office", ta: "சங்க அலுவலகத்தில்" },
+  { src: `${NEW}0031.jpg`, en: "Honouring a Member", ta: "உறுப்பினர் கௌரவிப்பு" },
+  { src: `${NEW}0032.jpg`, en: "Records Handed Over", ta: "ஆவணங்கள் ஒப்படைப்பு" },
+  { src: `${NEW}0033.jpg`, en: "Full Strength", ta: "முழு உறுப்பினர்கள்" },
+  { src: `${NEW}0034.jpg`, en: "A Warm Welcome", ta: "அன்பான வரவேற்பு" },
+  { src: `${NEW}0035.jpg`, en: "Round the Table", ta: "மேசையைச் சுற்றி" },
+  { src: `${NEW}0036.jpg`, en: "Working Meeting", ta: "பணிக்குழு கூட்டம்" },
+  { src: `${NEW}0037.jpg`, en: "Felicitation", ta: "பாராட்டு விழா" },
+  { src: `${NEW}0038.jpg`, en: "Members Gathered", ta: "உறுப்பினர்கள் கூடுகை" },
+  { src: `${NEW}0039.jpg`, en: "Under Our Banner", ta: "எங்கள் கொடியின் கீழ்" },
+  { src: `${NEW}0040.jpg`, en: "Garlands and Greetings", ta: "மாலையும் வாழ்த்தும்" },
+  { src: `${NEW}0041.jpg`, en: "Papers Received", ta: "ஆவணம் பெறுதல்" },
+  { src: `${NEW}0042.jpg`, en: "Standing Together", ta: "ஒன்றாக நிற்கிறோம்" },
+  { src: `${NEW}0043.jpg`, en: "A Guest Received", ta: "விருந்தினர் வரவேற்பு" },
+  { src: `${NEW}0044.jpg`, en: "Courtesy Call", ta: "மரியாதை சந்திப்பு" },
+  { src: `${NEW}0045.jpg`, en: "Bouquet Presented", ta: "பூங்கொத்து வழங்கல்" },
+  { src: `${NEW}0046.jpg`, en: "In the Chamber", ta: "அறையில்" },
+  { src: `${NEW}0047.jpg`, en: "Guest of Honour", ta: "சிறப்பு விருந்தினர்" },
+  { src: `${NEW}0048.jpg`, en: "A Day to Mark", ta: "நினைவில் நிற்கும் நாள்" },
+  { src: `${NEW}0049.jpg`, en: "Token of Thanks", ta: "நன்றி நினைவுப் பரிசு" },
+  { src: `${NEW}0050.jpg`, en: "Association Colours", ta: "சங்க நிறங்கள்" },
+  { src: `${NEW}0051.jpg`, en: "Celebration", ta: "கொண்டாட்டம்" },
+  { src: `${NEW}0052.jpg`, en: "Materials Handed Over", ta: "பொருட்கள் வழங்கல்" },
+  { src: `${NEW}0053.jpg`, en: "The Team", ta: "எங்கள் குழு" },
+  { src: `${NEW}0054.jpg`, en: "Between Sittings", ta: "அமர்வுகளுக்கு இடையே" },
+  { src: `${NEW}0055.jpg`, en: "Recognition", ta: "அங்கீகாரம்" },
+  { src: `${NEW}0056.jpg`, en: "All of Us", ta: "நாங்கள் அனைவரும்" },
+  { src: `${NEW}0057.jpg`, en: "At Our Stall", ta: "எங்கள் அரங்கில்" },
+  { src: `${NEW}0058.jpg`, en: "Outreach Desk", ta: "சேவை மேசை" },
+  { src: `${NEW}0059.jpg`, en: "Respect to Our Elders", ta: "மூத்தோர் கௌரவிப்பு" },
+  { src: `${NEW}0060.jpg`, en: "Assembled Members", ta: "கூடிய உறுப்பினர்கள்" },
+  { src: `${NEW}0061.jpg`, en: "Side by Side", ta: "தோளோடு தோள்" },
 ];
 
-export const galleryImages = Array.from({ length: 36 }, (_, i) => {
-  const item = galleryPool[i % galleryPool.length];
-  return { id: i, src: item.src, en: item.en, ta: item.ta, no: String(i + 1).padStart(2, "0") };
-});
+export const galleryImages = galleryPool.map((item, i) => ({
+  id: i,
+  /** Full-resolution — used by the lightbox only */
+  src: item.src,
+  /** 480px square crop — used by the tile */
+  thumb: item.src.replace(NEW, THUMB),
+  en: item.en,
+  ta: item.ta,
+  no: String(i + 1).padStart(2, "0"),
+}));

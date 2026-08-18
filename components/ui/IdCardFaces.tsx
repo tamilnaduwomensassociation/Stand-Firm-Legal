@@ -140,10 +140,10 @@ function Scales({ size = 28, color = "#fff", opacity = 1 }: { size?: number; col
 
 function Title({ fs = 15 }: { fs?: number }) {
   return (
-    <div style={{ textAlign: "center", color: "#fff", lineHeight: 1.14 }}>
+    <div style={{ textAlign: "center", color: "#fff", lineHeight: 1.26 }}>
       <div style={{ ...serif, fontSize: fs, fontWeight: 700, letterSpacing: 0.3 }}>TAMILNADU WOMEN LAW</div>
       <div style={{ ...serif, fontSize: fs, fontWeight: 700, letterSpacing: 0.3 }}>ASSOCIATION — MADRAS</div>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 5, marginTop: 2 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 5, marginTop: 5 }}>
         <span style={{ height: 1, width: 26, background: GOLD_LT, opacity: 0.8 }} />
         <span style={{ fontSize: 5.5, letterSpacing: 1.5, color: GOLD_LT }}>TN GOVT REG 194/2023</span>
         <span style={{ height: 1, width: 26, background: GOLD_LT, opacity: 0.8 }} />
@@ -208,7 +208,7 @@ export function CardFront({
     <div ref={cardRef} style={shell}>
       <Columns />
       <JusticeMark />
-      <Header h={58} uid="f" />
+      <Header h={68} uid="f" />
 
       <div style={{ position: "absolute", top: 5, left: 0, right: 0, zIndex: 2, display: "flex", alignItems: "center", padding: "0 13px", gap: 9 }}>
         <Seal size={52} />
@@ -216,11 +216,11 @@ export function CardFront({
         <Scales size={28} opacity={0.95} />
       </div>
 
-      <div style={{ position: "absolute", top: 70, left: 0, right: 0, zIndex: 2 }}>
+      <div style={{ position: "absolute", top: 80, left: 0, right: 0, zIndex: 2 }}>
         <Ribbon label="MEMBERSHIP ID CARD" />
       </div>
 
-      <div style={{ position: "absolute", top: 100, left: 14, right: 13, bottom: 12, zIndex: 2, display: "flex", gap: 12 }}>
+      <div style={{ position: "absolute", top: 108, left: 14, right: 13, bottom: 10, zIndex: 2, display: "flex", gap: 12 }}>
         {/* photograph */}
         <div style={{ width: 92, flexShrink: 0 }}>
           <div style={{
@@ -248,14 +248,13 @@ export function CardFront({
         {/* field table */}
         <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 3, paddingTop: 2 }}>
           {rows.map(([label, value, accent]) => (
-            <div key={label} style={{ display: "flex", alignItems: "flex-end", gap: 5, height: 18 }}>
-              <span style={{ width: 92, flexShrink: 0, fontSize: 8.5, fontWeight: 700, color: INK, lineHeight: 1.45, whiteSpace: "nowrap" }}>{label}</span>
+            <div key={label} style={{ display: "flex", alignItems: "baseline", gap: 5, height: 18 }}>
+              <span style={{ width: 84, flexShrink: 0, fontSize: 8.5, fontWeight: 700, color: INK, lineHeight: 1.45, whiteSpace: "nowrap" }}>{label}</span>
               <span style={{ fontSize: 8.5, color: MUTED, lineHeight: 1.45 }}>:</span>
               <span style={{
                 flex: 1, minWidth: 0, fontSize: 9, fontWeight: accent ? 800 : 600,
                 color: accent ? VAL : INK, lineHeight: 1.45, whiteSpace: "nowrap",
                 overflow: "hidden", textOverflow: "ellipsis",
-                borderBottom: "1px solid #CBD5E6", paddingBottom: 2,
               }}>
                 {value || "—"}
               </span>
@@ -266,10 +265,11 @@ export function CardFront({
         {/* signature */}
         <div style={{ width: 104, flexShrink: 0, display: "flex", flexDirection: "column", justifyContent: "flex-end", alignItems: "center", paddingBottom: 20 }}>
           <div style={{ height: 26, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
-            {signature ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={signature} alt="" style={{ maxWidth: 98, maxHeight: 26, objectFit: "contain" }} />
-            ) : null}
+            {/* Falls back to the President's signature asset, so a freshly
+                opened card is already signed. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={signature || "/media/president-signature.png"} alt=""
+              style={{ maxWidth: 98, maxHeight: 26, objectFit: "contain" }} />
           </div>
           <div style={{ width: 100, height: 1, background: NAVY }} />
           <div style={{ fontSize: 6.8, fontWeight: 700, color: INK, marginTop: 3, letterSpacing: 0.2, whiteSpace: "nowrap" }}>Authorised Signatory</div>
@@ -296,17 +296,17 @@ export function CardBack({ data, cardRef }: { data: CardData; cardRef?: RefObjec
   return (
     <div ref={cardRef} style={shell}>
       <Columns />
-      <Header h={66} uid="b" />
+      <Header h={74} uid="b" />
 
-      <div style={{ position: "absolute", top: 7, left: 13, zIndex: 3 }}><Seal size={48} /></div>
-      <div style={{ position: "absolute", top: 12, left: 70, right: 118, zIndex: 2 }}><Title fs={14} /></div>
+      <div style={{ position: "absolute", top: 11, left: 13, zIndex: 3 }}><Seal size={48} /></div>
+      <div style={{ position: "absolute", top: 13, left: 70, right: 118, zIndex: 2 }}><Title fs={14} /></div>
       <div style={{ position: "absolute", top: 12, right: 13, zIndex: 3 }}>
         <div style={{ background: "#fff", padding: 4, borderRadius: 5, boxShadow: `0 0 0 1.2px ${NAVY}` }}>
           <QrCode value={data.verifyUrl} size={58} />
         </div>
       </div>
 
-      <div style={{ position: "absolute", top: 84, left: 14, right: 13, bottom: 40, zIndex: 2, display: "flex", gap: 8 }}>
+      <div style={{ position: "absolute", top: 92, left: 14, right: 13, bottom: 40, zIndex: 2, display: "flex", gap: 8 }}>
         <div style={{ width: 160, flexShrink: 0 }}>
           {line(dot("M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"), data.address)}
           {line(dot("M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2Z"), data.phone)}

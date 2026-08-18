@@ -21,7 +21,7 @@
  * off-screen rather than hidden with display:none, because html2canvas
  * cannot rasterise a node that isn't laid out.
  */
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Download, IdCard as IdCardIcon, Move, RotateCcw, Upload, X } from "lucide-react";
 import { site } from "@/config/site.config";
 import { useLang } from "@/lib/i18n";
@@ -30,6 +30,12 @@ import { CardBack, CardFront, CARD_H, CARD_W, type CardData } from "@/components
 
 const inputCls =
   "w-full rounded-xl bg-obsidian-soft/60 border border-[var(--hairline)] px-4 py-3 font-sans text-sm text-ivory placeholder:text-ivory-faint focus:border-gold/60 focus:outline-none focus:ring-1 focus:ring-gold/30 transition-all";
+
+const BLOOD_GROUPS = ["A+ve", "A-ve", "B+ve", "B-ve", "AB+ve", "AB-ve", "O+ve", "O-ve"];
+
+/* Enrollment years run from this year back to 1970 — newest first, because
+   that is where almost every entry will be. */
+const ENROL_YEARS = Array.from({ length: new Date().getFullYear() - 1969 }, (_, i) => String(new Date().getFullYear() - i));
 
 /* "June 2027" — a year out, which is when the annual renewal falls due */
 const defaultValidity = () => {
@@ -46,7 +52,7 @@ export default function IdCardSection() {
   const [data, setData] = useState<CardData>({
     cardNo: "",
     memberName: "",
-    membershipNo: "",
+    membershipNo: "TNWLA/2026/",
     enrollmentNo: "",
     designation: "Member",
     district: "Chennai",
@@ -60,7 +66,7 @@ export default function IdCardSection() {
     verifyUrl: `${site.url}/id-card`,
   });
   const [photo, setPhoto] = useState<string | null>(null);
-  const [signature, setSignature] = useState<string | null>(null);
+  const [signature, setSignature] = useState<string | null>(null); // null = use the President asset
   const [busy, setBusy] = useState(false);
 
   /* Free 3D rotation, driven by dragging the card.
@@ -70,9 +76,29 @@ export default function IdCardSection() {
   const [rot, setRot] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
   const drag = useRef<{ px: number; py: number; rx: number; ry: number } | null>(null);
+  const settle = useRef<number | null>(null);
+
+  /* Let go and the card rights itself three seconds later, so the
+     preview never gets abandoned face-down or edge-on. */
+  const scheduleSettle = () => {
+    if (settle.current) window.clearTimeout(settle.current);
+    settle.current = window.setTimeout(() => setRot({ x: 0, y: 0 }), 3000);
+  };
+  const cancelSettle = () => {
+    if (settle.current) { window.clearTimeout(settle.current); settle.current = null; }
+  };
+  useEffect(() => cancelSettle, []);
+
+  /* Enrollment is "<number>/<year>" — the year is picked, not typed */
+  const [enrolNo, setEnrolNo] = useState("");
+  const [enrolYear, setEnrolYear] = useState(String(new Date().getFullYear()));
+  useEffect(() => {
+    setData((d) => ({ ...d, enrollmentNo: enrolNo ? `${enrolNo}/${enrolYear}` : "" }));
+  }, [enrolNo, enrolYear]);
 
   const onPointerDown = (e: React.PointerEvent) => {
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    cancelSettle();
     drag.current = { px: e.clientX, py: e.clientY, rx: rot.x, ry: rot.y };
     setDragging(true);
   };
@@ -87,11 +113,12 @@ export default function IdCardSection() {
     (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);
     drag.current = null;
     setDragging(false);
+    scheduleSettle();
   };
 
   /* Flip snaps to the nearest half-turn that shows the other face */
-  const flip = () => setRot((r) => ({ x: 0, y: Math.round(r.y / 180) * 180 + 180 }));
-  const reset = () => setRot({ x: 0, y: 0 });
+  const flip = () => { cancelSettle(); setRot((r) => ({ x: 0, y: Math.round(r.y / 180) * 180 + 180 })); };
+  const reset = () => { cancelSettle(); setRot({ x: 0, y: 0 }); };
 
   const set = (k: keyof CardData, v: string) => setData((d) => ({ ...d, [k]: v }));
 
@@ -174,10 +201,30 @@ export default function IdCardSection() {
             <div className="grid gap-5 sm:grid-cols-2">
               <Field data={data} set={set} k="memberName" label={lang === "ta" ? "உறுப்பினர் பெயர்" : "Member Name"} placeholder="M Jenifer Arokia Mary" />
               <Field data={data} set={set} k="membershipNo" label={lang === "ta" ? "உறுப்பினர் எண்" : "Membership No."} placeholder="TNWLA/2026/01" />
-              <Field data={data} set={set} k="enrollmentNo" label={lang === "ta" ? "பதிவு எண்" : "Enrollment No."} placeholder="1080/2024" />
+              <label className="block">
+                <span className="mb-1.5 block font-sans text-[11px] uppercase tracking-widest text-ivory-dim">
+                  {lang === "ta" ? "பதிவு எண்" : "Enrollment No."}
+                </span>
+                <div className="flex items-center gap-2">
+                  <input className={cn(inputCls, "flex-1")} value={enrolNo} placeholder="1080"
+                    onChange={(e) => setEnrolNo(e.target.value)} />
+                  <span className="font-serif text-lg text-ivory-faint">/</span>
+                  <select className={cn(inputCls, "w-[110px]")} value={enrolYear} onChange={(e) => setEnrolYear(e.target.value)}>
+                    {ENROL_YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
+                  </select>
+                </div>
+              </label>
               <Field data={data} set={set} k="designation" label={lang === "ta" ? "பதவி" : "Designation"} placeholder="President" />
               <Field data={data} set={set} k="district" label={lang === "ta" ? "மாவட்டம்" : "District"} placeholder="Chennai" />
-              <Field data={data} set={set} k="blood" label={lang === "ta" ? "இரத்தப் பிரிவு" : "Blood Group"} placeholder="B+ve" />
+              <label className="block">
+                <span className="mb-1.5 block font-sans text-[11px] uppercase tracking-widest text-ivory-dim">
+                  {lang === "ta" ? "இரத்தப் பிரிவு" : "Blood Group"}
+                </span>
+                <select className={inputCls} value={data.blood} onChange={(e) => set("blood", e.target.value)}>
+                  <option value="">{lang === "ta" ? "தேர்ந்தெடுக்கவும்" : "Select…"}</option>
+                  {BLOOD_GROUPS.map((b) => <option key={b} value={b}>{b}</option>)}
+                </select>
+              </label>
               <Field data={data} set={set} k="mobile" label={lang === "ta" ? "கைபேசி எண்" : "Mobile No."} placeholder="99625 02244" />
               <Field data={data} set={set} k="validUpTo" label={lang === "ta" ? "செல்லுபடி வரை" : "Valid Up To"} placeholder="June 2027" />
               <Field data={data} set={set} k="cardNo" label={lang === "ta" ? "அட்டை வரிசை எண்" : "Card Serial"} placeholder="08" />
@@ -207,8 +254,12 @@ export default function IdCardSection() {
                 value={photo} onPick={(f) => readImage(f, setPhoto)} onClear={() => setPhoto(null)}
               />
               <Drop
-                label={lang === "ta" ? "கையொப்பம் (வெளிப்படை PNG சிறந்தது)" : "Signature — transparent PNG works best"}
-                value={signature} onPick={(f) => readImage(f, setSignature)} onClear={() => setSignature(null)}
+                label={signature
+                  ? (lang === "ta" ? "கையொப்பம் (மாற்றப்பட்டது)" : "Signature — replacing the default")
+                  : (lang === "ta" ? "கையொப்பம் — தலைவரின் கையொப்பம் இயல்பாக உள்ளது" : "Signature — President's signature is the default")}
+                value={signature ?? "/media/president-signature.png"}
+                onPick={(f) => readImage(f, setSignature)}
+                onClear={() => setSignature(null)}
               />
             </div>
 
@@ -260,13 +311,17 @@ export default function IdCardSection() {
                   transition: dragging ? "none" : "transform 0.75s cubic-bezier(.2,.75,.2,1)",
                   cursor: dragging ? "grabbing" : "grab",
                   touchAction: "none",
-                  filter: "drop-shadow(0 22px 40px rgba(15,35,80,0.45))",
+                  /* NO filter, opacity or overflow on this element. Any of
+                     them forces the browser to flatten the 3D subtree, which
+                     kills backface-visibility — the back face stops hiding
+                     and you see the front mirrored instead. The shadow lives
+                     on each face instead. */
                 }}
               >
-                <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}>
+                <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", borderRadius: 14, boxShadow: "0 22px 40px -12px rgba(15,35,80,0.5)" }}>
                   <CardFront data={data} photo={photo} signature={signature} />
                 </div>
-                <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", transform: "rotateY(180deg)" }}>
+                <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", transform: "rotateY(180deg)", borderRadius: 14, boxShadow: "0 22px 40px -12px rgba(15,35,80,0.5)" }}>
                   <CardBack data={data} />
                 </div>
               </div>

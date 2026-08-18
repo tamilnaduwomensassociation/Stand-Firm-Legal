@@ -65,7 +65,7 @@ export default function CaseStudyDetail({ study }: { study: Study }) {
           <p className="font-serif text-xl leading-relaxed text-ivory md:text-2xl">{study.result}</p>
         </div>
 
-        <p className="mt-8 font-sans text-[11px] leading-relaxed text-ivory-faint">
+        <p className="prose-justify mt-8 font-sans text-[11px] leading-relaxed text-ivory-faint">
           {lang === "ta"
             ? "இது பொது சட்ட விழிப்புணர்வுக்காக எழுதப்பட்டது; உங்கள் வழக்குக்கான சட்ட ஆலோசனை அல்ல. நடவடிக்கை எடுப்பதற்கு முன் எங்களை அணுகவும்."
             : "Written for general legal awareness — it is not advice on your matter. Statutes, rules and platform obligations change; every case turns on its own facts. Speak to us before you act on any of it."}

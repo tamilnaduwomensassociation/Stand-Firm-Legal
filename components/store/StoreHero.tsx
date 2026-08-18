@@ -2,11 +2,16 @@
 
 /**
  * STAND FIRM LEGAL ASSOCIATES — page masthead.
- * Sits above the service store on /stand-firm.
+ *
+ * The page opens on the firm's brand film, scrubbed by scroll rather
+ * than played on a timer (see components/ui/ScrubHero.tsx). Once the
+ * film has run its course the page settles into the credentials strip
+ * and hands off to the service store below.
  */
 import { ArrowDown, Landmark, ShieldCheck, Timer } from "lucide-react";
 import { site } from "@/config/site.config";
 import { useLang } from "@/lib/i18n";
+import ScrubHero from "@/components/ui/ScrubHero";
 
 export default function StoreHero() {
   const { lang } = useLang();
@@ -36,7 +41,29 @@ export default function StoreHero() {
   ];
 
   return (
-    <section id="stand-firm-top" className="force-dark relative overflow-hidden bg-obsidian-deep">
+    <>
+      {/* ---------- the film ---------- */}
+      <ScrubHero
+        id="stand-firm-top"
+        src="/media/sfla-scrub.mp4"
+        poster="/media/stills/sfla-poster.jpg"
+        freeze="/media/stills/sfla-freeze.jpg"
+        runway="+=300%"
+        scrollHint={lang === "ta" ? "உருட்டவும்" : "Scroll — the film follows your hand"}
+      >
+        <h1 className="font-serif text-4xl leading-tight gold-text md:text-6xl lg:text-7xl">
+          Stand Firm Legal Associates
+        </h1>
+        <p className="mt-4 font-sans text-[11px] uppercase tracking-luxe text-ivory-dim">
+          {site.firmReg}
+        </p>
+        <p className="mt-6 font-serif text-xl text-gold-bright/90 md:text-2xl">
+          {lang === "ta" ? "நாங்கள் கேட்கிறோம். வாதாடுகிறோம். நீங்கள் வெல்கிறீர்கள்." : site.motto}
+        </p>
+      </ScrubHero>
+
+      {/* ---------- what the firm stands on ---------- */}
+      <section className="force-dark relative overflow-hidden bg-obsidian-deep">
       <div
         className="absolute inset-0 bg-cover bg-center opacity-25"
         style={{ backgroundImage: "url(/media/stills/scene-1.jpg)" }}
@@ -48,13 +75,6 @@ export default function StoreHero() {
       <div className="relative section-pad mx-auto max-w-6xl text-center">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/media/sfla-logo.png" alt="Stand Firm Legal Associates" className="mx-auto h-24 w-auto md:h-28" />
-
-        <h1 className="mt-7 font-serif text-4xl leading-tight gold-text md:text-6xl">
-          Stand Firm Legal Associates
-        </h1>
-        <p className="mt-3 font-sans text-[11px] uppercase tracking-luxe text-ivory-dim">
-          {site.firmReg}
-        </p>
 
         <p className="mx-auto mt-7 max-w-3xl prose-justify text-center font-sans text-[15px] leading-relaxed text-ivory-dim md:text-base">
           {lang === "ta"
@@ -81,6 +101,7 @@ export default function StoreHero() {
           {lang === "ta" ? "சேவைகளைப் பார்" : "Browse Services"} <ArrowDown size={14} />
         </a>
       </div>
-    </section>
+      </section>
+    </>
   );
 }

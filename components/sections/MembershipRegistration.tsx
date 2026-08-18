@@ -17,14 +17,17 @@
  * deep link and QR handle collection, with the applicant entering the
  * UTR so it travels with the application.
  */
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useGSAP } from "@gsap/react";
 import {
-  ArrowLeft, Briefcase, Check, ChevronLeft, ChevronRight, Download, Eye,
+  ArrowLeft, Briefcase, Check, CheckCircle2, ChevronLeft, ChevronRight, Download, Eye,
   GraduationCap, Mail, MessageCircle, PackageCheck, Scale, Smartphone,
-  Upload, X, type LucideIcon,
+  Upload, Wallet, X, type LucideIcon,
 } from "lucide-react";
 import { gsap } from "@/lib/gsap";
+import { openGooglePay, platform, upiLinks } from "@/lib/upi";
+import { downloadReceipt, receiptNumber, sendReceiptEmail, sendReceiptWhatsApp } from "@/lib/receipt";
+import PaymentReceipt from "@/components/ui/PaymentReceipt";
 import { site } from "@/config/site.config";
 import {
   commonUploads, declarationText, membershipCategories, membershipSteps,
@@ -137,6 +140,7 @@ function UploadBox({ spec, file, onPick, onClear, lang, hint }: {
 export default function MembershipRegistration({ embedded = false }: { embedded?: boolean }) {
   const root = useRef<HTMLElement>(null);
   const docRef = useRef<HTMLDivElement>(null);
+  const receiptRef = useRef<HTMLDivElement>(null);
   const { lang, t } = useLang();
   const tr = t as unknown as (k: string) => string;
 
@@ -148,6 +152,12 @@ export default function MembershipRegistration({ embedded = false }: { embedded?
   const [txn, setTxn] = useState("");
   const [preview, setPreview] = useState(false);
   const [qrOk, setQrOk] = useState(true);
+
+  /* Receipt state — see the note above the payment block */
+  const [receiptNo, setReceiptNo] = useState("");
+  const [paidOn, setPaidOn] = useState("");
+  const [plat, setPlat] = useState<"android" | "ios" | "desktop">("desktop");
+  useEffect(() => setPlat(platform()), []);
 
   /* Wizard = base steps + uploads + payment */
   const steps = useMemo(() => {
@@ -208,10 +218,69 @@ export default function MembershipRegistration({ embedded = false }: { embedded?
     setStep(step + 1);
   };
 
-  /* ---------- PAYMENT ---------- */
-  const upiLink = cat
-    ? `upi://pay?pa=${encodeURIComponent(paymentConfig.upiId)}&pn=${encodeURIComponent(paymentConfig.upiPayeeName)}&am=${cat.joiningFee}&cu=INR&tn=${encodeURIComponent("TNWLA Membership - " + cat.en)}`
-    : "";
+  /* ---------- PAYMENT ----------
+     The deep link carries the joining fee for the chosen category, so
+     the amount the applicant sees in Google Pay is the amount shown on
+     this screen. What it cannot do is tell the website the payment went
+     through — see the long note at the top of lib/upi.ts. The receipt
+     below is therefore issued against the reference the applicant
+     supplies and is confirmed by the office against the bank account. */
+  const upiRequest = {
+    upiId: paymentConfig.upiId,
+    payeeName: paymentConfig.upiPayeeName,
+    amount: cat?.joiningFee ?? 0,
+    note: `TNWLA Membership - ${cat?.en ?? ""}`.trim(),
+    /* No `tr` here: the receipt number is only minted once the applicant
+       reports a reference, which is after this link has been used. The
+       note above already identifies what the payment is for. */
+  };
+  const anyUpiLink = upiLinks(upiRequest).any;
+
+  const payWithGooglePay = () => openGooglePay(upiRequest);
+  const payWithAnyUpiApp = () => { window.location.href = anyUpiLink; };
+
+  const refOk = txn.trim().replace(/\s/g, "").length >= 6;
+
+  /* Receipt is minted the moment a usable reference appears */
+  useEffect(() => {
+    if (refOk && !receiptNo) {
+      setReceiptNo(receiptNumber("TNWLA/MEM"));
+      setPaidOn(new Date().toISOString());
+    }
+  }, [refOk, receiptNo]);
+
+  const receiptFile = () => `Receipt-${(receiptNo || "TNWLA").replace(/[^A-Za-z0-9-]/g, "-")}`;
+
+  const receiptText = () =>
+    `*Tamilnadu Women Law Association — Madras*\n` +
+    `Payment Acknowledgement\n\n` +
+    `Receipt No: ${receiptNo}\n` +
+    `Date: ${new Date(paidOn || Date.now()).toLocaleDateString("en-IN")}\n\n` +
+    `Received from: ${vals.name || "—"}\nPhone: ${vals.phone || "—"}\n\n` +
+    `Towards: Membership joining fee — ${cat?.en ?? ""}\n` +
+    `*Total received: ₹${(cat?.joiningFee ?? 0).toLocaleString("en-IN")}*\n` +
+    `Mode: UPI · UTR/Ref: ${txn}\n\n` +
+    `Annual renewal thereafter: ₹${cat?.renewalFee ?? 0}.\n` +
+    `This acknowledges a payment reported against the reference above; ` +
+    `the association confirms every credit against its bank account before ` +
+    `membership is taken on record.\n` +
+    `${site.address}\n${site.phones[0]}`;
+
+  const receiptPdf = async () => {
+    if (receiptRef.current) await downloadReceipt(receiptRef.current, receiptFile());
+  };
+  const receiptWhatsApp = async () => {
+    if (receiptRef.current) await sendReceiptWhatsApp(receiptRef.current, receiptFile(), receiptText());
+  };
+  const receiptEmail = async () => {
+    if (!receiptRef.current) return;
+    await sendReceiptEmail(receiptRef.current, receiptFile(), {
+      to: vals.email || site.formEmail,
+      cc: vals.email ? site.formEmail : undefined,
+      subject: `Membership Payment Receipt ${receiptNo} — TNWLA Madras`,
+      body: receiptText().replace(/\*/g, ""),
+    });
+  };
 
   /**
    * INTEGRATION POINT — live gateway.
@@ -455,14 +524,32 @@ export default function MembershipRegistration({ embedded = false }: { embedded?
                 </div>
 
                 <div className="flex flex-col justify-center gap-3">
-                  <a href={upiLink} className="flex items-center justify-center gap-2 rounded-full bg-gold px-5 py-3 font-sans text-xs uppercase tracking-widest text-black transition-all hover:bg-gold-bright">
-                    <Smartphone size={15} /> Pay by UPI
-                  </a>
-                  <button onClick={startGatewayPayment} className="flex items-center justify-center gap-2 rounded-full gold-border px-5 py-3 font-sans text-xs uppercase tracking-widest text-gold transition-all hover:bg-gold hover:text-black">
+                  {/* Amount and payee travel with the link, so the
+                      applicant only has to enter their UPI PIN. */}
+                  <button
+                    onClick={payWithGooglePay}
+                    disabled={plat === "desktop"}
+                    className="flex items-center justify-center gap-2.5 rounded-full bg-gold px-5 py-3.5 font-sans text-xs uppercase tracking-widest text-black transition-all hover:bg-gold-bright disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <Wallet size={15} />
+                    {lang === "ta" ? `கூகுள் பே — ₹${cat.joiningFee}` : `Pay ₹${cat.joiningFee} with Google Pay`}
+                  </button>
+                  <button
+                    onClick={payWithAnyUpiApp}
+                    disabled={plat === "desktop"}
+                    className="flex items-center justify-center gap-2 rounded-full gold-border px-5 py-3 font-sans text-xs uppercase tracking-widest text-gold transition-all hover:bg-gold hover:text-black disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <Smartphone size={14} /> {lang === "ta" ? "வேறு UPI செயலி" : "Any other UPI app"}
+                  </button>
+                  <button onClick={startGatewayPayment} className="flex items-center justify-center gap-2 rounded-full border border-[var(--hairline)] px-5 py-2.5 font-sans text-[11px] uppercase tracking-widest text-ivory-faint transition-all hover:text-ivory">
                     Card / Netbanking
                   </button>
                   <p className="font-sans text-[11px] leading-relaxed text-ivory-faint">
-                    {lang === "ta" ? paymentConfig.renewalNoteTa : paymentConfig.renewalNote}
+                    {plat === "desktop"
+                      ? lang === "ta"
+                        ? "கணினியில் UPI செயலி திறக்காது — தொலைபேசியில் QR ஐ ஸ்கேன் செய்யவும்."
+                        : "A computer has no UPI app to open — scan the QR with your phone instead."
+                      : lang === "ta" ? paymentConfig.renewalNoteTa : paymentConfig.renewalNote}
                   </p>
                 </div>
               </div>
@@ -471,8 +558,51 @@ export default function MembershipRegistration({ embedded = false }: { embedded?
                 <span className="mb-1.5 block font-sans text-xs uppercase tracking-widest text-ivory-dim">
                   {tr("txnRef")} <span className="text-gold">*</span>
                 </span>
-                <input className={inputCls} value={txn} onChange={(e) => setTxn(e.target.value)} placeholder="e.g. 4512 8890 2231" />
+                <input className={inputCls} value={txn} onChange={(e) => setTxn(e.target.value)} placeholder="e.g. 4512 8890 2231" inputMode="numeric" />
+                <span className="mt-2 block font-sans text-[11px] leading-relaxed text-ivory-faint">
+                  {lang === "ta"
+                    ? "கூகுள் பே-யில் பரிவர்த்தனையைத் திறந்து “UPI transaction ID” ஐ நகலெடுக்கவும்."
+                    : "In Google Pay, open the transaction and copy the “UPI transaction ID”."}
+                </span>
               </label>
+
+              {/* ---- receipt, once a reference has been given ---- */}
+              {refOk && receiptNo && (
+                <div className="rounded-xl border border-gold/40 bg-gold-faint p-6">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle2 size={22} className="shrink-0 text-gold" />
+                    <div>
+                      <p className="font-serif text-xl text-ivory">
+                        {lang === "ta" ? "கட்டணம் பதிவு செய்யப்பட்டது" : "Payment Recorded"}
+                      </p>
+                      <p className="font-sans text-[11px] text-ivory-faint">
+                        {lang === "ta" ? "ரசீது எண்" : "Receipt No"}: {receiptNo}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 flex flex-wrap gap-3">
+                    <button onClick={receiptPdf}
+                      className="flex items-center gap-2 rounded-full gold-border px-5 py-2.5 font-sans text-xs uppercase tracking-widest text-gold transition-all hover:bg-gold hover:text-black">
+                      <Download size={14} /> {lang === "ta" ? "ரசீது PDF" : "Receipt PDF"}
+                    </button>
+                    <button onClick={receiptWhatsApp}
+                      className="flex items-center gap-2 rounded-full bg-[#25D366] px-5 py-2.5 font-sans text-xs uppercase tracking-widest text-white transition-all hover:brightness-110">
+                      <MessageCircle size={14} /> {lang === "ta" ? "வாட்ஸ்அப்" : "WhatsApp"}
+                    </button>
+                    <button onClick={receiptEmail}
+                      className="flex items-center gap-2 rounded-full bg-gold px-5 py-2.5 font-sans text-xs uppercase tracking-widest text-black transition-all hover:bg-gold-bright">
+                      <Mail size={14} /> {lang === "ta" ? "மின்னஞ்சல்" : "Email"}
+                    </button>
+                  </div>
+
+                  <p className="prose-justify mt-4 font-sans text-[11px] leading-relaxed text-ivory-faint">
+                    {lang === "ta"
+                      ? "இது நீங்கள் தெரிவித்த கட்டணத்திற்கான ஒப்புகை. வங்கிக் கணக்கில் வரவு உறுதி செய்யப்பட்ட பின்னரே உறுப்பினர் பதிவு இறுதி செய்யப்படும். தொடர்ந்து விண்ணப்பத்தை சமர்ப்பிக்கவும்."
+                      : "This acknowledges the payment you reported. Membership is taken on record once the association traces the credit in its bank account. Continue below to submit the application itself."}
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
@@ -581,6 +711,33 @@ export default function MembershipRegistration({ embedded = false }: { embedded?
           <ArrowLeft size={13} /> {tr("changeCategory")}
         </button>
       </div>
+
+      {/* Receipt — off-screen, rasterised on demand. Mounted only once a
+          receipt number exists so its images are never fetched for
+          visitors who never reach the payment step. */}
+      {receiptNo && cat && (
+        <div className="pointer-events-none fixed -left-[9999px] top-0" aria-hidden>
+          <div ref={receiptRef}>
+            <PaymentReceipt
+              receiptNo={receiptNo}
+              dateISO={paidOn}
+              towards={`Membership joining fee — ${cat.en}`}
+              payer={{
+                name: vals.name || "",
+                phone: vals.phone || "",
+                email: vals.email || "",
+                address: vals.address || "",
+              }}
+              lines={[
+                { label: `Membership joining fee — ${cat.en}`, sub: "One time, on admission", amount: cat.joiningFee },
+              ]}
+              total={cat.joiningFee}
+              reference={txn}
+              footNote={`Annual renewal thereafter is ₹${cat.renewalFee}.`}
+            />
+          </div>
+        </div>
+      )}
 
       {/* ================= PREVIEW ================= */}
       {preview && (

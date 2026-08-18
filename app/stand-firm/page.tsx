@@ -30,7 +30,11 @@ export default function StandFirmPage() {
   return (
     <>
       <Navbar />
-      <main className="pt-24 md:pt-28">
+      {/* No top padding: the page opens on a full-bleed pinned
+          ScrubHero and the navbar floats over it, exactly as on
+          the home page. Padding here would push the pinned
+          section down and leave a band of background above it. */}
+      <main>
         <StoreHero />
         <ServiceStore />
         {/* The deed particulars form has no section of its own any more —

@@ -19,13 +19,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Building2, Check, CheckCircle2, ChevronRight, Download, FileSignature, LandPlot,
-  Mail, MessageCircle, Minus, PenLine, Plus, Search, ShoppingBag, Smartphone, Trash2, X,
+  Mail, MessageCircle, Minus, PenLine, Plus, Search, ShieldCheck, ShoppingBag, Smartphone,
+  Trash2, Wallet, X,
   type LucideIcon,
 } from "lucide-react";
 import { storeCategories, storeNotice, type StoreItem } from "@/config/store.config";
 import { paymentConfig } from "@/config/forms.config";
 import { site } from "@/config/site.config";
 import { useLang } from "@/lib/i18n";
+import { openGooglePay, platform, upiLinks } from "@/lib/upi";
+import { downloadReceipt, receiptNumber, sendReceiptEmail, sendReceiptWhatsApp } from "@/lib/receipt";
+import PaymentReceipt from "@/components/ui/PaymentReceipt";
 import { cn } from "@/lib/utils";
 
 const catIcons: Record<string, LucideIcon> = { LandPlot, FileSignature, Building2 };
@@ -49,6 +53,7 @@ const inr = (n: number) => n.toLocaleString("en-IN");
 export default function ServiceStore() {
   const { lang } = useLang();
   const docRef = useRef<HTMLDivElement>(null);
+  const receiptRef = useRef<HTMLDivElement>(null);
 
   const [activeCat, setActiveCat] = useState(storeCategories[0].id);
   const [query, setQuery] = useState("");
@@ -66,6 +71,15 @@ export default function ServiceStore() {
   const [buyer, setBuyer] = useState({ name: "", phone: "", email: "", address: "", notes: "" });
   const [txn, setTxn] = useState("");
   const [showErrors, setShowErrors] = useState(false);
+
+  /* Payment hand-off state. `handedOff` only means the UPI app was
+     opened — it is NOT proof of payment; see the note in lib/upi.ts. */
+  const [handedOff, setHandedOff] = useState(false);
+  const [receiptNo, setReceiptNo] = useState("");
+  const [paidOn, setPaidOn] = useState("");
+  const [plat, setPlat] = useState<"android" | "ios" | "desktop">("desktop");
+
+  useEffect(() => setPlat(platform()), []);
 
   /* ---- cart persistence ---- */
   useEffect(() => {
@@ -126,9 +140,25 @@ export default function ServiceStore() {
   /* ---- checkout ---- */
   const detailsOk = buyer.name.trim() !== "" && buyer.phone.trim().length >= 10;
 
-  const upiLink = `upi://pay?pa=${encodeURIComponent(paymentConfig.upiId)}&pn=${encodeURIComponent(
-    paymentConfig.upiPayeeName
-  )}&am=${total}&cu=INR&tn=${encodeURIComponent("SFLA Services " + (orderNo || ""))}`;
+  /* Everything the UPI app needs. Amount comes straight from the cart,
+     so what the payer sees in Google Pay is what the cart says. */
+  const upiRequest = {
+    upiId: paymentConfig.upiId,
+    payeeName: paymentConfig.upiPayeeName,
+    amount: total,
+    note: `SFLA Services ${orderNo || ""}`.trim(),
+    ref: orderNo,
+  };
+  const links = upiLinks(upiRequest);
+
+  const payWithGooglePay = () => {
+    setHandedOff(true);
+    openGooglePay(upiRequest); // no-op on desktop — the QR is there instead
+  };
+  const payWithAnyUpiApp = () => {
+    setHandedOff(true);
+    window.location.href = links.any;
+  };
 
   const goToPay = () => {
     if (!detailsOk) { setShowErrors(true); return; }
@@ -178,26 +208,63 @@ export default function ServiceStore() {
 
   const downloadPdf = async () => { (await buildPdf())?.save(`${orderNo || "SFLA-order"}.pdf`); };
 
-  const sendWhatsApp = async () => {
+  /* Send the full order sheet to the office — how they learn of it. */
+  const sendOrderToOffice = async () => {
     await downloadPdf();
-    window.open(`https://wa.me/${site.formWhatsapp}?text=${encodeURIComponent(orderText())}`, "_blank");
+    window.open(`https://wa.me/${site.formWhatsapp}?text=${encodeURIComponent(orderText())}`, "_blank", "noopener");
+  };
+
+  /* ---- payment confirmation & receipt -----------------------------
+     The reference number is the only evidence a static site can have
+     that money moved, so it is required before a receipt is issued.  */
+  const refOk = txn.trim().replace(/\s/g, "").length >= 6;
+
+  const confirmPaid = () => {
+    if (!refOk) { setShowErrors(true); return; }
+    setShowErrors(false);
+    setReceiptNo(receiptNumber("TNWLA/SFLA"));
+    setPaidOn(new Date().toISOString());
     setStage("done");
   };
-  const sendEmail = async () => {
-    await downloadPdf();
-    window.open(
-      `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(site.formEmail)}&su=${encodeURIComponent(
-        "Service Order " + orderNo
-      )}&body=${encodeURIComponent(orderText())}`,
-      "_blank"
-    );
-    setStage("done");
+
+  const receiptFile = () => `Receipt-${(receiptNo || orderNo || "TNWLA").replace(/[^A-Za-z0-9-]/g, "-")}`;
+
+  const receiptText = () =>
+    `*Tamilnadu Women Law Association — Madras*\n` +
+    `Payment Acknowledgement\n\n` +
+    `Receipt No: ${receiptNo}\n` +
+    `Order No: ${orderNo}\n` +
+    `Date: ${new Date(paidOn || Date.now()).toLocaleDateString("en-IN")}\n\n` +
+    `Received from: ${buyer.name}\nPhone: ${buyer.phone}\n\n` +
+    `Towards: Professional charges — Stand Firm Legal Associates\n` +
+    cart.map((l) => `• ${l.en} × ${l.qty} — ₹${inr(l.price * l.qty)}`).join("\n") +
+    `\n\n*Total received: ₹${inr(total)}*\n` +
+    `Mode: UPI · UTR/Ref: ${txn}\n\n` +
+    `This acknowledges a payment reported against the reference above; ` +
+    `our office confirms every credit against the bank account. ` +
+    `Government fees and stamp duty are billed separately at actuals.\n` +
+    `${site.address}\n${site.phones[0]}`;
+
+  const receiptPdf = async () => {
+    if (receiptRef.current) await downloadReceipt(receiptRef.current, receiptFile());
+  };
+  const receiptWhatsApp = async () => {
+    if (receiptRef.current) await sendReceiptWhatsApp(receiptRef.current, receiptFile(), receiptText());
+  };
+  const receiptEmail = async () => {
+    if (!receiptRef.current) return;
+    await sendReceiptEmail(receiptRef.current, receiptFile(), {
+      to: buyer.email || site.formEmail,
+      cc: buyer.email ? site.formEmail : undefined,
+      subject: `Payment Receipt ${receiptNo} — TNWLA Madras`,
+      body: receiptText().replace(/\*/g, ""),
+    });
   };
 
   const resetAll = () => {
     setCart([]); setCheckout(false); setCartOpen(false); setStage("details");
     setBuyer({ name: "", phone: "", email: "", address: "", notes: "" });
-    setTxn(""); setOrderNo("");
+    setTxn(""); setOrderNo(""); setHandedOff(false); setReceiptNo(""); setPaidOn("");
   };
 
   /* ================================================================= */
@@ -405,7 +472,7 @@ export default function ServiceStore() {
               <p className="kicker !tracking-[0.2em]">
                 {stage === "details" && (lang === "ta" ? "உங்கள் விவரங்கள்" : "Your Details")}
                 {stage === "pay" && (lang === "ta" ? "கட்டணம்" : "Payment")}
-                {stage === "done" && (lang === "ta" ? "ஆர்டர் அனுப்பப்பட்டது" : "Order Sent")}
+                {stage === "done" && (lang === "ta" ? "ரசீது" : "Receipt")}
               </p>
               <button onClick={() => setCheckout(false)} aria-label="Close"><X size={20} className="text-ivory-dim hover:text-gold" /></button>
             </div>
@@ -486,38 +553,131 @@ export default function ServiceStore() {
                     </div>
 
                     <div className="flex flex-col justify-center gap-3">
-                      <a href={upiLink}
-                        className="flex items-center justify-center gap-2 rounded-full bg-gold px-5 py-3 font-sans text-xs uppercase tracking-widest text-black transition-all hover:bg-gold-bright">
-                        <Smartphone size={15} /> {lang === "ta" ? "UPI மூலம் செலுத்து" : "Pay by UPI"}
-                      </a>
+                      {/* Google Pay carries the amount and the order number
+                          with it, so the payer only enters their UPI PIN. */}
+                      <button
+                        onClick={payWithGooglePay}
+                        disabled={plat === "desktop"}
+                        className="flex items-center justify-center gap-2.5 rounded-full bg-gold px-5 py-3.5 font-sans text-xs uppercase tracking-widest text-black transition-all hover:bg-gold-bright disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        <Wallet size={15} />
+                        {lang === "ta" ? `கூகுள் பே — ₹${inr(total)}` : `Pay ₹${inr(total)} with Google Pay`}
+                      </button>
+
+                      <button
+                        onClick={payWithAnyUpiApp}
+                        disabled={plat === "desktop"}
+                        className="flex items-center justify-center gap-2 rounded-full gold-border px-5 py-3 font-sans text-xs uppercase tracking-widest text-gold transition-all hover:bg-gold hover:text-black disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        <Smartphone size={14} />
+                        {lang === "ta" ? "வேறு UPI செயலி" : "Any other UPI app"}
+                      </button>
+
                       <p className="font-sans text-[11px] leading-relaxed text-ivory-faint">
-                        {lang === "ta"
-                          ? "செலுத்திய பிறகு பரிமாற்ற எண்ணை உள்ளிட்டு ஆர்டரை அனுப்பவும். அரசு கட்டணம் தனி."
-                          : "Pay, then enter the reference number below and send the order. Government fees and stamp duty are billed separately."}
+                        {plat === "desktop"
+                          ? lang === "ta"
+                            ? "கணினியில் UPI செயலி திறக்காது — உங்கள் தொலைபேசியில் இடதுபுற QR ஐ ஸ்கேன் செய்யவும்."
+                            : "A computer has no UPI app to open — scan the QR on the left with your phone instead."
+                          : lang === "ta"
+                            ? "தொகையும் ஆர்டர் எண்ணும் ஏற்கனவே நிரப்பப்படும். செலுத்திய பிறகு இங்கே திரும்பி வரவும்."
+                            : "The amount and order number are filled in for you. Come back here after paying."}
                       </p>
                     </div>
                   </div>
 
+                  {/* The reference number. A static website cannot see your
+                      bank, so this is what the receipt is issued against. */}
                   <label className="block">
                     <span className="mb-1.5 block font-sans text-xs uppercase tracking-widest text-ivory-dim">
-                      {lang === "ta" ? "பணப் பரிமாற்ற எண் / UTR" : "Payment Reference / UTR Number"}
+                      {lang === "ta" ? "பணப் பரிமாற்ற எண் / UTR" : "Payment Reference / UTR Number"}{" "}
+                      <span className="text-gold">*</span>
                     </span>
-                    <input className={inputCls} value={txn} onChange={(e) => setTxn(e.target.value)} placeholder="e.g. 4512 8890 2231" />
+                    <input
+                      className={cn(inputCls, showErrors && !refOk && "border-red-500/70 focus:border-red-500/70")}
+                      value={txn}
+                      onChange={(e) => setTxn(e.target.value)}
+                      placeholder="e.g. 4512 8890 2231"
+                      inputMode="numeric"
+                    />
+                    <span className="mt-2 block font-sans text-[11px] leading-relaxed text-ivory-faint">
+                      {lang === "ta"
+                        ? "கூகுள் பே-யில் பரிவர்த்தனையைத் திறந்தால் “UPI transaction ID” என்று காணப்படும். ரசீது இதன் அடிப்படையில் வழங்கப்படுகிறது."
+                        : "In Google Pay, open the transaction and copy the “UPI transaction ID”. The receipt is issued against it and our office then confirms the credit in the bank account."}
+                    </span>
                   </label>
+
+                  {handedOff && !refOk && (
+                    <div className="flex items-start gap-3 rounded-xl border border-gold/40 bg-gold-faint p-4">
+                      <ShieldCheck size={17} className="mt-0.5 shrink-0 text-gold" />
+                      <p className="font-sans text-[12px] leading-relaxed text-ivory-dim">
+                        {lang === "ta"
+                          ? "கட்டணம் முடிந்ததா? மேலே உள்ள பரிமாற்ற எண்ணை உள்ளிட்டால் உடனே ரசீது கிடைக்கும்."
+                          : "Payment done? Enter the reference number above and your receipt is generated straight away."}
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
 
               {/* ---------- STAGE 3 ---------- */}
               {stage === "done" && (
-                <div className="flex flex-col items-center justify-center gap-5 py-16 text-center">
-                  <CheckCircle2 size={58} className="text-gold" />
-                  <h3 className="font-serif text-3xl text-ivory">{lang === "ta" ? "ஆர்டர் அனுப்பப்பட்டது" : "Order Sent"}</h3>
-                  <p className="max-w-sm font-sans text-sm leading-relaxed text-ivory-dim">
+                <div className="flex flex-col items-center gap-6 py-6 text-center">
+                  <span className="flex h-20 w-20 items-center justify-center rounded-full border border-gold/50 bg-gold-faint">
+                    <CheckCircle2 size={44} className="text-gold" />
+                  </span>
+
+                  <div>
+                    <h3 className="font-serif text-3xl text-ivory">
+                      {lang === "ta" ? "கட்டணம் பதிவு செய்யப்பட்டது" : "Payment Recorded"}
+                    </h3>
+                    <p className="mt-2 font-serif text-4xl gold-text">₹{inr(total)}</p>
+                  </div>
+
+                  <dl className="w-full max-w-sm space-y-2 rounded-xl border border-gold/30 bg-gold-faint p-5 text-left font-sans text-[12px]">
+                    {[
+                      [lang === "ta" ? "ரசீது எண்" : "Receipt No", receiptNo],
+                      [lang === "ta" ? "ஆர்டர் எண்" : "Order No", orderNo],
+                      [lang === "ta" ? "UTR / குறிப்பு" : "UTR / Reference", txn],
+                      [lang === "ta" ? "பெயர்" : "Name", buyer.name],
+                    ].map(([k, v]) => (
+                      <div key={k} className="flex justify-between gap-4">
+                        <dt className="uppercase tracking-widest text-ivory-faint">{k}</dt>
+                        <dd className="text-right text-ivory">{v || "—"}</dd>
+                      </div>
+                    ))}
+                  </dl>
+
+                  {/* Receipt delivery */}
+                  <div className="flex w-full max-w-md flex-wrap justify-center gap-3">
+                    <button onClick={receiptPdf}
+                      className="flex items-center gap-2 rounded-full gold-border px-5 py-2.5 font-sans text-xs uppercase tracking-widest text-gold transition-all hover:bg-gold hover:text-black">
+                      <Download size={14} /> {lang === "ta" ? "ரசீது PDF" : "Receipt PDF"}
+                    </button>
+                    <button onClick={receiptWhatsApp}
+                      className="flex items-center gap-2 rounded-full bg-[#25D366] px-5 py-2.5 font-sans text-xs uppercase tracking-widest text-white transition-all hover:brightness-110">
+                      <MessageCircle size={14} /> {lang === "ta" ? "வாட்ஸ்அப்" : "WhatsApp"}
+                    </button>
+                    <button onClick={receiptEmail}
+                      className="flex items-center gap-2 rounded-full bg-gold px-5 py-2.5 font-sans text-xs uppercase tracking-widest text-black transition-all hover:bg-gold-bright">
+                      <Mail size={14} />
+                      {buyer.email
+                        ? lang === "ta" ? "மின்னஞ்சல்" : "Email to me"
+                        : lang === "ta" ? "மின்னஞ்சல்" : "Email"}
+                    </button>
+                  </div>
+
+                  <button onClick={sendOrderToOffice}
+                    className="font-sans text-[11px] uppercase tracking-luxe text-gold underline-offset-4 hover:underline">
+                    {lang === "ta" ? "முழு ஆர்டரையும் அலுவலகத்திற்கு அனுப்பு" : "Also send the full order sheet to our office"}
+                  </button>
+
+                  <p className="prose-justify max-w-md font-sans text-[11px] leading-relaxed text-ivory-faint">
                     {lang === "ta"
-                      ? `ஆர்டர் எண் ${orderNo}. எங்கள் அலுவலகம் விரைவில் வாட்ஸ்அப்பில் உறுதிப்படுத்தி, தேவையான ஆவணங்களைக் கேட்கும்.`
-                      : `Order ${orderNo} is with our office. We will confirm on WhatsApp shortly and tell you exactly which documents to send.`}
+                      ? "இது நீங்கள் தெரிவித்த கட்டணத்திற்கான ஒப்புகை. வங்கிக் கணக்கில் வரவு உறுதி செய்யப்பட்ட பின் அலுவலகம் வாட்ஸ்அப்பில் தொடர்பு கொள்ளும். அரசு கட்டணம், முத்திரைத்தாள் கட்டணம் தனியாக வசூலிக்கப்படும்."
+                      : "This acknowledges the payment you reported. Our office verifies the credit in the bank account and will reach you on WhatsApp with the documents needed. Government fees and stamp duty are billed separately at actuals."}
                   </p>
-                  <button onClick={resetAll} className="text-xs uppercase tracking-luxe text-gold hover:text-gold-bright">
+
+                  <button onClick={resetAll} className="text-xs uppercase tracking-luxe text-ivory-dim hover:text-gold">
                     {lang === "ta" ? "மற்றொரு ஆர்டர்" : "Place another order"}
                   </button>
                 </div>
@@ -540,23 +700,42 @@ export default function ServiceStore() {
                     {lang === "ta" ? "கட்டணத்திற்கு" : "Continue to Payment"} <ChevronRight size={14} />
                   </button>
                 ) : (
-                  <div className="flex flex-wrap gap-3">
+                  <div className="flex flex-wrap items-center gap-3">
                     <button onClick={downloadPdf}
-                      className="flex items-center gap-2 rounded-full gold-border px-5 py-2.5 font-sans text-xs uppercase tracking-widest text-gold transition-all hover:bg-gold hover:text-black">
-                      <Download size={14} /> PDF
+                      className="flex items-center gap-2 rounded-full gold-border px-5 py-2.5 font-sans text-xs uppercase tracking-widest text-ivory-dim transition-all hover:bg-white/10 hover:text-ivory">
+                      <Download size={14} /> {lang === "ta" ? "ஆர்டர் PDF" : "Order PDF"}
                     </button>
-                    <button onClick={sendWhatsApp}
-                      className="flex items-center gap-2 rounded-full bg-[#25D366] px-5 py-2.5 font-sans text-xs uppercase tracking-widest text-white transition-all hover:brightness-110">
-                      <MessageCircle size={14} /> {lang === "ta" ? "வாட்ஸ்அப்" : "WhatsApp"}
-                    </button>
-                    <button onClick={sendEmail}
-                      className="flex items-center gap-2 rounded-full bg-gold px-5 py-2.5 font-sans text-xs uppercase tracking-widest text-black transition-all hover:bg-gold-bright">
-                      <Mail size={14} /> {lang === "ta" ? "மின்னஞ்சல்" : "Email"}
+                    <button
+                      onClick={confirmPaid}
+                      disabled={!refOk}
+                      className="flex items-center gap-2 rounded-full bg-gold px-7 py-3 font-sans text-xs uppercase tracking-widest text-black transition-all hover:bg-gold-bright disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      <CheckCircle2 size={14} />
+                      {lang === "ta" ? "செலுத்திவிட்டேன் — ரசீது பெறு" : "I have paid — get receipt"}
                     </button>
                   </div>
                 )}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Receipt — off-screen, rasterised by html2canvas on demand.
+          Mounted only once a receipt number exists, so the images inside
+          it are never fetched for visitors who do not pay. */}
+      {receiptNo && (
+        <div className="pointer-events-none fixed -left-[9999px] top-0" aria-hidden>
+          <div ref={receiptRef}>
+            <PaymentReceipt
+              receiptNo={receiptNo}
+              dateISO={paidOn}
+              towards={`Professional charges — Stand Firm Legal Associates · Order ${orderNo}`}
+              payer={buyer}
+              lines={cart.map((l) => ({ label: l.en, sub: l.cat, qty: l.qty, amount: l.price * l.qty }))}
+              total={total}
+              reference={txn}
+            />
           </div>
         </div>
       )}
