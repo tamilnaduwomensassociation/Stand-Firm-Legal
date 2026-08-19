@@ -48,7 +48,7 @@ function toCardData(m: MemberRecord): CardData {
 export default function VerifyMembership() {
   const { lang } = useLang();
   const [tab, setTab] = useState<"verify" | "result">("verify");
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState("TNWLA/2026/");
   const [found, setFound] = useState<MemberRecord | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [showBack, setShowBack] = useState(false);
