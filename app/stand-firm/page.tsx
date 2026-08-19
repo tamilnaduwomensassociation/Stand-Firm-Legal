@@ -45,7 +45,7 @@ export default function StandFirmPage() {
         <SFLAServices />
       </main>
       <Footer />
-      <FloatingActions />
+      <FloatingActions brandIcon="/media/marks/sfla-float-mark.png" />
       <Chatbot />
       <SearchOverlay />
     </>
