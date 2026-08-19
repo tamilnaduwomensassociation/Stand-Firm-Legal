@@ -8,7 +8,7 @@
 import { useState } from "react";
 import {
   BookOpen, CheckCircle2, Landmark, Laptop, Mail, MessageCircle, MousePointerClick,
-  Phone, ShoppingBag, UtensilsCrossed, type LucideIcon,
+  Phone, ShoppingBag, UtensilsCrossed, X, type LucideIcon,
 } from "lucide-react";
 import { jeni, site } from "@/config/site.config";
 import { useLang } from "@/lib/i18n";
@@ -26,8 +26,21 @@ const inputCls =
 export default function JeniEnterprises() {
   const { lang } = useLang();
   const [vertical, setVertical] = useState("");
+  /* The shop is not part of the page until Foods is opened. It carries
+     ten products, their photographs and a whole checkout, so leaving it
+     mounted put a storefront under every visitor who only came to read
+     about the other four verticals. */
+  const [shopOpen, setShopOpen] = useState(false);
   const [form, setForm] = useState({ name: "", phone: "", message: "" });
   const [sent, setSent] = useState(false);
+
+  const openShop = () => {
+    setShopOpen(true);
+    /* Wait a frame for the section to mount before scrolling to it */
+    window.requestAnimationFrame(() =>
+      document.getElementById("foods")?.scrollIntoView({ behavior: "smooth", block: "start" })
+    );
+  };
 
   const send = () => {
     if (!form.name || !form.phone) return;
@@ -49,6 +62,7 @@ export default function JeniEnterprises() {
         poster="/media/stills/jeni-poster.jpg"
         freeze="/media/stills/jeni-freeze.jpg"
         runway="+=300%"
+        shade={0.18}
         scrollHint={lang === "ta" ? "உருட்டவும்" : "Scroll — the film follows your hand"}
       >
         {/* The film already draws the wordmark and the tagline, so the
@@ -61,12 +75,14 @@ export default function JeniEnterprises() {
             ? "உணவு, புத்தகங்கள், தகவல் தொழில்நுட்ப சேவைகள், வங்கி ஏல சொத்துக்கள் மற்றும் இ-சேவை — ஐந்து பிரிவுகள், ஒரே அலுவலகம்."
             : "Foods, books, IT services, bank auction property and e-sevai — five verticals, one counter."}
         </p>
-        <a
-          href="#foods"
+        {/* Not an anchor: #foods does not exist in the DOM until the
+            shop is opened, so a plain href would scroll nowhere. */}
+        <button
+          onClick={openShop}
           className="mt-6 inline-flex items-center gap-2.5 rounded-full bg-gold px-8 py-4 font-sans text-xs uppercase tracking-widest text-black transition-all hover:bg-gold-bright"
         >
           <ShoppingBag size={15} /> {lang === "ta" ? "உணவுப் பொருட்களை வாங்க" : "Shop Foods"}
-        </a>
+        </button>
       </ScrubHero>
 
       {/* ---------------- VERTICALS ---------------- */}
@@ -90,10 +106,7 @@ export default function JeniEnterprises() {
               <button
                 key={v.id}
                 onClick={() => {
-                  if (isShop) {
-                    document.getElementById("foods")?.scrollIntoView({ behavior: "smooth", block: "start" });
-                    return;
-                  }
+                  if (isShop) { openShop(); return; }
                   setVertical(active ? "" : v.id);
                 }}
                 className={cn(
@@ -128,15 +141,28 @@ export default function JeniEnterprises() {
       </section>
 
       {/* ---------------- FOODS SHOP ----------------
-          Ten products, one cart, Google Pay checkout. Opened by the
-          Foods card above; also reachable at /jeni#foods. */}
-      <div className="bg-obsidian pt-4 text-center">
-        <p className="kicker">{lang === "ta" ? "ஆன்லைன் கடை" : "Shop Online"}</p>
-        <h2 className="mt-3 font-serif text-3xl gold-text md:text-5xl">
-          {lang === "ta" ? "ஜெனி உணவுப் பொருட்கள்" : "Jeni Foods"}
-        </h2>
-      </div>
-      <FoodShop />
+          Ten products, one cart, Google Pay checkout. Mounted only once
+          the Foods card is opened, and closable again. */}
+      {shopOpen && (
+        <>
+          <div className="bg-obsidian pt-4 text-center">
+            <p className="kicker">{lang === "ta" ? "ஆன்லைன் கடை" : "Shop Online"}</p>
+            <h2 className="mt-3 font-serif text-3xl gold-text md:text-5xl">
+              {lang === "ta" ? "ஜெனி உணவுப் பொருட்கள்" : "Jeni Foods"}
+            </h2>
+            <button
+              onClick={() => {
+                setShopOpen(false);
+                document.getElementById("verticals")?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+              className="mt-5 inline-flex items-center gap-2 rounded-full gold-border px-5 py-2.5 font-sans text-[10px] uppercase tracking-luxe text-ivory-dim transition-all hover:bg-gold hover:text-black"
+            >
+              <X size={13} /> {lang === "ta" ? "கடையை மூடு" : "Close the shop"}
+            </button>
+          </div>
+          <FoodShop />
+        </>
+      )}
 
       {/* ---------------- ENQUIRY ---------------- */}
       <section id="enquiry" className="bg-obsidian-deep section-pad">

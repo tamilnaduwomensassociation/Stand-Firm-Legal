@@ -67,6 +67,13 @@ export default function FoodShop() {
   const [buyer, setBuyer] = useState({ name: "", phone: "", email: "", address: "", pin: "", notes: "" });
   const [txn, setTxn] = useState("");
   const [orderNo, setOrderNo] = useState("");
+  /* The basket is emptied the moment payment is recorded, so the
+     floating "1 item" badge cannot survive a completed order. The
+     receipt still needs those lines, so they are snapshotted here
+     first — the document must keep showing what was actually paid
+     for, even after the basket it came from is gone. */
+  const [paidLines, setPaidLines] = useState<Line[]>([]);
+  const [paidTotal, setPaidTotal] = useState(0);
   const [receiptNo, setReceiptNo] = useState("");
   const [paidOn, setPaidOn] = useState("");
   const [showErrors, setShowErrors] = useState(false);
@@ -157,17 +164,26 @@ export default function FoodShop() {
   const confirmPaid = () => {
     if (!refOk) { setShowErrors(true); return; }
     setShowErrors(false);
+    setPaidLines(cart);          // freeze what was bought…
+    setPaidTotal(total);
+    setCart([]);                 // …then empty the basket
     setReceiptNo(receiptNumber("JENI/FOODS"));
     setPaidOn(new Date().toISOString());
     setStage("done");
   };
 
-  /* Lines grouped by who actually despatches them */
+  /* Everything below the payment step reads the snapshot, never the
+     live basket — which is empty by then. */
+  const doneLines = paidLines.length ? paidLines : cart;
+  const doneTotal = paidLines.length ? paidTotal : total;
+
+  /* Lines grouped by who actually despatches them. Reads doneLines so
+     the order sheet still works after the basket has been emptied. */
   const byMaker = useMemo(() => {
     const m = new Map<string, Line[]>();
-    cart.forEach((l) => m.set(l.maker, [...(m.get(l.maker) ?? []), l]));
+    doneLines.forEach((l) => m.set(l.maker, [...(m.get(l.maker) ?? []), l]));
     return [...m.entries()];
-  }, [cart]);
+  }, [doneLines]);
 
   const orderText = () =>
     `*Jeni Foods — Order*\n` +
@@ -179,7 +195,7 @@ export default function FoodShop() {
         `${maker}:\n` + lines.map((l) => `• ${l.en} (${l.pack}) × ${l.qty} — ₹${inr(l.price * l.qty)}`).join("\n")
       )
       .join("\n\n") +
-    `\n\n*Total: ₹${inr(total)}*\n` +
+    `\n\n*Total: ₹${inr(doneTotal)}*\n` +
     `UTR/Ref: ${txn || "-"}\n` +
     (buyer.notes ? `\nNotes: ${buyer.notes}\n` : "") +
     `\n${foodsNotice.en}`;
@@ -192,8 +208,8 @@ export default function FoodShop() {
     `Date: ${new Date(paidOn || Date.now()).toLocaleDateString("en-IN")}\n\n` +
     `Received from: ${buyer.name}\nPhone: ${buyer.phone}\n` +
     `Deliver to: ${buyer.address}${buyer.pin ? ` — ${buyer.pin}` : ""}\n\n` +
-    cart.map((l) => `• ${l.en} (${l.pack}) × ${l.qty} — ₹${inr(l.price * l.qty)}`).join("\n") +
-    `\n\n*Total received: ₹${inr(total)}*\nMode: UPI · UTR/Ref: ${txn}\n\n` +
+    doneLines.map((l) => `• ${l.en} (${l.pack}) × ${l.qty} — ₹${inr(l.price * l.qty)}`).join("\n") +
+    `\n\n*Total received: ₹${inr(doneTotal)}*\nMode: UPI · UTR/Ref: ${txn}\n\n` +
     `This acknowledges a payment reported against the reference above; ` +
     `the credit is confirmed against the bank account before despatch. ` +
     `${foodsNotice.en}\n${site.phones[0]}`;
@@ -220,6 +236,7 @@ export default function FoodShop() {
     setCart([]); setCheckout(false); setCartOpen(false); setStage("details");
     setBuyer({ name: "", phone: "", email: "", address: "", pin: "", notes: "" });
     setTxn(""); setOrderNo(""); setReceiptNo(""); setPaidOn(""); setHandedOff(false);
+    setPaidLines([]); setPaidTotal(0);
   };
 
   /* ================================================================= */
@@ -393,7 +410,10 @@ export default function FoodShop() {
                 {stage === "pay" && (lang === "ta" ? "கட்டணம்" : "Payment")}
                 {stage === "done" && (lang === "ta" ? "ரசீது" : "Receipt")}
               </p>
-              <button onClick={() => setCheckout(false)} aria-label="Close">
+              <button
+                onClick={() => (stage === "done" ? resetAll() : setCheckout(false))}
+                aria-label="Close"
+              >
                 <X size={20} className="text-ivory-dim hover:text-gold" />
               </button>
             </div>
@@ -537,7 +557,7 @@ export default function FoodShop() {
                     <h3 className="font-serif text-3xl text-ivory">
                       {lang === "ta" ? "கட்டணம் பதிவு செய்யப்பட்டது" : "Payment Recorded"}
                     </h3>
-                    <p className="mt-2 font-serif text-4xl gold-text">₹{inr(total)}</p>
+                    <p className="mt-2 font-serif text-4xl gold-text">₹{inr(doneTotal)}</p>
                   </div>
 
                   <dl className="w-full max-w-sm space-y-2 rounded-xl border border-gold/30 bg-gold-faint p-5 text-left font-sans text-[12px]">
@@ -633,13 +653,13 @@ export default function FoodShop() {
                 email: buyer.email,
                 address: `${buyer.address}${buyer.pin ? ` — ${buyer.pin}` : ""}`,
               }}
-              lines={cart.map((l) => ({
+              lines={doneLines.map((l) => ({
                 label: l.en,
                 sub: `${l.brand} · ${l.pack} · ${l.maker}`,
                 qty: l.qty,
                 amount: l.price * l.qty,
               }))}
-              total={total}
+              total={doneTotal}
               reference={txn}
               footNote="Courier charges are extra and confirmed separately."
             />

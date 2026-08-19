@@ -59,6 +59,16 @@ type Props = {
   runway?: string;
   /** Hint under the scroll indicator */
   scrollHint?: string;
+  /**
+   * How hard to darken the film, 0–1.
+   *
+   * These two films sit at opposite ends: the Jeni reveal is near-white
+   * and the Stand Firm one near-black. A single fixed overlay cannot
+   * serve both — the value that gives the dark film depth turns the
+   * light one to mud, which is exactly what it was doing. Light films
+   * want roughly 0.18, dark films can take 0.35.
+   */
+  shade?: number;
   /** Headline block, laid over the opening frame; fades out early. */
   children?: ReactNode;
   id?: string;
@@ -70,6 +80,7 @@ export default function ScrubHero({
   freeze,
   runway = "+=320%",
   scrollHint,
+  shade = 0.3,
   children,
   id,
 }: Props) {
@@ -134,9 +145,9 @@ export default function ScrubHero({
         )
         .to(".scrub-copy", { yPercent: -35, opacity: 0, duration: 0.22, ease: "power1.in" }, 0.06)
         .to(".scrub-cue", { opacity: 0, duration: 0.06 }, 0)
-        .to(".scrub-shade", { opacity: 0.12, duration: 0.3 }, 0.15)
+        .to(".scrub-shade", { opacity: shade * 0.4, duration: 0.3 }, 0.15)
         .fromTo(".scrub-freeze", { opacity: 0 }, { opacity: 1, duration: 0.07 }, 0.93)
-        .to(".scrub-shade", { opacity: 0.35, duration: 0.07 }, 0.93);
+        .to(".scrub-shade", { opacity: shade, duration: 0.07 }, 0.93);
 
       return () => {
         cancelAnimationFrame(rafId);
@@ -144,7 +155,7 @@ export default function ScrubHero({
         window.removeEventListener("touchstart", prime);
       };
     },
-    { scope: root }
+    { scope: root, dependencies: [shade, runway] }
   );
 
   return (
@@ -201,8 +212,8 @@ export default function ScrubHero({
         aria-hidden
       />
 
-      <div className="scrub-shade absolute inset-0 bg-black/40" />
-      <div className="vignette absolute inset-0" />
+      <div className="scrub-shade absolute inset-0 bg-black" style={{ opacity: shade }} />
+      <div className="vignette absolute inset-0 opacity-60" />
 
       {/* ---- COPY ----
           Bottom-aligned, not centred. These films ARE the wordmark —

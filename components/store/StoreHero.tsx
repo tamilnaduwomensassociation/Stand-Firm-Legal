@@ -49,6 +49,7 @@ export default function StoreHero() {
         poster="/media/stills/sfla-poster.jpg"
         freeze="/media/stills/sfla-freeze.jpg"
         runway="+=300%"
+        shade={0.34}
         scrollHint={lang === "ta" ? "உருட்டவும்" : "Scroll — the film follows your hand"}
       >
         {/* The film ends on the firm's own wordmark, so the visible
