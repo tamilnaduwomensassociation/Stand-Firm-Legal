@@ -45,7 +45,6 @@
  * re-measuring against the new file.
  */
 import type { CSSProperties, RefObject } from "react";
-import QrCode from "@/components/ui/QrCode";
 
 export const CARD_W = 480;
 export const CARD_H = 255;
@@ -127,20 +126,17 @@ const B_XOFF = (CARD_W - 1626 * B_SCALE) / 2;
 const bx = (x: number) => B_XOFF + x * B_SCALE;
 const by = (y: number) => y * B_SCALE;
 
-/* Fallback if the QR link field is ever left empty — the card should
-   never show a blank/broken box, it should always encode something
-   a visitor can actually scan. */
+/* Kept as an exported constant in case a future template ever ships
+   without a working scan code baked into the artwork and the QR
+   needs to be drawn dynamically again. Not used while the template's
+   own QR is live — see the note in CardBack below. */
 export const DEFAULT_VERIFY_URL = "https://www.tnwla-madras.com/#verify-membership";
 
-/* QR corner, measured directly off the checkerboard pattern itself —
-   x[1298,1578] y[43,304]. The QR is always square, so it's sized to
-   the smaller of this box's two dimensions and centred. Nothing is
-   drawn behind it (the QR image is already fully opaque), so there
-   is nothing left to appear as a stray white box. */
-const QR_BOX = { left: bx(1298), top: by(43), width: bx(1578) - bx(1298), height: by(304) - by(43) };
-const QR_SIZE = Math.round(Math.min(QR_BOX.width, QR_BOX.height));
-const QR_LEFT = QR_BOX.left + (QR_BOX.width - QR_SIZE) / 2;
-const QR_TOP = QR_BOX.top + (QR_BOX.height - QR_SIZE) / 2;
+/* QR corner geometry, measured directly off the checkerboard pattern
+   for reference — x[1298,1578] y[43,304], the smaller of that box's
+   two dimensions gives a square that never overlaps the surrounding
+   artwork. Not currently used: see the note in CardBack below for
+   why, and how to bring this back if the template ever needs it. */
 
 /* Emergency-contact ruled line: y≈784, x[543,1110] */
 const EMERGENCY_LINE_Y = by(784);
@@ -224,12 +220,12 @@ export function CardBack({ data, cardRef }: { data: CardData; cardRef?: RefObjec
         style={{ ...noDrag.style, position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", objectPosition: "center" }}
       />
 
-      {/* QR — the image itself is fully opaque, so it's placed directly
-          with no wrapping box of its own. Falls back to a working link
-          if the verification-URL field is ever left empty. */}
-      <div style={{ position: "absolute", left: QR_LEFT, top: QR_TOP }}>
-        <QrCode value={data.verifyUrl || DEFAULT_VERIFY_URL} size={QR_SIZE} margin={2} />
-      </div>
+      {/* No QR overlay here on purpose — the template image itself now
+          has a working scan code baked directly into the artwork, so
+          drawing another one on top would just be a second, redundant
+          QR sitting over the first. If the template ever goes back to
+          a blank/placeholder QR graphic, the measurements to restore
+          this are in the "QR corner geometry" comment above. */}
 
       {/* emergency contact value — SVG text, see the TEXT POSITIONING
           note at the top of this file */}
