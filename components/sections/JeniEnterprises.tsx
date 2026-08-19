@@ -51,18 +51,19 @@ export default function JeniEnterprises() {
         runway="+=300%"
         scrollHint={lang === "ta" ? "உருட்டவும்" : "Scroll — the film follows your hand"}
       >
-        <h1 className="font-serif text-4xl leading-tight gold-text md:text-6xl lg:text-7xl">{jeni.name}</h1>
-        <p className="mt-4 font-sans text-[11px] uppercase tracking-luxe text-ivory-dim md:text-sm">
-          {jeni.tagline}
-        </p>
-        <p className="mx-auto mt-7 max-w-2xl font-sans text-[15px] leading-relaxed text-ivory-dim">
+        {/* The film already draws the wordmark and the tagline, so the
+            h1 is here for screen readers and search engines only. */}
+        <h1 className="sr-only">
+          {jeni.name} — {jeni.tagline}
+        </h1>
+        <p className="mx-auto max-w-2xl font-sans text-[13px] leading-relaxed text-ivory/90 md:text-[15px]">
           {lang === "ta"
-            ? "உணவு, புத்தகங்கள், தகவல் தொழில்நுட்ப சேவைகள், வங்கி ஏல சொத்துக்கள் மற்றும் இ-சேவை — ஐந்து பிரிவுகள், ஒரே அலுவலகம். ஸ்டாண்ட் ஃபர்ம் லீகல் அசோசியேட்ஸின் சகோதர நிறுவனம்."
-            : "Foods, books, IT services, bank auction property and e-sevai — five verticals, one counter. The sister enterprise to Stand Firm Legal Associates, run from the same office at Parrys."}
+            ? "உணவு, புத்தகங்கள், தகவல் தொழில்நுட்ப சேவைகள், வங்கி ஏல சொத்துக்கள் மற்றும் இ-சேவை — ஐந்து பிரிவுகள், ஒரே அலுவலகம்."
+            : "Foods, books, IT services, bank auction property and e-sevai — five verticals, one counter."}
         </p>
         <a
           href="#foods"
-          className="mt-9 inline-flex items-center gap-2.5 rounded-full bg-gold px-8 py-4 font-sans text-xs uppercase tracking-widest text-black transition-all hover:bg-gold-bright"
+          className="mt-6 inline-flex items-center gap-2.5 rounded-full bg-gold px-8 py-4 font-sans text-xs uppercase tracking-widest text-black transition-all hover:bg-gold-bright"
         >
           <ShoppingBag size={15} /> {lang === "ta" ? "உணவுப் பொருட்களை வாங்க" : "Shop Foods"}
         </a>

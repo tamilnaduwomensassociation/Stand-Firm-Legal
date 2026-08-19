@@ -51,14 +51,14 @@ export default function StoreHero() {
         runway="+=300%"
         scrollHint={lang === "ta" ? "உருட்டவும்" : "Scroll — the film follows your hand"}
       >
-        <h1 className="font-serif text-4xl leading-tight gold-text md:text-6xl lg:text-7xl">
-          Stand Firm Legal Associates
-        </h1>
-        <p className="mt-4 font-sans text-[11px] uppercase tracking-luxe text-ivory-dim">
-          {site.firmReg}
-        </p>
-        <p className="mt-6 font-serif text-xl text-gold-bright/90 md:text-2xl">
+        {/* The film ends on the firm's own wordmark, so the visible
+            headline would be a duplicate. Kept for assistive tech. */}
+        <h1 className="sr-only">Stand Firm Legal Associates — {site.motto}</h1>
+        <p className="font-serif text-lg text-gold-bright/90 md:text-2xl">
           {lang === "ta" ? "நாங்கள் கேட்கிறோம். வாதாடுகிறோம். நீங்கள் வெல்கிறீர்கள்." : site.motto}
+        </p>
+        <p className="mt-3 font-sans text-[10px] uppercase tracking-luxe text-ivory/80 md:text-[11px]">
+          {site.firmReg}
         </p>
       </ScrubHero>
 
