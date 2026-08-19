@@ -29,7 +29,7 @@ export default function JeniPage() {
         <JeniEnterprises />
       </main>
       <Footer />
-      <FloatingActions />
+      <FloatingActions brandIcon="/media/marks/jeni-float-mark.png" />
       <SearchOverlay />
     </>
   );
