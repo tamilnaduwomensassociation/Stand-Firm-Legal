@@ -16,11 +16,15 @@
  * ASPECT RATIO — CARD_W/CARD_H match the FRONT template's own native
  * proportions exactly, so the front face fills the card edge-to-edge
  * with zero cropping and zero blank margin. The back template is a
- * different shape (portrait-ish rather than ultra-wide), so it's
- * width-constrained instead of height-constrained inside the shared
- * box — see B_SCALE/B_XOFF below — leaving a small, unavoidable
- * blank margin on the left and right rather than cropping content
- * off or stretching it out of shape.
+ * different shape (portrait-ish rather than ultra-wide), so it can't
+ * fill the same box without either cropping content off or leaving a
+ * blank margin down the sides — and cropping isn't safe here, because
+ * the back's QR code and seal sit close enough to the edges that a
+ * crop tight enough to kill the margin would cut into them. So the
+ * back is stretched slightly to fill the box exactly instead (see
+ * `objectFit: "fill"` below) — a few percent horizontal stretch that
+ * reads as correct at a glance, in exchange for zero border and zero
+ * cropped content.
  *
  * TEXT POSITIONING — every dynamic value is drawn as SVG <text>, not
  * an HTML <span>. This isn't a style choice: html2canvas (the library
@@ -116,15 +120,15 @@ const VALUE_W = fx(1210 - 825);
 const ROW_LINE_Y = [385, 454, 523, 592, 660, 729, 798, 867].map(fy);
 
 /* ---------------- BACK template geometry ----------------
-   Source image: template-back.png, native 1626×967 — proportionally
-   taller/narrower than the front, so object-fit:contain in the
-   shared CARD_W×CARD_H box is HEIGHT-constrained here (the opposite
-   of the front), leaving a small blank margin on the left and right
-   instead of top and bottom. */
-const B_SCALE = Math.min(CARD_W / 1626, CARD_H / 967);
-const B_XOFF = (CARD_W - 1626 * B_SCALE) / 2;
-const bx = (x: number) => B_XOFF + x * B_SCALE;
-const by = (y: number) => y * B_SCALE;
+   Source image: template-back.png, native 1626×967. Since the image
+   is displayed with objectFit:"fill" (see the ASPECT RATIO note
+   above), it's stretched independently on each axis rather than
+   scaled uniformly — so x and y each need their own scale factor,
+   with no centering offset, unlike the front. */
+const B_SCALE_X = CARD_W / 1626;
+const B_SCALE_Y = CARD_H / 967;
+const bx = (x: number) => x * B_SCALE_X;
+const by = (y: number) => y * B_SCALE_Y;
 
 /* Kept as an exported constant in case a future template ever ships
    without a working scan code baked into the artwork and the QR
@@ -217,7 +221,7 @@ export function CardBack({ data, cardRef }: { data: CardData; cardRef?: RefObjec
         src="/media/id-card/template-back.png"
         alt=""
         {...noDrag}
-        style={{ ...noDrag.style, position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", objectPosition: "center" }}
+        style={{ ...noDrag.style, position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "fill" }}
       />
 
       {/* No QR overlay here on purpose — the template image itself now
