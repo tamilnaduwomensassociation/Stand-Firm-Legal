@@ -4,13 +4,20 @@
  * FLOATING FEATURES — WhatsApp, AI assistant, scroll-to-top.
  * (Phone/contact bubble removed by client request — the number
  * stays one tap away in the navbar and contact section.)
+ *
+ * The AI-assistant button shows a generic sparkle by default, but on
+ * /jeni and /stand-firm it's passed that page's own logo instead
+ * (see the `brandIcon` prop, and app/jeni/page.tsx and
+ * app/stand-firm/page.tsx for how each is wired) so the floating
+ * button reads as "this page's assistant," not a generic site-wide
+ * icon that happens to be floating over a different brand's film.
  */
 import { useEffect, useState } from "react";
 import { ArrowUp, MessageCircle, Sparkles } from "lucide-react";
 import { site } from "@/config/site.config";
 import { cn } from "@/lib/utils";
 
-export default function FloatingActions() {
+export default function FloatingActions({ brandIcon }: { brandIcon?: string } = {}) {
   const [showTop, setShowTop] = useState(false);
 
   useEffect(() => {
@@ -25,10 +32,15 @@ export default function FloatingActions() {
     <div className="fixed bottom-6 right-6 z-[85] flex flex-col items-center gap-3">
       <button
         onClick={() => window.dispatchEvent(new CustomEvent("sf:chat"))}
-        className={cn(base, "glass gold-border text-gold hover:shadow-[0_0_30px_rgba(201,162,75,0.45)] animate-float-slow")}
+        className={cn(base, "glass gold-border text-gold hover:shadow-[0_0_30px_rgba(201,162,75,0.45)] animate-float-slow overflow-hidden")}
         aria-label="Open AI legal assistant"
       >
-        <Sparkles size={20} />
+        {brandIcon ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={brandIcon} alt="" className="h-8 w-8 object-contain" />
+        ) : (
+          <Sparkles size={20} />
+        )}
       </button>
       <a
         href={`https://wa.me/${site.whatsapp}`} target="_blank" rel="noopener noreferrer"
