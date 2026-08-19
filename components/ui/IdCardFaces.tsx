@@ -12,17 +12,12 @@
  * a plain-HTML harness and photographed in a real browser before it
  * ships. This layout was checked that way.
  *
- * TYPOGRAPHY NOTE — field-row values truncate with an ellipsis, which
- * needs `overflow: hidden` somewhere. Put that on a plain wrapper div
- * that only does flex vertical-centering (row height fixed, alignItems
- * center) and let the text span itself size to its own natural line
- * box, with no fixed height or custom line-height of its own. html2canvas
- * reimplements text layout rather than delegating to the browser, and
- * a text node that carries BOTH `overflow: hidden` AND a hand-tuned
- * line-height while sitting in a `baseline`-aligned flex row is exactly
- * the combination it gets wrong — the clip rect and the glyph paint
- * position disagree, and the PNG export shows only the top sliver of
- * every value. Keep clipping and text on separate elements.
+ * TYPOGRAPHY NOTE — field-row values are truncated in JavaScript
+ * (see `truncate` below CardFront), not with CSS `overflow: hidden` +
+ * `text-overflow: ellipsis`. html2canvas has a known, unresolved bug
+ * where that CSS combination clips or garbles custom-webfont text in
+ * the exported canvas even though it renders correctly live — the
+ * safe fix is to never ask html2canvas to clip text at all.
  */
 import type { CSSProperties, RefObject } from "react";
 import QrCode from "@/components/ui/QrCode";
@@ -194,6 +189,16 @@ function Divider() {
 }
 
 /* ======================= FRONT ======================= */
+/* html2canvas has a long-standing bug where `overflow: hidden` +
+   `text-overflow: ellipsis` on custom-webfont text gets clipped or
+   garbled in the exported canvas — it shows fine live, then the PNG
+   export slices the bottom off every value. The values are the only
+   text on this card that used CSS-based ellipsis; the labels never
+   did, and the labels are the only text that always exported cleanly.
+   Fix: truncate in JS instead, so the exported DOM never has overflow
+   clipping to get wrong. */
+const truncate = (s: string, max: number) => (s.length > max ? `${s.slice(0, max - 1)}…` : s);
+
 export function CardFront({
   data, photo, signature, cardRef,
 }: {
@@ -257,28 +262,12 @@ export function CardFront({
             <div key={label} style={{ display: "flex", alignItems: "center", gap: 5, height: 18 }}>
               <span style={{ width: 84, flexShrink: 0, fontSize: 8.5, fontWeight: 700, color: INK, whiteSpace: "nowrap" }}>{label}</span>
               <span style={{ fontSize: 8.5, color: MUTED }}>:</span>
-              {/* The clipping box is this plain, height-less wrapper —
-                  it only centers the row via flexbox alignment, which
-                  html2canvas's layout engine handles reliably. The text
-                  itself lives in a separate span below with NO fixed
-                  height and NO custom line-height of its own, so its
-                  line box is whatever the glyphs naturally need and
-                  overflow:hidden never has a reason to slice through
-                  the middle of a character. (Putting overflow:hidden
-                  + a hand-tuned line-height directly on a baseline-
-                  aligned text node — the old approach — relies on
-                  html2canvas reproducing the browser's exact baseline
-                  math; it doesn't, and the mismatch is what sliced the
-                  top off every value in the exported PNG.) */}
-              <div style={{ flex: 1, minWidth: 0, height: 18, display: "flex", alignItems: "center", overflow: "hidden" }}>
-                <span style={{
-                  display: "block", width: "100%", fontSize: 9, fontWeight: accent ? 800 : 600,
-                  color: accent ? VAL : INK, whiteSpace: "nowrap",
-                  overflow: "hidden", textOverflow: "ellipsis",
-                }}>
-                  {value || "—"}
-                </span>
-              </div>
+              <span style={{
+                flex: 1, minWidth: 0, fontSize: 9, fontWeight: accent ? 800 : 600,
+                color: accent ? VAL : INK, whiteSpace: "nowrap",
+              }}>
+                {value ? truncate(value, 24) : "—"}
+              </span>
             </div>
           ))}
         </div>
