@@ -68,7 +68,7 @@ function answer(q: string): string {
   return `I can help with Indian & Tamil Nadu law — property & registration, the new criminal codes, family matters, consumer complaints, accident claims, labour, MSME, company registrations, wills, writs and women's rights. Ask me anything specific, or call ${site.phones[0]} to speak with our advocates.`;
 }
 
-export default function Chatbot() {
+export default function Chatbot({ brandIcon }: { brandIcon?: string } = {}) {
   const [open, setOpen] = useState(false);
   const [msgs, setMsgs] = useState<Msg[]>([
     { from: "bot", text: "Vanakkam! I am the TNWLA legal assistant — trained on Indian and Tamil Nadu law. Ask me about property, family, criminal, consumer, business matters or women's rights." },
@@ -123,7 +123,14 @@ export default function Chatbot() {
         >
           <div className="flex items-center justify-between border-b border-gold/20 px-5 py-4">
             <div className="flex items-center gap-3">
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gold-faint text-gold"><Sparkles size={17} /></span>
+              <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-gold-faint text-gold">
+                {brandIcon ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={brandIcon} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <Sparkles size={17} />
+                )}
+              </span>
               <div>
                 <p className="font-serif text-ivory">TNWLA Assistant</p>
                 <p className="text-[10px] uppercase tracking-luxe text-gold/80">India & TN legal knowledge</p>
