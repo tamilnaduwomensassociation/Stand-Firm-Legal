@@ -4,15 +4,18 @@
  * MEMBER ID CARD — build, preview, print.
  *
  * The card itself lives in components/ui/IdCardFaces.tsx. This section
- * is the workbench around it: the field form, the photograph and
- * signature uploads, the live flip preview and the PDF export.
+ * is the workbench around it: the field form, the photograph upload
+ * (the signature is part of the association's own printed template,
+ * so there is nothing to upload for it), the live flip preview and
+ * the PDF export.
  *
  * The export writes PNG — always, both faces, as two files. A card is
  * an image, not a document: PNG drops into a card-printer template, a
  * WhatsApp message or a Word merge without anyone having to crop a page
- * first. Each face is rasterised at 4× the 480 px working width, which
- * is 1920 × 1212 px — about 570 dpi at the physical 85.6 × 54 mm card,
- * comfortably past the 300 dpi print shops ask for.
+ * first. Each face is rasterised at 4× the 480 px working width — the
+ * card's proportions match the association's own front-template
+ * artwork exactly (not the generic CR80 blank), so nothing on the
+ * front is stretched or cropped to fit.
  *
  * The canvas is captured on a transparent backdrop, so the rounded
  * corners come out rounded instead of sitting on a white square.
@@ -71,7 +74,6 @@ export default function IdCardSection() {
     verifyUrl: "https://www.tnwla-madras.com/#home",
   });
   const [photo, setPhoto] = useState<string | null>(null);
-  const [signature, setSignature] = useState<string | null>(null); // null = use the President asset
   const [busy, setBusy] = useState(false);
 
   /* Free 3D rotation, driven by dragging the card.
@@ -207,8 +209,8 @@ export default function IdCardSection() {
           </h1>
           <p className="mx-auto mt-6 max-w-2xl font-sans text-[15px] leading-relaxed text-ivory-dim">
             {lang === "ta"
-              ? "விவரங்களை நிரப்பினால் அட்டை உடனடியாக உருவாகும். இரு பக்கமும் சரியான அட்டை அளவில் (85.6 × 54 மி.மீ) PNG படங்களாக பதிவிறக்கலாம்."
-              : "Fill in the details and the card renders as you type. Both faces download as print-ready PNG images at true card proportions — 85.6 × 54 mm, the same CR80 blank a card printer expects."}
+              ? "விவரங்களை நிரப்பினால் அட்டை உடனடியாக உருவாகும். இரு பக்கமும் சங்கத்தின் அதிகாரப்பூர்வ வடிவமைப்பில் PNG படங்களாக பதிவிறக்கலாம்."
+              : "Fill in the details and the card renders as you type. Both faces download as print-ready PNG images, matching the association's official card design exactly."}
           </p>
         </div>
       </section>
@@ -270,18 +272,10 @@ export default function IdCardSection() {
               </div>
             </div>
 
-            <div className="mt-7 grid gap-4 sm:grid-cols-2">
+            <div className="mt-7">
               <Drop
                 label={lang === "ta" ? "புகைப்படம் (பாஸ்போர்ட் அளவு)" : "Photograph — passport size, portrait"}
                 value={photo} onPick={(f) => readImage(f, setPhoto)} onClear={() => setPhoto(null)}
-              />
-              <Drop
-                label={signature
-                  ? (lang === "ta" ? "கையொப்பம் (மாற்றப்பட்டது)" : "Signature — replacing the default")
-                  : (lang === "ta" ? "கையொப்பம் — தலைவரின் கையொப்பம் இயல்பாக உள்ளது" : "Signature — President's signature is the default")}
-                value={signature ?? "/media/president-signature.png"}
-                onPick={(f) => readImage(f, setSignature)}
-                onClear={() => setSignature(null)}
               />
             </div>
 
@@ -307,7 +301,7 @@ export default function IdCardSection() {
           {/* ---- live preview ---- */}
           <div className="lg:sticky lg:top-32 lg:self-start">
             <p className="kicker !tracking-[0.25em] mb-5 text-center">
-              {lang === "ta" ? "நேரடி முன்னோட்டம்" : "Live Preview"} · 85.6 × 54 mm
+              {lang === "ta" ? "நேரடி முன்னோட்டம்" : "Live Preview"}
             </p>
 
             {/* Grab it and spin it. The two faces sit back to back in 3D
@@ -341,7 +335,7 @@ export default function IdCardSection() {
                 }}
               >
                 <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", borderRadius: 14, boxShadow: "0 22px 40px -12px rgba(15,35,80,0.5)" }}>
-                  <CardFront data={data} photo={photo} signature={signature} />
+                  <CardFront data={data} photo={photo} />
                 </div>
                 <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", transform: "rotateY(180deg)", borderRadius: 14, boxShadow: "0 22px 40px -12px rgba(15,35,80,0.5)" }}>
                   <CardBack data={data} />
@@ -358,14 +352,14 @@ export default function IdCardSection() {
                 parked off-screen. Rasterising the 3D preview would bake the
                 current rotation into the downloaded card. */}
             <div className="pointer-events-none fixed -left-[9999px] top-0" aria-hidden>
-              <CardFront data={data} photo={photo} signature={signature} cardRef={frontRef} />
+              <CardFront data={data} photo={photo} cardRef={frontRef} />
               <CardBack data={data} cardRef={backRef} />
             </div>
 
             <p className="mx-auto mt-6 max-w-[480px] text-center font-sans text-[11px] leading-relaxed text-ivory-faint">
               {lang === "ta"
                 ? "முன் மற்றும் பின் பக்கம் தனித்தனி PNG கோப்புகளாக, அச்சுத் தரத்தில் பதிவிறக்கப்படும். அட்டை எப்போதும் நேவி/வெள்ளை நிறத்திலேயே இருக்கும் — தளத்தின் இருள் பயன்முறை இதை பாதிக்காது."
-                : `Downloads as two PNG files — front and back — at ${CARD_W * 4} × ${CARD_H * 4} px, roughly 570 dpi on an 85.6 × 54 mm card. Artwork is fixed navy-on-white and ignores the site's light/dark theme, because a card has to print the same way every time.`}
+                : `Downloads as two PNG files — front and back — at ${CARD_W * 4} × ${CARD_H * 4} px, print quality. Artwork matches the association's official card design and ignores the site's light/dark theme, because a card has to print the same way every time.`}
             </p>
           </div>
         </div>

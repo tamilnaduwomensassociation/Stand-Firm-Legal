@@ -125,7 +125,7 @@ export default function VerifyMembership() {
 
           <div className="w-full overflow-x-auto">
             <div style={{ width: CARD_W, height: CARD_H, margin: "0 auto" }}>
-              {showBack ? <CardBack data={toCardData(found)} /> : <CardFront data={toCardData(found)} photo={null} signature={null} />}
+              {showBack ? <CardBack data={toCardData(found)} /> : <CardFront data={toCardData(found)} photo={null} />}
             </div>
           </div>
 
