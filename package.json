@@ -2,14 +2,15 @@
   "name": "tsjh-portals",
   "version": "1.0.0",
   "private": true,
-  "description": "TNWLA Madras · Stand Firm Legal Associates · Jeni Enterprises · Harmony Pranic Healing — four brands, one Next.js application.",
+  "description": "TNWLA Madras \u00b7 Stand Firm Legal Associates \u00b7 Jeni Enterprises \u00b7 Harmony Pranic Healing \u2014 four brands, one Next.js application.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "prebuild": "node scripts/fetch-news.mjs",
     "news": "node scripts/fetch-news.mjs",
-    "hash-password": "node scripts/hash-password.mjs"
+    "hash-password": "node scripts/hash-password.mjs",
+    "auth-check": "node scripts/auth-check.mjs"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
