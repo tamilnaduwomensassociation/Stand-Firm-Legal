@@ -182,7 +182,7 @@ export const practiceAreas: PracticeArea[] = [
       { slug: "white-collar", en: "White-Collar Defence", ta: "வெள்ளை காலர் குற்றங்கள்", desc: "Directors and officers facing prosecution over company affairs — vicarious liability under Section 141 NI Act and its equivalents, resisted on the facts of actual control." },
       { slug: "cheque-bounce", en: "Cheque Bounce", ta: "காசோலை மோசடி", desc: "Section 138 NI Act complaints and defences — the notice period, the debt in existence, and the presumption that has to be rebutted with evidence, not argument." },
     ],
-  },,
+  },
 
   /* ------------------------------ 4 ------------------------------ */
   {

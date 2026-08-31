@@ -122,7 +122,7 @@ export default function ThemePanel({ brand }: { brand: BrandId }) {
             const value = (theme as Record<string, unknown>)[f.key];
 
             if (f.type === "color") {
-              const paired = f.pairsWith ? (theme as Record<string, unknown>)[f.pairsWith] : undefined;
+              const paired = "pairsWith" in f && f.pairsWith ? (theme as Record<string, unknown>)[f.pairsWith] : undefined;
               const ratio = value && paired ? contrast(String(value), String(paired)) : null;
               return (
                 <div key={f.key}>

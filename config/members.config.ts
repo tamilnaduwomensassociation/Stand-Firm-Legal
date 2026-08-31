@@ -32,6 +32,8 @@ export type MemberRecord = {
   validUpTo: string;
   /** "MM-DD" — drives the birthday wishes panel. Optional. */
   dob?: string;
+  /** Photo URL or Data URI. Optional. */
+  photo?: string;
 };
 
 export const members: MemberRecord[] = [
