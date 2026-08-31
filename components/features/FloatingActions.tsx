@@ -26,13 +26,19 @@ export default function FloatingActions({ brandIcon }: { brandIcon?: string } = 
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  /* The two glass buttons were washing out over the pale part of the
+     hero film — legible against the dark half, ghosts against the light
+     half, which is how they came to look "hidden" next to the solid
+     green WhatsApp button. An opaque surface token behind the blur
+     fixes it in both themes without pinning a literal colour. */
   const base = "flex h-12 w-12 items-center justify-center rounded-full shadow-xl transition-all duration-500 hover:scale-110";
+  const solid = "bg-[rgb(var(--c-bg-soft))]/92";
 
   return (
     <div className="fixed bottom-6 right-6 z-[85] flex flex-col items-center gap-3">
       <button
         onClick={() => window.dispatchEvent(new CustomEvent("sf:chat"))}
-        className={cn(base, "glass gold-border text-gold hover:shadow-[0_0_30px_rgba(201,162,75,0.45)] animate-float-slow overflow-hidden")}
+        className={cn(base, solid, "glass gold-border text-gold hover:shadow-[0_0_30px_rgba(201,162,75,0.45)] animate-float-slow overflow-hidden")}
         aria-label="Open AI legal assistant"
       >
         {brandIcon ? (
@@ -51,7 +57,7 @@ export default function FloatingActions({ brandIcon }: { brandIcon?: string } = 
       </a>
       <button
         onClick={() => window.scrollTo({ top: 0 })}
-        className={cn(base, "glass text-ivory-dim hover:text-gold", showTop ? "opacity-100 translate-y-0" : "pointer-events-none opacity-0 translate-y-4")}
+        className={cn(base, solid, "glass text-ivory-dim hover:text-gold", showTop ? "opacity-100 translate-y-0" : "pointer-events-none opacity-0 translate-y-4")}
         aria-label="Scroll to top"
       >
         <ArrowUp size={19} />

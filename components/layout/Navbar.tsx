@@ -118,11 +118,24 @@ export default function Navbar() {
             <span className="font-serif text-base font-bold tracking-[0.12em] gold-text md:text-xl md:tracking-[0.14em]">
               TNWLA · MADRAS
             </span>
+            {/* Two lines, not one. On a single line this ran to roughly
+                300px — wider than the wordmark above it and the largest
+                single claim on the header's width, which is a good part
+                of why the link row had nowhere to go. Broken here it is
+                ~250px, and "MADRAS" reads as the chapter rather than as
+                a trailing fragment of the association's name.
+
+                It is also the header's cheapest space: between 1366 and
+                1600 the line steps aside so the links fit without
+                touching the marks. Below 1366 the drawer takes over and
+                there is room for it again. */}
             <span className={cn(
-              "mt-1 whitespace-nowrap font-sans text-[7.5px] font-extrabold uppercase tracking-[0.18em] transition-colors group-hover:text-gold md:text-[9px] md:tracking-[0.2em]",
+              "mt-1 flex flex-col whitespace-nowrap font-sans text-[7.5px] font-extrabold uppercase leading-[1.45] tracking-[0.18em] transition-colors group-hover:text-gold md:text-[9px] md:tracking-[0.2em]",
+              "min-[1366px]:hidden min-[1600px]:flex",
               onHeroFilm ? "text-white/80" : "text-ivory-dim"
             )}>
-              Tamilnadu Women Law Association — Madras
+              <span>Tamilnadu Women Law Association</span>
+              <span className="text-gold/85">— Madras</span>
             </span>
           </span>
         </a>
@@ -138,11 +151,26 @@ export default function Navbar() {
                1440px; the drawer takes over. It also never scales up: at
                2xl the old larger type and wider gaps cost more width than
                the extra viewport gave back. */
-            "hidden min-w-0 flex-1 items-center justify-center min-[1440px]:flex",
+            /* MEASURED AGAIN, because the header grew.
+               Eleven links need ~770px in English. Since the house marks
+               moved into the right cluster that side costs ~390px, and
+               the brand block ~370px with the subtitle showing — about
+               1630px in total, which is why the links were printing over
+               the Stand Firm mark at 1440px.
+
+               Two things fix it and neither hides anything a visitor
+               needs. The subtitle steps out between 1366 and 1600 (see
+               the brand block above), which returns ~250px, and the row
+               itself runs tighter below 1600. `overflow-hidden` is the
+               backstop: a centred flex row that runs out of width spills
+               sideways rather than shrinking, and spilling is what put
+               the links on top of the marks. Clipped is recoverable;
+               overlapping is not. */
+            "hidden min-w-0 flex-1 items-center justify-center overflow-hidden min-[1366px]:flex",
             onHeroFilm ? "text-white" : "text-ivory/90",
             ta
-              ? "gap-2.5 font-tamil text-[11px] normal-case tracking-normal"
-              : "gap-3.5 font-sans text-[11px] uppercase tracking-[0.1em]"
+              ? "gap-2 font-tamil text-[10.5px] normal-case tracking-normal min-[1600px]:gap-2.5 min-[1600px]:text-[11px]"
+              : "gap-2.5 font-sans text-[10px] uppercase tracking-[0.08em] min-[1600px]:gap-3.5 min-[1600px]:text-[11px] min-[1600px]:tracking-[0.1em]"
           )}
           aria-label="Primary"
         >
@@ -244,7 +272,7 @@ export default function Navbar() {
             <Search size={19} />
           </button>
           <button
-            className={cn("min-[1440px]:hidden", onHeroFilm ? "text-white" : "text-ivory")}
+            className={cn("min-[1366px]:hidden", onHeroFilm ? "text-white" : "text-ivory")}
             onClick={() => setOpen(!open)}
             aria-label="Toggle menu"
           >
@@ -256,7 +284,7 @@ export default function Navbar() {
       {/* ---------- Mobile drawer ---------- */}
       <div
         className={cn(
-          "overflow-hidden transition-all duration-500 glass !bg-obsidian/95 min-[1440px]:hidden",
+          "overflow-hidden transition-all duration-500 glass !bg-obsidian/95 min-[1366px]:hidden",
           open ? "max-h-[80vh] border-t border-gold/20" : "max-h-0"
         )}
       >

@@ -139,11 +139,35 @@ export default function WishesPanel() {
 
   return (
     <>
-      {/* The bell sits above the chat bubble in the floating stack. */}
+      {/*
+        THE BELL IS THE FOURTH BUTTON IN THE FLOATING COLUMN.
+
+        It is a separate component from FloatingActions, so its position
+        has to be derived rather than inherited — and it was guessed:
+        `right-5` against the stack's `right-6`, and a bottom offset that
+        matched no button in it. Four pixels out horizontally and a dozen
+        vertically is exactly the "not aligned like the WhatsApp one"
+        that was reported.
+
+        So the offset is now arithmetic, not a guess. The stack sits at
+        bottom-6 (24px) with 48px buttons and 12px gaps, and every button
+        occupies space whether or not it is visible — scroll-to-top fades
+        with opacity, it does not leave the flow. Counting up from the
+        bottom:
+
+          scroll-to-top   24 →  72
+          WhatsApp        84 → 132
+          assistant      144 → 192
+          bell           204 → 252   ← this button
+
+        Same right edge, same size, same surface as the rest of the
+        column, so the four read as one control rather than three plus a
+        stray.
+      */}
       <button
         onClick={() => { setOpen(true); markSeen(); }}
         aria-label={ta ? "வாழ்த்துகள் & அறிவிப்புகள்" : "Wishes and notices"}
-        className="fixed bottom-[172px] right-5 z-[88] flex h-12 w-12 items-center justify-center rounded-full glass gold-border text-gold shadow-[0_10px_30px_-8px_rgba(0,0,0,0.6)] transition-all hover:bg-gold hover:text-black md:bottom-[188px] md:right-8"
+        className="fixed bottom-[204px] right-6 z-[88] flex h-12 w-12 items-center justify-center rounded-full glass gold-border bg-[rgb(var(--c-bg-soft))]/92 text-gold shadow-xl transition-all duration-500 hover:scale-110 hover:bg-gold hover:text-black"
       >
         <Bell size={19} />
         {today.length > 0 && !seen && (

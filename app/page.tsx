@@ -11,6 +11,7 @@
  * hero reaches first paint with minimal JS (Lighthouse-friendly).
  */
 import dynamic from "next/dynamic";
+import { brandMarks } from "@/config/site.config";
 import Preloader from "@/components/layout/Preloader";
 import Navbar from "@/components/layout/Navbar";
 import Hero from "@/components/sections/Hero";
@@ -62,9 +63,11 @@ export default function Home() {
         <EventsSection limit={3} />
       </main>
       <Footer />
-      <FloatingActions />
+      {/* The association's own mark, so the home page matches the three
+          brand pages and the last generic sparkle leaves the site. */}
+      <FloatingActions brandIcon={brandMarks.start} />
       <WishesPanel />
-      <Chatbot />
+      <Chatbot brandIcon={brandMarks.start} />
       <SearchOverlay />
     </>
   );
