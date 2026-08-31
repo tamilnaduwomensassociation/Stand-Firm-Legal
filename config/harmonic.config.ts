@@ -43,7 +43,7 @@ export const harmony = {
   phones: ["+91 99625 02244"],          /* TODO stock — confirm the centre's own number */
   whatsapp: "919962502244",
   whatsappDisplay: "+91 99625 02244",
-  email: "tnwlam2023@gmail.com",        /* TODO stock — confirm a dedicated address */
+  email: "advocate.mjenifer@zoho.com",   /* One address across all four brands. */
   address: "Armenian Street, Parrys, Chennai — 600 001",
 
   /** Shown at the foot of every Harmony page. Do not remove. */

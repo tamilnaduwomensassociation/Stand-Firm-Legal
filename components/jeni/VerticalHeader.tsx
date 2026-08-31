@@ -19,7 +19,7 @@ export default function VerticalHeader({ vertical }: { vertical: Vertical }) {
   const Icon = icons[vertical.icon] ?? Boxes;
 
   return (
-    <section className="relative overflow-hidden bg-obsidian-deep pb-12 pt-16 md:pt-20">
+    <section className="relative overflow-hidden bg-obsidian-deep pb-12 pt-36 md:pt-44">
       <div
         className="absolute inset-0 bg-cover bg-center opacity-[0.15]"
         style={{ backgroundImage: "url(/media/stills/jeni-freeze.jpg)" }}

@@ -40,7 +40,7 @@ export const jeni = {
   poster: "/media/stills/jeni-poster.jpg",
   whatsapp: "919962502244",
   whatsappDisplay: "+91 99625 02244",
-  email: "tnwlam2023@gmail.com",
+  email: "advocate.mjenifer@zoho.com",
   address: "Armenian Street, Parrys, Chennai — 600 001",
   phones: ["+91 99625 02244", "+91 89396 26242"],
 };

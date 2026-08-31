@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import Navbar from "@/components/layout/Navbar";
-import VerticalTabs from "@/components/jeni/VerticalTabs";
+import JeniNavbar from "@/components/jeni/JeniNavbar";
 import { jeni } from "@/config/jeni.config";
 import ThemeStyle from "@/components/providers/ThemeStyle";
 
@@ -10,13 +9,17 @@ export const metadata: Metadata = {
     "Foods, clothing, sarees, wholesale combos, import and export of Milagu and spices, IT services, books, bank auction property and e-sevai — from Armenian Street, Parrys, Chennai.",
 };
 
-/** The tab strip belongs to every /jeni page, so it lives in the layout. */
+/**
+ * Every route beneath /jeni wears Jeni's own chrome — and, as with
+ * /stand-firm, no route beneath it renders a navbar of its own, so
+ * there is no way for the association's bar to reappear here by
+ * accident. The counter tabs are row two of JeniNavbar.
+ */
 export default function JeniLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <ThemeStyle brand="jeni" />
-      <Navbar />
-      <VerticalTabs />
+      <JeniNavbar />
       {children}
     </>
   );

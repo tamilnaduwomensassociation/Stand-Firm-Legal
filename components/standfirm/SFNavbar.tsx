@@ -36,6 +36,7 @@ import { areaIcon } from "@/components/standfirm/icons";
 import { useLang } from "@/lib/i18n";
 import { useLockPageScroll } from "@/lib/useLockPageScroll";
 import { cn } from "@/lib/utils";
+import BackToAssociation from "@/components/ui/BackToAssociation";
 
 const SECONDARY = [
   { href: "/stand-firm/about", en: "About Us", ta: "எங்களைப் பற்றி" },
@@ -118,7 +119,10 @@ export default function SFNavbar() {
       onMouseLeave={hoverClose}
     >
       {/* ================= ROW 1 — brand + utilities ================= */}
-      <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-4 px-4 py-3 md:px-8">
+      <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-3 px-4 py-3 md:gap-4 md:px-8">
+        <div className="flex min-w-0 shrink-0 items-center gap-3">
+        <BackToAssociation />
+
         <Link href="/stand-firm" className="group flex shrink-0 items-center gap-3" aria-label={`${sf.name} — home`}>
           <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/95 ring-1 ring-gold/40 transition-all duration-300 group-hover:ring-gold md:h-12 md:w-12">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -136,6 +140,7 @@ export default function SFNavbar() {
             </span>
           </span>
         </Link>
+        </div>
 
         {/* secondary row, desktop */}
         <nav

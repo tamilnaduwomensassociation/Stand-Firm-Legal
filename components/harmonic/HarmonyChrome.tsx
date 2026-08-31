@@ -14,6 +14,7 @@ import { Flame, GraduationCap, Mail, MapPin, Phone, ScrollText, type LucideIcon 
 import { harmony, harmonyTabs } from "@/config/harmonic.config";
 import { useLang } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import BackToAssociation from "@/components/ui/BackToAssociation";
 
 const icons: Record<string, LucideIcon> = { Flame, GraduationCap, ScrollText };
 
@@ -24,7 +25,10 @@ export function HarmonyHeader() {
 
   return (
     <header className="fixed inset-x-0 top-0 z-[80] glass !bg-obsidian/92 shadow-[0_10px_40px_rgba(0,0,0,0.35)]">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 md:px-8">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 md:gap-4 md:px-8">
+        <div className="flex min-w-0 shrink-0 items-center gap-3">
+        <BackToAssociation />
+
         <Link href="/harmonic" className="group flex shrink-0 items-center gap-3">
           <span className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-white/95 ring-1 ring-gold/40 transition-all group-hover:ring-gold">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -37,6 +41,7 @@ export function HarmonyHeader() {
             </span>
           </span>
         </Link>
+        </div>
 
         <a
           href={`tel:+91${harmony.phones[0].replace(/\D/g, "").slice(-10)}`}

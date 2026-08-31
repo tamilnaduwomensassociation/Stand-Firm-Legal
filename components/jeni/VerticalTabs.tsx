@@ -1,10 +1,16 @@
 "use client";
 
 /**
- * The horizontal tab strip that sits under the header on every
- * /jeni/* page, so you can move between counters without going back
- * to the front page first. The active tab is derived from the URL, not
- * from state — which is what makes a browser Back button work.
+ * The horizontal tab strip of the nine counters. The active tab is
+ * derived from the URL, not from state — which is what makes a browser
+ * Back button work.
+ *
+ * This used to position itself (`sticky top-[68px]`) while the header
+ * above it was `fixed`. Two elements in different positioning contexts
+ * claiming the same 60 pixels is how the strip ended up printed under
+ * the association's navbar. It now renders as row two INSIDE
+ * JeniNavbar and owns no position of its own, so there is nothing left
+ * to get out of step.
  */
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -18,7 +24,7 @@ export default function VerticalTabs() {
   const ta = lang === "ta";
 
   return (
-    <div className="sticky top-[68px] z-[70] border-y border-[var(--hairline)] glass !bg-obsidian/92">
+    <div className="border-t border-[var(--hairline)]">
       {/* Horizontal scroll rather than a wrap: nine tabs on a phone
           would otherwise stack into four rows and push the content
           below the fold. */}

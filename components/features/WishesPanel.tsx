@@ -66,7 +66,19 @@ export default function WishesPanel() {
   }, []);
 
   const total = today.length + tomorrow.length;
-  if (total === 0) return null;
+
+  /**
+   * This used to `return null` when there was nothing to show, which is
+   * why the bell was reported missing: with no member dates of birth
+   * imported yet and no festival falling today, there is nothing to
+   * show on most days, so the control simply never rendered and looked
+   * like it had not been built.
+   *
+   * A notification icon that disappears is worse than an empty one —
+   * you cannot tell "nothing today" from "broken". So the bell is
+   * always here, above the chat bubble; only the pulsing dot is
+   * conditional, and that still fires for today's wishes alone.
+   */
 
   const markSeen = () => {
     setSeen(true);
@@ -159,6 +171,20 @@ export default function WishesPanel() {
             </div>
 
             <div data-lenis-prevent className="flex-1 overflow-y-auto overscroll-contain px-6 py-5">
+              {total === 0 && (
+                <div className="py-6 text-center">
+                  <Cake size={26} className="mx-auto mb-4 text-gold/70" />
+                  <p className="font-serif text-[17px] text-ivory">
+                    {ta ? "இன்று வாழ்த்துகள் எதுவும் இல்லை." : "No wishes today."}
+                  </p>
+                  <p className="prose-justify mx-auto mt-2 max-w-xs text-center font-sans text-[12.5px] leading-relaxed text-ivory-dim">
+                    {ta
+                      ? "உறுப்பினர்களின் பிறந்தநாட்கள் மற்றும் பண்டிகை வாழ்த்துகள் அன்றைய தினம் இங்கே தோன்றும்."
+                      : "Member birthdays and festival greetings appear here on the day, and the bell marks itself unread until you have seen them."}
+                  </p>
+                </div>
+              )}
+
               {today.length > 0 && (
                 <>
                   <p className="mb-3 font-sans text-[10px] uppercase tracking-widest text-gold">

@@ -48,7 +48,7 @@ export const sf = {
   /** Enquiry sheets and service orders are sent to this WhatsApp. */
   whatsapp: "919962502244",
   whatsappDisplay: "+91 99625 02244",
-  email: "tnwlam2023@gmail.com",
+  email: "advocate.mjenifer@zoho.com",
 
   address: "No. 26/105, 1st Floor, Armenian Street, Parrys, Chennai — 600 001",
   addressTa: "எண் 26/105, முதல் தளம், ஆர்மேனியன் தெரு, பாரிஸ், சென்னை — 600 001",

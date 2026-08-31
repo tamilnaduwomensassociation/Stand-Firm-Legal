@@ -68,9 +68,16 @@ export default function WomenDevelopment() {
 
       {/* ---------- tabs ---------- */}
       <div className="wd-rise mx-auto mt-10 max-w-5xl">
+        {/* Five pillars, and the fifth has the longest label. On a single
+            scrolling row it sat half off the right edge with no visible
+            affordance saying it could be scrolled to, so it read as broken
+            rather than as hidden. Above `sm` the row wraps and centres, so
+            every pillar is on screen; below it, where wrapping would make
+            five stacked rows, it still scrolls — with a right pad so the
+            last chip clears the edge instead of being sliced by it. */}
         <div
           data-lenis-prevent
-          className="flex gap-2 overflow-x-auto overscroll-contain pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex gap-2 overflow-x-auto overscroll-contain pb-2 pr-6 [scrollbar-width:none] sm:flex-wrap sm:justify-center sm:overflow-visible sm:pr-0 [&::-webkit-scrollbar]:hidden"
           role="tablist"
           aria-label={womenDevIntro.title}
         >

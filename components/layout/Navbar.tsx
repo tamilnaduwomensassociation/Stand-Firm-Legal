@@ -26,8 +26,9 @@
  */
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { IdCard, Menu, Moon, Phone, Search, Sun, X } from "lucide-react";
-import { navLinks, brandMarks, jeni, site } from "@/config/site.config";
+import { IdCard, Menu, Moon, Search, Sun, X } from "lucide-react";
+import { navLinks, brandMarks, jeni } from "@/config/site.config";
+import { harmony } from "@/config/harmonic.config";
 import { useLang } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -109,7 +110,7 @@ export default function Navbar() {
           className="group flex shrink-0 items-center gap-2.5 md:gap-3.5"
           aria-label="Tamilnadu Women Law Association Madras — home"
         >
-          <span className={cn(MARK, "h-9 w-9 md:h-11 md:w-11")}>
+          <span className={cn(MARK, "h-11 w-11 md:h-14 md:w-14")}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={brandMarks.start} alt="" className="h-full w-full object-cover" />
           </span>
@@ -151,36 +152,53 @@ export default function Navbar() {
             </a>
           ))}
 
-          {/* ---- House marks, immediately after Contact ----
-               Grouped in their own tighter flex so the pair reads as one
-               lockup rather than two stray dots with nav-sized gaps. */}
-          <span className="mx-0.5 hidden h-6 w-px shrink-0 bg-[var(--hairline)] min-[1600px]:block" aria-hidden />
-
-          <span className="flex shrink-0 items-center gap-2">
-          <a
-            href="/stand-firm"
-            className={cn(MARK, "h-10 w-10")}
-            title="Stand Firm Legal Associates — services, deeds & registrations"
-            aria-label="Stand Firm Legal Associates"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={brandMarks.sfla} alt="" className="h-full w-full object-cover" />
-          </a>
-
-          <a
-            href="/jeni"
-            className={cn(MARK, "h-10 w-10")}
-            title={`${jeni.name} — ${jeni.tagline}`}
-            aria-label={jeni.name}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={brandMarks.jeni} alt="" className="h-full w-full object-cover" />
-          </a>
-          </span>
         </nav>
 
         {/* ---------- Right cluster ---------- */}
         <div className="flex shrink-0 items-center gap-2 xl:gap-2.5">
+          {/* ---------- The three house marks ----------
+              These used to sit inside the centred nav. That row is a
+              `justify-center` flex child, and a centred flex row that runs
+              out of width spills sideways rather than shrinking — so in
+              Tamil, where every label is longer, the marks slid right and
+              came to rest on top of the ID CARD chip. Here they are
+              ordinary siblings of the chip inside a `shrink-0` cluster,
+              which cannot overlap it in any language, and they are visible
+              at every width instead of only above 1440px. */}
+          <span className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+            <a
+              href="/stand-firm"
+              className={cn(MARK, "h-11 w-11 md:h-[52px] md:w-[52px]")}
+              title="Stand Firm Legal Associates — services, deeds & registrations"
+              aria-label="Stand Firm Legal Associates"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={brandMarks.sfla} alt="" className="h-full w-full object-cover" />
+            </a>
+
+            <a
+              href="/jeni"
+              className={cn(MARK, "h-11 w-11 md:h-[52px] md:w-[52px]")}
+              title={`${jeni.name} — ${jeni.tagline}`}
+              aria-label={jeni.name}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={brandMarks.jeni} alt="" className="h-full w-full object-cover" />
+            </a>
+
+            <a
+              href="/harmonic"
+              className={cn(MARK, "h-11 w-11 md:h-[52px] md:w-[52px]")}
+              title={`${harmony.name} — ${harmony.tagline}`}
+              aria-label={harmony.name}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={brandMarks.harmony} alt="" className="h-full w-full object-cover" />
+            </a>
+          </span>
+
+          <span className="mx-0.5 hidden h-7 w-px shrink-0 bg-[var(--hairline)] sm:block" aria-hidden />
+
           {/* ID CARD — sits exactly where the Services menu used to.
               Label collapses to the icon until there is room for words. */}
           <a
@@ -225,15 +243,6 @@ export default function Navbar() {
           >
             <Search size={19} />
           </button>
-          {/* Icon only — taps straight through to the dialer */}
-          <a
-            href={`tel:+91${site.phones[0].replace(/\D/g, "").slice(-10)}`}
-            className="flex shrink-0 items-center justify-center rounded-full glass gold-border p-2 text-gold transition-all duration-300 hover:bg-gold hover:text-black"
-            aria-label={`Call ${site.phones[0]}`}
-            title={site.phones[0]}
-          >
-            <Phone size={16} />
-          </a>
           <button
             className={cn("min-[1440px]:hidden", onHeroFilm ? "text-white" : "text-ivory")}
             onClick={() => setOpen(!open)}
@@ -270,7 +279,7 @@ export default function Navbar() {
           ))}
 
           <a href="/stand-firm" onClick={() => setOpen(false)} className="flex items-center gap-3 border-b border-white/5 py-3 text-gold">
-            <span className={cn(MARK, "h-7 w-7")}>
+            <span className={cn(MARK, "h-8 w-8")}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={brandMarks.sfla} alt="" className="h-full w-full object-cover" />
             </span>
@@ -278,11 +287,19 @@ export default function Navbar() {
           </a>
 
           <a href="/jeni" onClick={() => setOpen(false)} className="flex items-center gap-3 border-b border-white/5 py-3 text-gold">
-            <span className={cn(MARK, "h-7 w-7")}>
+            <span className={cn(MARK, "h-8 w-8")}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={brandMarks.jeni} alt="" className="h-full w-full object-cover" />
             </span>
             {jeni.name}
+          </a>
+
+          <a href="/harmonic" onClick={() => setOpen(false)} className="flex items-center gap-3 border-b border-white/5 py-3 text-gold">
+            <span className={cn(MARK, "h-8 w-8")}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={brandMarks.harmony} alt="" className="h-full w-full object-cover" />
+            </span>
+            {harmony.name}
           </a>
 
           <a

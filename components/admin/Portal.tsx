@@ -62,7 +62,11 @@ export default function Portal({
 }) {
   const router = useRouter();
 
-  const [brand, setBrand] = useState<BrandId>("stand-firm");
+  /* The portal opens on the association, which is the first tab and the
+     parent of the other three — not on whichever brand happened to be
+     first in an earlier draft. Derived from the list rather than typed
+     as a literal, so reordering brands.config moves the default with it. */
+  const [brand, setBrand] = useState<BrandId>(brands[0].id);
   const [panel, setPanel] = useState<PanelId>("overview");
   const [orders, setOrders] = useState<Row[]>(initialOrders);
   const [enquiries, setEnquiries] = useState<Row[]>(initialEnquiries);

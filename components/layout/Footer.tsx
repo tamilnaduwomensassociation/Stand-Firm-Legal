@@ -36,7 +36,10 @@ export default function Footer() {
               {lang === "ta" ? site.addressTa : site.address}
             </p>
             <p className="mt-3 font-sans text-xs text-ivory-faint">{site.regNo}</p>
-            <p className="mt-1 font-sans text-xs text-ivory-faint">{site.firmReg}</p>
+            {/* The firm's own registration line was removed here by client
+                request: this footer belongs to the association. Stand Firm's
+                registration numbers live in the Stand Firm footer, which is
+                the only place they identify the entity whose page you are on. */}
             <div className="mt-6 flex gap-4">
               <a href={site.social.instagram} aria-label="Instagram" className="glass gold-border rounded-full p-2.5 text-ivory-dim hover:text-gold hover:border-gold/60 transition-all"><Instagram size={16} /></a>
               <a href={site.social.facebook} aria-label="Facebook" className="glass gold-border rounded-full p-2.5 text-ivory-dim hover:text-gold hover:border-gold/60 transition-all"><Facebook size={16} /></a>
