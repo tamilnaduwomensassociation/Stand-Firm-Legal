@@ -1,7 +1,8 @@
 import { NextRequest } from "next/server";
 import { list } from "@/lib/server/db";
 import { clean, fail, ok } from "@/lib/server/http";
-import { ask, isLive, type BrandId, type ChatTurn } from "@/lib/server/grok";
+import { ask, isLive, PROMPTS, type BrandId, type ChatTurn } from "@/lib/server/grok";
+import { runAgent } from "@/lib/server/agent";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,6 +26,15 @@ const BRANDS: BrandId[] = ["tnwla", "stand-firm", "jeni", "harmonic"];
  * answers it already has. It never returns a made-up answer and never
  * returns an error the user has to read. That is why the chatbot keeps
  * working today, before any key exists.
+ *
+ * ACTING. The assistant has tools now: it can look up live sessions,
+ * seats, prices and a membership, and it can PROPOSE a booking, an
+ * order or an enquiry. It cannot carry any of those out. A write tool
+ * returns a `proposal` — the exact fields, nothing hidden — which the
+ * chat panel renders as a confirmation card for the customer to press.
+ * Only that press posts to the ordinary API, with the ordinary
+ * validation. See lib/server/agentTools.ts for why that boundary is
+ * where it is.
  *
  * There is no rate limiting here beyond the length caps. Add one at
  * the edge before this is public at scale — an unmetered LLM endpoint
@@ -84,8 +94,21 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const answer = await ask(brand, question, history, context);
-    return ok({ answer, live: true });
+    const system = context
+      ? `${PROMPTS[brand]}\n\nCurrent information you may use, and should prefer over your own memory:\n${context}`
+      : PROMPTS[brand];
+
+    const { answer, proposal } = await runAgent(brand, system, question, history);
+
+    /* If the tool loop came back with nothing — a timeout, a refusal, a
+       round limit — fall back to a plain answer before giving up on the
+       model altogether. Two chances, then the keyword bot. */
+    if (!answer && !proposal) {
+      const plain = await ask(brand, question, history, context);
+      return ok({ answer: plain, proposal: null, live: true });
+    }
+
+    return ok({ answer, proposal, live: true });
   } catch (e) {
     return fail(e);
   }

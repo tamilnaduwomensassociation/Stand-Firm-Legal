@@ -66,7 +66,9 @@ ALWAYS:
 - End anything substantive by pointing to the office.
 `.trim();
 
-const PROMPTS: Record<BrandId, string> = {
+/** The brand prompts, exported so the agent loop uses the identical
+ *  system message rather than a second copy that can drift from it. */
+export const PROMPTS: Record<BrandId, string> = {
   tnwla: `
 You are the assistant for Tamilnadu Women Law Association — Madras
 (TN Govt Reg 194/2023), a women lawyers' association at Armenian

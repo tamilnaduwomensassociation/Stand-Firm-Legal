@@ -11,20 +11,70 @@
  */
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Send, Sparkles, X } from "lucide-react";
+import { Check, Loader2, Send, Sparkles, X } from "lucide-react";
 import { site } from "@/config/site.config";
 import ThinkingOrb, { type OrbState } from "@/components/ui/ThinkingOrb";
 
 type Msg = { from: "bot" | "user"; text: string };
 
-const SUGGESTED = [
-  "TN stamp duty for a sale deed?",
-  "New criminal laws 2024?",
-  "Divorce process in Tamil Nadu",
-  "Free legal aid for women",
-  "MSME delayed payment recovery",
-  "Cheque bounce case",
-];
+/**
+ * A PROPOSAL IS NOT AN ACTION.
+ *
+ * The assistant can work out that someone wants two seats at Saturday's
+ * session, and it can fill in the form. It cannot press the button.
+ * What arrives here is every field it intends to send, rendered plainly
+ * so a wrong number is visible before it is written — and the confirm
+ * button is the customer's, not the model's.
+ *
+ * The POST goes to the same endpoint the ordinary form uses. Seats are
+ * re-counted and prices re-derived there, so a proposal that has gone
+ * stale while it sat on screen fails exactly as a form submission
+ * would, rather than booking a seat that no longer exists.
+ */
+type Proposal = {
+  kind: "booking" | "interest" | "order" | "enquiry";
+  summary: { label: string; value: string }[];
+  endpoint: string;
+  payload: Record<string, unknown>;
+  confirmLabel: string;
+};
+
+/**
+ * The chips are also how anyone finds out the assistant can now DO
+ * things rather than only explain them. A capability nobody is told
+ * about is a capability nobody uses, so each brand leads with one
+ * action it can actually take.
+ */
+const SUGGESTED_BY_BRAND: Record<string, string[]> = {
+  tnwla: [
+    "Book me a seat at the next session",
+    "What sessions are coming up?",
+    "Free legal aid for women",
+    "Divorce process in Tamil Nadu",
+    "New criminal laws 2024?",
+    "Is my membership still valid?",
+  ],
+  "stand-firm": [
+    "I need help with a property matter",
+    "TN stamp duty for a sale deed?",
+    "How do I get an encumbrance certificate?",
+    "Cheque bounce case",
+    "MSME delayed payment recovery",
+  ],
+  jeni: [
+    "Order 2 bottles of coconut oil",
+    "What coconut oil do you have?",
+    "Show me sarees",
+    "Do you deliver outside Chennai?",
+    "I want a wholesale quote",
+  ],
+  harmonic: [
+    "Register me for the basic class",
+    "What dhoobam do you sell?",
+    "When is the free meditation?",
+    "What happens in a session?",
+  ],
+};
 
 const DISCLAIMER = " (General information, not legal advice — consult us for your specific case.)";
 
@@ -102,6 +152,8 @@ export default function Chatbot({
      it has been accepted — two states the visitor can actually feel the
      difference between on a slow connection. */
   const [orbState, setOrbState] = useState<OrbState>("connecting");
+  const [proposal, setProposal] = useState<Proposal | null>(null);
+  const [confirming, setConfirming] = useState(false);
   const bodyRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -112,7 +164,7 @@ export default function Chatbot({
 
   useEffect(() => {
     bodyRef.current?.scrollTo({ top: bodyRef.current.scrollHeight, behavior: "smooth" });
-  }, [msgs, typing]);
+  }, [msgs, typing, proposal]);
 
   /** Type an answer out, however it was produced. */
   const reveal = (full: string) => {
@@ -143,6 +195,10 @@ export default function Chatbot({
     if (!text.trim()) return;
     setMsgs((m) => [...m, { from: "user", text }]);
     setInput("");
+    /* A new question supersedes an unconfirmed proposal — leaving a
+       stale confirm button on screen invites the wrong one being
+       pressed after the conversation has moved on. */
+    setProposal(null);
     setTyping(true);
     setOrbState("connecting");
 
@@ -163,6 +219,12 @@ export default function Chatbot({
       if (res.ok) {
         const d = await res.json();
         if (typeof d.answer === "string" && d.answer.trim()) full = d.answer.trim() + DISCLAIMER;
+        if (d.proposal && typeof d.proposal === "object") {
+          setProposal(d.proposal as Proposal);
+          /* The model may propose without saying anything; the card has
+             to be introduced or it appears from nowhere. */
+          if (!full) full = "Here is what I have — please check it and confirm.";
+        }
       }
     } catch {
       /* Offline, or the route is unreachable. The keyword answer
@@ -172,6 +234,53 @@ export default function Chatbot({
     setOrbState("settling");
     setTyping(false);
     reveal(full ?? answer(text));
+  };
+
+  /** The customer's press — the only thing in this component that writes. */
+  const confirm = async () => {
+    if (!proposal || confirming) return;
+    setConfirming(true);
+    try {
+      const res = await fetch(proposal.endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(proposal.payload),
+      });
+      const d = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        /* The server's own words. "Only 1 seat left" is a useful thing
+           to be told; "something went wrong" is not. */
+        reveal(d?.error ? `That did not go through — ${d.error}` : "That did not go through. Please try again, or call the office.");
+        setProposal(null);
+        return;
+      }
+
+      if (proposal.kind === "order") {
+        /* An order is registered, not paid. Sending someone away
+           believing it is settled would be the worst possible outcome
+           of this whole feature. */
+        reveal(
+          `Your order is registered${d?.order?.id ? ` as ${d.order.id}` : ""}. ` +
+          "It is not paid yet — open the shop to pay, or the office will call you to take payment."
+        );
+      } else if (proposal.kind === "booking") {
+        reveal(
+          `Booked${d?.booking?.ref ? ` — your reference is ${d.booking.ref}` : ""}. ` +
+          (typeof d?.seatsLeft === "number" ? `${d.seatsLeft} seat${d.seatsLeft === 1 ? "" : "s"} left. ` : "") +
+          "Please bring this reference with you."
+        );
+      } else if (proposal.kind === "interest") {
+        reveal("Noted — you will be told as soon as a date is set.");
+      } else {
+        reveal("Sent to the office. Someone will call you on that number.");
+      }
+      setProposal(null);
+    } catch {
+      reveal("That did not go through — you may be offline. Please try again.");
+    } finally {
+      setConfirming(false);
+    }
   };
 
   return (
@@ -232,10 +341,52 @@ export default function Chatbot({
                 </span>
               </div>
             )}
+
+            {/* ---------- the confirmation card ---------- */}
+            {proposal && !typing && (
+              <div className="rounded-2xl border border-gold/40 bg-gold-faint p-4">
+                <p className="mb-3 font-sans text-[10px] uppercase tracking-widest text-gold">
+                  Check before confirming
+                </p>
+
+                <dl className="space-y-1.5">
+                  {proposal.summary.map((r, i) => (
+                    <div key={i} className="flex gap-3 text-[12.5px]">
+                      <dt className="w-24 shrink-0 font-sans text-ivory-faint">{r.label}</dt>
+                      <dd className="min-w-0 flex-1 break-words font-sans text-ivory">{r.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+
+                <p className="mt-3 font-sans text-[11px] leading-relaxed text-ivory-dim">
+                  {proposal.kind === "order"
+                    ? "Nothing is ordered or charged until you press this. The price is calculated by the office, not by me."
+                    : "Nothing is recorded until you press this."}
+                </p>
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    onClick={confirm}
+                    disabled={confirming}
+                    className="flex h-10 items-center gap-2 rounded-full bg-gold px-5 font-sans text-[11px] uppercase tracking-widest text-black transition-all hover:bg-gold-bright disabled:opacity-50"
+                  >
+                    {confirming ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
+                    {proposal.confirmLabel}
+                  </button>
+                  <button
+                    onClick={() => { setProposal(null); reveal("Cancelled — nothing was recorded. Tell me what to change."); }}
+                    disabled={confirming}
+                    className="flex h-10 items-center rounded-full gold-border px-4 font-sans text-[11px] uppercase tracking-widest text-ivory-dim transition-all hover:text-gold disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex gap-2 overflow-x-auto px-5 pb-3 [scrollbar-width:none]">
-            {SUGGESTED.map((s) => (
+            {(SUGGESTED_BY_BRAND[brandId] ?? SUGGESTED_BY_BRAND.tnwla).map((s) => (
               <button key={s} onClick={() => send(s)} className="shrink-0 rounded-full gold-border px-3.5 py-1.5 text-[11px] font-sans text-ivory-dim hover:text-gold hover:border-gold/60 transition-all">
                 {s}
               </button>
