@@ -45,7 +45,14 @@ export default async function VerticalPage({ params }: { params: Promise<{ verti
   return (
     <>
       <main id="main">
-        <VerticalHeader vertical={v} />
+        {/* The section's own eyebrow and fuller blurb move up here, so
+            the counter is introduced once rather than twice. */}
+        <VerticalHeader
+          vertical={v}
+          kicker={section?.kicker ?? (v.kind === "service" ? "What This Counter Does" : undefined)}
+          lead={section?.blurb}
+          leadTa={section?.blurbTa}
+        />
         {v.kind === "foods" && <FoodShop />}
         {v.kind === "shop" && section && <ShopSection section={section} />}
         {v.kind === "service" && <ServiceVertical vertical={v} />}

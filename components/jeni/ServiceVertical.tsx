@@ -70,12 +70,13 @@ export default function ServiceVertical({ vertical }: { vertical: Vertical }) {
       {vertical.offers?.length ? (
         <section className="bg-obsidian section-pad">
           <div className="mx-auto max-w-5xl">
+            {/* The counter is named once, in VerticalHeader. What was a
+                second title here is now just the label for this grid. */}
             <div className="mx-auto max-w-2xl text-center">
-              <p className="kicker mb-3">{ta ? "என்ன செய்கிறோம்" : "What This Counter Does"}</p>
-              <h2 className="font-serif text-3xl gold-text md:text-4xl">{ta ? vertical.ta : vertical.en}</h2>
+              <p className="kicker">{ta ? "இந்தப் பிரிவில்" : "What we handle"}</p>
             </div>
 
-            <div className="mt-11 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {vertical.offers.map((o) => {
                 const active = want === o.en;
                 return (

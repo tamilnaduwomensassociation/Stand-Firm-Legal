@@ -14,10 +14,7 @@
  * one cannot be ordered even if the button were somehow pressed.
  */
 import { useMemo, useState } from "react";
-import {
-  Boxes, Check, Loader2, Minus, Plus, Search, Shirt, ShoppingBag, Ship,
-  Sparkles, Trash2, X, type LucideIcon,
-} from "lucide-react";
+import { Check, Loader2, Minus, Plus, Search, ShoppingBag, Trash2, X } from "lucide-react";
 import { itemsInSection, shopNotice, type ShopItem, type ShopSection as Section } from "@/config/shop.config";
 import { usePrices } from "@/lib/usePrices";
 import { jeni } from "@/config/jeni.config";
@@ -28,8 +25,6 @@ import { useLockPageScroll } from "@/lib/useLockPageScroll";
 import { useCheckout, type CheckoutLine } from "@/lib/useCheckout";
 import { upiLinks } from "@/lib/upi";
 import { cn } from "@/lib/utils";
-
-const sectionIcons: Record<string, LucideIcon> = { Shirt, Boxes, Ship, Sparkles };
 
 const inputCls =
   "w-full rounded-xl border border-[var(--hairline)] bg-obsidian-soft/60 px-5 py-3.5 font-sans text-sm text-ivory transition-all placeholder:text-ivory-faint focus:border-gold/60 focus:outline-none focus:ring-1 focus:ring-gold/30";
@@ -136,23 +131,14 @@ export default function ShopSection({ section }: { section: Section }) {
     );
   };
 
-  const SectionIcon = sectionIcons[section.icon] ?? Boxes;
-
   /* ================================================================ */
   return (
     <section id={section.id} className="relative bg-obsidian section-pad">
-      {/* ---------- header ---------- */}
-      <div className="mx-auto max-w-3xl text-center">
-        <div className="mb-4 flex justify-center"><SectionIcon size={28} className="text-gold" /></div>
-        <p className="kicker mb-3">{section.kicker}</p>
-        <h2 className="font-serif text-3xl gold-text md:text-5xl">{ta ? section.ta : section.en}</h2>
-        <p className="mt-4 font-sans text-sm leading-relaxed text-ivory-dim">
-          {ta ? section.blurbTa : section.blurb}
-        </p>
-      </div>
+      {/* The masthead lives in VerticalHeader — icon, kicker, title and
+          blurb, once. This section starts at the filters. */}
 
       {/* ---------- group chips ---------- */}
-      <div className="mx-auto mt-9 flex max-w-4xl flex-wrap justify-center gap-2.5">
+      <div className="mx-auto flex max-w-4xl flex-wrap justify-center gap-2.5">
         <Chip active={group === "all"} onClick={() => setGroup("all")}>
           {ta ? "அனைத்தும்" : "All"}
         </Chip>

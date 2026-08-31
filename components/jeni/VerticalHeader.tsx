@@ -1,6 +1,21 @@
 "use client";
 
-/** Masthead for a single Jeni counter. */
+/**
+ * THE MASTHEAD FOR A COUNTER — and the only one on the page.
+ *
+ * Every counter printed its title twice: this header said "Clothing"
+ * with the breadcrumb and a short blurb, and then the section beneath
+ * it said "Clothing" again with a kicker and a longer one. Two icons,
+ * two headings, two descriptions of the same thing, on eight of the
+ * nine counters.
+ *
+ * The fix is not to delete one of them — the page header had the
+ * breadcrumb, and the section had the kicker and the fuller sentence,
+ * and both were worth keeping. They are merged here instead, and the
+ * sections below now start at their content. `kicker` and `lead` are
+ * optional so a counter with nothing extra to say still reads correctly
+ * from the vertical alone.
+ */
 import Link from "next/link";
 import {
   BookOpen, Boxes, ChevronRight, Landmark, Laptop, MousePointerClick,
@@ -13,7 +28,16 @@ const icons: Record<string, LucideIcon> = {
   UtensilsCrossed, Shirt, Sparkles, Boxes, Ship, Laptop, BookOpen, Landmark, MousePointerClick,
 };
 
-export default function VerticalHeader({ vertical }: { vertical: Vertical }) {
+export default function VerticalHeader({
+  vertical, kicker, lead, leadTa,
+}: {
+  vertical: Vertical;
+  /** Section eyebrow, e.g. "Burma Collection & Everyday Wear" */
+  kicker?: string;
+  /** The fuller description, when the section has one */
+  lead?: string;
+  leadTa?: string;
+}) {
   const { lang } = useLang();
   const ta = lang === "ta";
   const Icon = icons[vertical.icon] ?? Boxes;
@@ -35,11 +59,12 @@ export default function VerticalHeader({ vertical }: { vertical: Vertical }) {
         </nav>
 
         <div className="mb-5 flex justify-center"><Icon size={32} className="text-gold" /></div>
+        {kicker ? <p className="kicker mb-3">{kicker}</p> : null}
         <h1 className="font-serif text-4xl leading-tight gold-text md:text-5xl">
           {ta ? vertical.ta : vertical.en}
         </h1>
         <p className="prose-justify mx-auto mt-5 max-w-2xl text-center font-sans text-[15px] leading-relaxed text-ivory-dim">
-          {ta ? vertical.blurbTa : vertical.blurb}
+          {ta ? (leadTa ?? vertical.blurbTa) : (lead ?? vertical.blurb)}
         </p>
       </div>
     </section>
