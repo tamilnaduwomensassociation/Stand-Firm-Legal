@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import PageShell from "@/components/standfirm/PageShell";
 import SFContact from "@/components/standfirm/SFContact";
 import { sf } from "@/config/standfirm.config";
-import { lawyers, sflaPartners } from "@/config/site.config";
+import { lawyers, namedPartners } from "@/config/site.config";
 
 export const metadata: Metadata = {
   title: "Our Advocates",
@@ -44,9 +44,10 @@ export default function TeamPage() {
           Moved here from the association's advocates page. These are
           the firm's partners, so this is where they belong.
 
-          The names are still `[PH: Partner Name]` placeholders in
-          site.config — they were placeholders before the move and this
-          did not invent any. Fill in sflaPartners to replace them. */}
+          The section renders only when a partner has a real name — see
+          the note above sflaPartners in site.config for why an unnamed
+          card is worse than an absent one. Name one and it returns. */}
+      {namedPartners.length > 0 && (
       <section className="bg-obsidian-deep section-pad">
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
@@ -59,7 +60,7 @@ export default function TeamPage() {
           </div>
 
           <div className="mt-11 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {sflaPartners.map((p, i) => (
+            {namedPartners.map((p, i) => (
               <article key={`${p.role}-${i}`} className="flex flex-col overflow-hidden rounded-2xl glass gold-border">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={p.photo} alt={p.name} className="h-60 w-full object-cover" loading="lazy" />
@@ -78,6 +79,7 @@ export default function TeamPage() {
           </div>
         </div>
       </section>
+      )}
 
       <SFContact />
     </PageShell>

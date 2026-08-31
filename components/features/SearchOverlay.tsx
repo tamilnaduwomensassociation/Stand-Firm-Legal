@@ -10,7 +10,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowUpRight, Search, X } from "lucide-react";
 import {
   blogPosts, businessServices, caseStudies, deeds, faqs, leadersPanel, navLinks,
-  practiceAreas, propertyServices, sflaMatters, sflaPartners, testimonials,
+  practiceAreas, propertyServices, sflaMatters, namedPartners, testimonials,
 } from "@/config/site.config";
 import { membershipCategories } from "@/config/forms.config";
 import { useLockPageScroll } from "@/lib/useLockPageScroll";
@@ -49,7 +49,7 @@ export default function SearchOverlay() {
       })),
       /* Stand Firm Legal Associates */
       ...sflaMatters.map((m) => ({ label: m.en, sub: "Stand Firm Legal Associates · Banking & Recovery", href: "/stand-firm#sfla", keywords: `${m.ta} ${m.desc} SFLA` })),
-      ...sflaPartners.map((p) => ({ label: p.name, sub: p.role, href: "/#team", keywords: `${p.nameTa} ${p.roleTa} partner SFLA` })),
+      ...namedPartners.map((p) => ({ label: p.name, sub: p.role, href: "/stand-firm/team", keywords: `${p.nameTa} ${p.roleTa} partner SFLA` })),
       /* People */
       ...leadersPanel.map((l) => ({ label: l.name, sub: l.position, href: "/#team", keywords: `${l.nameTa} ${l.positionTa} leaders panel advocate` })),
       /* Case studies — link to their own pages */

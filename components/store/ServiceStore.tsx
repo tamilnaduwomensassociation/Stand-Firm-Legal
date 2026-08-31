@@ -46,6 +46,7 @@ import { paymentConfig } from "@/config/forms.config";
 import { site } from "@/config/site.config";
 import { useLang } from "@/lib/i18n";
 import { openGooglePay, platform, upiLinks } from "@/lib/upi";
+import QrCode from "@/components/ui/QrCode";
 import { downloadReceipt, receiptNumber, sendReceiptEmail, sendReceiptWhatsApp } from "@/lib/receipt";
 import PaymentReceipt from "@/components/ui/PaymentReceipt";
 import { cn } from "@/lib/utils";
@@ -83,7 +84,6 @@ export default function ServiceStore() {
   /* Freeze the page behind the popup — see lib/useLockPageScroll.ts */
   useLockPageScroll(cartOpen || checkout);
   const [stage, setStage] = useState<"details" | "pay" | "done">("details");
-  const [qrOk, setQrOk] = useState(true);
   const [orderNo, setOrderNo] = useState("");
 
   /* Deed particulars captured by the (headless) deed form on this page,
@@ -557,19 +557,14 @@ export default function ServiceStore() {
                       <p className="mb-3 font-sans text-xs uppercase tracking-widest text-ivory-dim">
                         {lang === "ta" ? "ஸ்கேன் செய்து செலுத்தவும்" : "Scan to pay"}
                       </p>
-                      {qrOk ? (
-                        /* eslint-disable-next-line @next/next/no-img-element */
-                        <img src="/media/upi-qr.png" alt="UPI QR code"
-                          className="mx-auto h-40 w-40 rounded-lg bg-white object-contain p-2"
-                          onError={() => setQrOk(false)} />
-                      ) : (
-                        <div className="mx-auto flex h-40 w-40 flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-gold/40 px-3 text-center">
-                          <Smartphone size={24} className="text-gold" />
-                          <span className="font-sans text-[11px] leading-snug text-ivory-dim">
-                            {lang === "ta" ? "கீழே உள்ள UPI ஐடிக்கு செலுத்தவும்" : "Pay to the UPI ID below"}
-                          </span>
-                        </div>
-                      )}
+                      {/* Generated from the same upiLinks() string the pay
+                          buttons use — see the note in MembershipRegistration.
+                          The static /media/upi-qr.png it replaced was never
+                          supplied, so this panel always fell back to "type the
+                          UPI ID yourself". */}
+                      <div className="mx-auto w-fit rounded-lg bg-white p-2">
+                        <QrCode value={links.any} size={144} />
+                      </div>
                       <p className="mt-3 font-sans text-xs text-ivory/90">{paymentConfig.upiId}</p>
                       <p className="font-sans text-[11px] text-ivory-faint">{paymentConfig.phone}</p>
                     </div>

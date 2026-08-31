@@ -28,6 +28,7 @@ import { gsap } from "@/lib/gsap";
 import { openGooglePay, platform, upiLinks } from "@/lib/upi";
 import { downloadReceipt, receiptNumber, sendReceiptEmail, sendReceiptWhatsApp } from "@/lib/receipt";
 import PaymentReceipt from "@/components/ui/PaymentReceipt";
+import QrCode from "@/components/ui/QrCode";
 import { site } from "@/config/site.config";
 import {
   commonUploads, declarationText, membershipCategories, membershipSteps,
@@ -156,7 +157,6 @@ export default function MembershipRegistration({ embedded = false }: { embedded?
 
   /* Freeze the page behind the popup — see lib/useLockPageScroll.ts */
   useLockPageScroll(preview);
-  const [qrOk, setQrOk] = useState(true);
 
   /* Receipt state — see the note above the payment block */
   const [receiptNo, setReceiptNo] = useState("");
@@ -563,25 +563,23 @@ export default function MembershipRegistration({ embedded = false }: { embedded?
               <div className="grid gap-5 sm:grid-cols-2">
                 <div className="rounded-xl glass gold-border p-6 text-center">
                   <p className="mb-3 font-sans text-xs uppercase tracking-widest text-ivory-dim">{tr("scanToPay")}</p>
-                  {/* Drop the association's UPI QR at /public/media/upi-qr.png.
-                      Until it exists, fall back to the UPI ID rather than
-                      showing a broken image on the payment screen. */}
-                  {qrOk ? (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img
-                      src="/media/upi-qr.png"
-                      alt="UPI QR code"
-                      className="mx-auto h-40 w-40 rounded-lg bg-white object-contain p-2"
-                      onError={() => setQrOk(false)}
-                    />
-                  ) : (
-                    <div className="mx-auto flex h-40 w-40 flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-gold/40 px-3 text-center">
-                      <Smartphone size={24} className="text-gold" />
-                      <span className="font-sans text-[11px] leading-snug text-ivory-dim">
-                        {lang === "ta" ? "கீழே உள்ள UPI ஐடிக்கு செலுத்தவும்" : "Pay to the UPI ID below"}
-                      </span>
-                    </div>
-                  )}
+                  {/*
+                    This waited on a file — /media/upi-qr.png — that was
+                    never supplied, so the payment screen fell through to
+                    "pay to the UPI ID below" and the applicant had to type
+                    the ID and the amount by hand. With Razorpay still under
+                    review this IS the payment path, so it is the last place
+                    that should ask for manual typing.
+
+                    Drawn from the same upiLinks() string the buttons use,
+                    it cannot go missing and cannot disagree with them. It
+                    also carries the amount and this application's reference,
+                    so scanning it fills both in and the payer only enters a
+                    PIN — which a generic printed QR of the ID could never do.
+                  */}
+                  <div className="mx-auto w-fit rounded-lg bg-white p-2">
+                    <QrCode value={anyUpiLink} size={144} />
+                  </div>
                   <p className="mt-3 font-sans text-xs text-ivory/90">{paymentConfig.upiId}</p>
                   <p className="font-sans text-[11px] text-ivory-faint">{tr("payTo")} {paymentConfig.phone}</p>
                 </div>

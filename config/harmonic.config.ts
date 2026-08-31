@@ -232,11 +232,24 @@ export const masters = [
     /* TODO history — names and detail to come from the centre's records. */
   },
   {
+    /*
+      This entry used to carry a note that ended with a `/* TODO *\/`
+      marker INSIDE the string rather than beside it — so the reminder
+      was not a note to us, it was a paragraph on the public page. A
+      placeholder that renders is worse than no paragraph at all.
+
+      What replaces it says only what is true of this centre and can be
+      stated without anyone's records: what is taught here, on what
+      terms, and where the practice it teaches comes from. When the
+      centre writes its own account — who brought the practice to
+      Chennai, who has taught here since — it replaces this text, and
+      nothing else has to change.
+    */
     name: "Harmony Pranic Healing, Chennai",
     years: "—",
     role: "This centre",
     note:
-      "How the practice reached this centre, who brought it, and who has taught here since. /* TODO history — this paragraph is a placeholder and should be replaced with the centre's own account. */",
+      "The Chennai centre teaches the system as it was set down — Levels I through III and Psychotherapy, in that order, because each level assumes the one before it. The weekly Meditation on Twin Hearts is free and open to anyone, whether or not they have taken a course, and it is deliberately the easiest door into the practice. Nothing taught here is offered as medical treatment: it sits alongside a doctor's care and never in place of it.",
   },
 ];
 

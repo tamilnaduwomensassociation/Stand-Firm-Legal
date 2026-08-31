@@ -279,11 +279,31 @@ export const leadersPanel = [
 ];
 
 /* Stand Firm Legal Associates — partnership advocates */
+/**
+ * The firm's partners.
+ *
+ * These three have never been named — they were placeholders before the
+ * Partnerships block moved here from the association's page, and no name
+ * has been invented to fill them. The important part is what happens
+ * while they are unnamed: a card reading "[PH: Partner Name]" under a
+ * stock photograph, with a "Consult" button beneath it, is worse than no
+ * card. It looks like a real person the reader cannot quite make out,
+ * and it invites them to book a consultation with nobody.
+ *
+ * So `namedPartners` below is what the site renders, and it is empty
+ * until real names are typed in here. The Partnerships section and the
+ * search index both read from it, and both disappear rather than
+ * degrade. Replace a `name` and that partner appears everywhere at once.
+ */
 export const sflaPartners = [
   { name: "[PH: Partner Name]", nameTa: "[PH: பெயர்]", role: "Partner — Banking & Recovery", roleTa: "பங்குதாரர் — வங்கி & மீட்பு", photo: "/media/stills/team-1.jpg" },
   { name: "[PH: Partner Name]", nameTa: "[PH: பெயர்]", role: "Partner — Civil & Property", roleTa: "பங்குதாரர் — உரிமையியல் & சொத்து", photo: "/media/stills/team-2.jpg" },
   { name: "[PH: Partner Name]", nameTa: "[PH: பெயர்]", role: "Partner — Criminal & Family", roleTa: "பங்குதாரர் — குற்றவியல் & குடும்பம்", photo: "/media/stills/team-3.jpg" },
 ];
+
+/** Only the partners who actually have a name. Render from this, never
+ *  from the list above. */
+export const namedPartners = sflaPartners.filter((p) => !p.name.includes("[PH:"));
 
 /* ---------------- CLIENT VOICES ----------------
  * Real Google reviews for the association, verbatim. Nothing here is
