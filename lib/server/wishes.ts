@@ -176,7 +176,7 @@ export async function collectWishes(scope: "public" | "admin" = "public"): Promi
           kind: "expiry",
           name: String(m.memberName ?? ""),
           membershipNo: String(m.membershipNo ?? ""),
-          validUpTo: raw,
+          validUpTo: String(m.validUpTo ?? ""),
           daysLeft,
           phone: String(m.mobile ?? ""),
         });

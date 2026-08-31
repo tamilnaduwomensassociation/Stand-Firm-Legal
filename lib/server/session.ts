@@ -90,7 +90,7 @@ export async function readSession(
     const valid = await crypto.subtle.verify(
       "HMAC",
       await hmacKey(secret),
-      fromB64Url(sig),
+      fromB64Url(sig) as unknown as BufferSource,
       new TextEncoder().encode(body)
     );
     if (!valid) return null;
