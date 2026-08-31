@@ -170,13 +170,73 @@ export async function refreshNews(): Promise<{ fetched: number; stored: number; 
   return { fetched: collected.length, stored: items.length, sources: liveSources };
 }
 
+/**
+ * HOW "EVERY HOUR" SURVIVES A HOBBY PLAN
+ *
+ * The cron in vercel.json used to be `0 * * * *`. Vercel's Hobby plan
+ * refuses any cron that fires more than once a day, and it refuses it
+ * at DEPLOY time — the whole deployment fails, so nothing ships at
+ * all. An hourly cron there is not a feature that quietly degrades; it
+ * is a build error.
+ *
+ * So the cron is now daily, and the hourly behaviour lives here: the
+ * first reader after the data passes an hour old triggers the refresh
+ * on the way through. Traffic does the scheduling.
+ *
+ * Two things keep that from being a footgun:
+ *
+ *   · A lock. Ten readers arriving at 10:00 must not fire ten
+ *     simultaneous fetches of four RSS feeds. The first one to claim
+ *     the lock refreshes; everyone else is served the existing list
+ *     immediately. The lock self-expires so a crashed run cannot wedge
+ *     the feed shut forever.
+ *
+ *   · Failure returns stale news, never an error. A feed being down
+ *     must not blank the page.
+ */
+const HOUR = 60 * 60 * 1000;
+const LOCK_KEY = "news:refreshing";
+const LOCK_TTL = 3 * 60 * 1000;
+
+async function claimRefreshLock(): Promise<boolean> {
+  try {
+    const row = await dbGet("content", LOCK_KEY);
+    const at = Number((row?.data as { at?: number } | undefined)?.at ?? 0);
+    if (at && Date.now() - at < LOCK_TTL) return false;
+    await put("content", { id: LOCK_KEY, createdAt: new Date().toISOString(), data: { at: Date.now() } });
+    return true;
+  } catch {
+    /* No store, no lock, no refresh — the caller falls back to stale. */
+    return false;
+  }
+}
+
 /** What the page renders. Empty is a legitimate answer. */
 export async function getNews(): Promise<{ items: NewsItem[]; refreshedAt: string }> {
-  try {
+  const read = async () => {
     const row = await dbGet("content", NEWS_KEY);
     const d = row?.data as { items?: NewsItem[]; refreshedAt?: string } | undefined;
     return { items: Array.isArray(d?.items) ? d!.items! : [], refreshedAt: d?.refreshedAt ?? "" };
+  };
+
+  let current: { items: NewsItem[]; refreshedAt: string };
+  try {
+    current = await read();
   } catch {
     return { items: [], refreshedAt: "" };
   }
+
+  const age = current.refreshedAt ? Date.now() - Date.parse(current.refreshedAt) : Infinity;
+  if (!Number.isFinite(age) || age > HOUR) {
+    if (await claimRefreshLock()) {
+      try {
+        await refreshNews();
+        return await read();
+      } catch {
+        /* Feeds down. Yesterday's news beats an empty page. */
+      }
+    }
+  }
+
+  return current;
 }
