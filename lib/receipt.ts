@@ -61,6 +61,46 @@ export async function pdfFromNode(node: HTMLElement): Promise<Jspdf | null> {
   return pdf as unknown as Jspdf;
 }
 
+/**
+ * A PDF from several nodes, one A4 page each.
+ *
+ * A letter that runs past one sheet is not an unusual case, it is the
+ * normal case for anything with substance in it — and a one-page
+ * exporter silently truncating page two is the kind of failure nobody
+ * notices until the recipient asks what happened to the rest.
+ *
+ * Each node is captured at its own size and placed on its own page, so
+ * pages cannot drift out of register with each other the way a single
+ * tall capture sliced into thirds would.
+ */
+export async function pdfFromNodes(nodes: HTMLElement[]): Promise<Jspdf | null> {
+  const live = nodes.filter(Boolean);
+  if (live.length === 0) return null;
+
+  const html2canvas = (await import("html2canvas")).default;
+  const { jsPDF } = await import("jspdf");
+  try { await (document as Document & { fonts?: FontFaceSet }).fonts?.ready; } catch { /* older browser */ }
+
+  const pdf = new jsPDF({ unit: "mm", format: "a4" });
+  const pageW = 210;
+  const margin = 12;
+  const w = pageW - margin * 2;
+
+  for (let i = 0; i < live.length; i++) {
+    const node = live[i];
+    const w0 = node.offsetWidth || undefined;
+    const h0 = node.offsetHeight || undefined;
+    const canvas = await html2canvas(node, {
+      scale: 2, backgroundColor: "#ffffff", useCORS: true, logging: false,
+      width: w0, height: h0, windowWidth: w0, windowHeight: h0, scrollX: 0, scrollY: 0,
+    });
+    const h = (canvas.height / canvas.width) * w;
+    if (i > 0) pdf.addPage();
+    pdf.addImage(canvas.toDataURL("image/jpeg", 0.94), "JPEG", margin, margin, w, Math.min(h, 273));
+  }
+  return pdf as unknown as Jspdf;
+}
+
 export async function downloadReceipt(node: HTMLElement, fileName: string) {
   const pdf = await pdfFromNode(node);
   pdf?.save(fileName.endsWith(".pdf") ? fileName : `${fileName}.pdf`);

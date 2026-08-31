@@ -191,3 +191,21 @@ html { font-size: calc(16px * var(--type-scale)); }
 
 .font-serif { font-family: var(--font-heading-override, var(--font-serif)), Georgia, serif; }
 .font-sans  { font-family: var(--font-body-override, var(--font-sans)), system-ui, sans-serif; }
+
+/* ------------------------------------------------------------------
+   The Superadmin letterhead preview.
+
+   The A4 sheet is a fixed 794x1123 node so the capture is sharp; the
+   panel shrinks it to fit. The scale is a custom property rather than a
+   Tailwind class because the component has to READ it back — the loupe
+   converts a cursor position into sheet coordinates, and a hard-coded
+   copy of four breakpoint values would be wrong at three of them.
+   ------------------------------------------------------------------ */
+.sheet-stage { --sheet-scale: 0.52; }
+@media (min-width: 640px)  { .sheet-stage { --sheet-scale: 0.62; } }
+@media (min-width: 1024px) { .sheet-stage { --sheet-scale: 0.58; } }
+@media (min-width: 1280px) { .sheet-stage { --sheet-scale: 0.68; } }
+
+/* The loupe follows the pointer; nothing inside it should be selectable
+   or draggable, and it must never become a scroll target. */
+.sheet-stage * { -webkit-user-drag: none; }
