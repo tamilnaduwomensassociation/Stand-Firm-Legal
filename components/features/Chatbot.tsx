@@ -13,6 +13,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Send, Sparkles, X } from "lucide-react";
 import { site } from "@/config/site.config";
+import ThinkingOrb, { type OrbState } from "@/components/ui/ThinkingOrb";
 
 type Msg = { from: "bot" | "user"; text: string };
 
@@ -97,6 +98,10 @@ export default function Chatbot({
   ]);
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
+  /* "connecting" while the request is still in flight, "thinking" once
+     it has been accepted — two states the visitor can actually feel the
+     difference between on a slow connection. */
+  const [orbState, setOrbState] = useState<OrbState>("connecting");
   const bodyRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -139,6 +144,7 @@ export default function Chatbot({
     setMsgs((m) => [...m, { from: "user", text }]);
     setInput("");
     setTyping(true);
+    setOrbState("connecting");
 
     let full: string | null = null;
     try {
@@ -151,6 +157,9 @@ export default function Chatbot({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ brand: brandId, question: text, history }),
       });
+      /* The moment the server answers the socket, the wait stops being
+         "can we reach it" and becomes "what will it say". */
+      setOrbState("thinking");
       if (res.ok) {
         const d = await res.json();
         if (typeof d.answer === "string" && d.answer.trim()) full = d.answer.trim() + DISCLAIMER;
@@ -160,6 +169,7 @@ export default function Chatbot({
          below is a complete reply, not an apology. */
     }
 
+    setOrbState("settling");
     setTyping(false);
     reveal(full ?? answer(text));
   };
@@ -206,10 +216,20 @@ export default function Chatbot({
               </div>
             ))}
             {typing && (
-              <div className="flex w-16 items-center gap-1 rounded-2xl bg-white/[0.06] px-4 py-3">
-                {[0, 1, 2].map((d) => (
-                  <span key={d} className="h-1.5 w-1.5 animate-bounce rounded-full bg-gold" style={{ animationDelay: `${d * 0.15}s` }} />
-                ))}
+              /* The orb replaces three bouncing dots. Dots say something
+                 is happening; they cannot say what, and a legal
+                 assistant that looks frozen is one a visitor abandons.
+                 The state changes as the request progresses, and the
+                 live region gives a screen reader the word rather than
+                 the picture. */
+              <div className="flex items-center gap-3 rounded-2xl bg-white/[0.06] px-4 py-3">
+                <ThinkingOrb state={orbState} size={34} speed={0.5} brandId={brandId} />
+                <span className="font-sans text-[12px] text-ivory-dim">
+                  {orbState === "connecting" ? "Reaching the assistant…" : "Thinking…"}
+                </span>
+                <span className="sr-only" role="status" aria-live="polite">
+                  The assistant is thinking
+                </span>
               </div>
             )}
           </div>

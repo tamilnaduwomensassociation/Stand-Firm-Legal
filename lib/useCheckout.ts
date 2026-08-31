@@ -43,6 +43,26 @@ declare global {
   }
 }
 
+/* Checkout wears the brand it was opened from. */
+const BRAND_NAMES: Record<string, string> = {
+  jeni: "Jeni Enterprises",
+  harmonic: "Harmony Pranic Healing",
+  tnwla: "Tamilnadu Women Law Association — Madras",
+  "stand-firm": "Stand Firm Legal Associates",
+};
+const BRAND_MARKS: Record<string, string> = {
+  jeni: "/media/marks/jeni-mark.png",
+  harmonic: "/media/marks/harmony-mark.png",
+  tnwla: "/media/marks/start-mark.png",
+  "stand-firm": "/media/marks/sfla-mark.png",
+};
+const BRAND_ACCENT: Record<string, string> = {
+  jeni: "#c9a24b",
+  harmonic: "#5fa88a",
+  tnwla: "#c9a24b",
+  "stand-firm": "#c9a24b",
+};
+
 /** Load Checkout once, on demand. Never bundled — it must come from Razorpay. */
 function loadRazorpay(): Promise<boolean> {
   if (typeof window === "undefined") return Promise.resolve(false);
@@ -109,10 +129,28 @@ export function useCheckout(brand: string) {
           order_id: razorpayOrder.id,
           amount: razorpayOrder.amount,
           currency: "INR",
-          name: "Jeni Enterprises",
+          /*
+            CARD ENTRY BELONGS TO RAZORPAY, NOT TO US.
+
+            A card form on our own page would put the number and CVV
+            through this origin and this server, which drags the
+            association into PCI-DSS scope for the sake of a nicer
+            input. Checkout renders its card fields inside Razorpay's
+            own iframe, so the card is never ours to hold, lose or
+            log — and it is the only way the payment can still be
+            verified by signature afterwards.
+
+            What IS ours is how it looks. `name`, `image` and `theme`
+            dress Checkout in the brand it was opened from, so the card
+            screen reads as part of the shop rather than a redirect to
+            somewhere else.
+          */
+          name: BRAND_NAMES[brand] ?? "Jeni Enterprises",
+          image: BRAND_MARKS[brand],
           description: `Order ${id}`,
           prefill: { name: buyer.name, contact: buyer.phone, email: buyer.email ?? "" },
-          theme: { color: "#c9a24b" },
+          notes: { order: id, brand },
+          theme: { color: BRAND_ACCENT[brand] ?? "#c9a24b", backdrop_color: "rgba(10,10,11,0.72)" },
           handler: async (r: RazorpayResponse) => {
             setState({ stage: "verifying" });
             try {
