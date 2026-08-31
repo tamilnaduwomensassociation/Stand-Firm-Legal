@@ -24,7 +24,7 @@
  *    /media/marks/* are circular with transparent corners — and belt
  *    and braces with `overflow-hidden` on the wrapper.
  */
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { IdCard, Menu, Moon, Search, Sun, X } from "lucide-react";
 import { navLinks, brandMarks, jeni } from "@/config/site.config";
@@ -36,12 +36,99 @@ import { cn } from "@/lib/utils";
 const MARK =
   "flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/95 ring-1 ring-gold/40 transition-all duration-300 hover:ring-gold hover:shadow-[0_0_22px_rgba(201,162,75,0.5)]";
 
+/**
+ * HOW MUCH OF THE HEADER FITS.
+ *
+ * "full"    emblem + wordmark + the subtitle + every link
+ * "compact" the subtitle steps aside so the links have the room
+ * "drawer"  the links move into the hamburger
+ */
+type Fit = "full" | "compact" | "drawer";
+
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const [light, setLight] = useState(true);
   const { lang, setLang } = useLang();
   const pathname = usePathname();
+
+  /**
+   * THE HEADER MEASURES ITSELF. IT DOES NOT GUESS.
+   *
+   * This row was fitted with hand-picked breakpoints three times and was
+   * wrong three times — links printed over the Stand Firm mark at 1440,
+   * then, once `overflow-hidden` was added as a backstop, the H of HOME
+   * and the S of SESSIONS were sliced off instead. Clipping is a nicer
+   * failure than overlapping but it is still a failure.
+   *
+   * The reason a fixed breakpoint cannot work here: the row's real width
+   * depends on the font actually loading, on the language (Tamil labels
+   * are longer and set in a different face), on the container's own
+   * max-width, and on how many house marks are in the right-hand
+   * cluster. Any of those changing invalidates a number typed into a
+   * class name, and nothing tells you it has.
+   *
+   * So the three parts are measured and compared with the space there
+   * is. The links keep their natural width even while hidden, because
+   * hiding them takes them out of the flow rather than out of the
+   * document — `scrollWidth` still reports what they would need, which
+   * is what lets the row come BACK when the window widens again.
+   *
+   * The subtitle is given up before the links are: a visitor can read
+   * "Tamilnadu Women Law Association" from the wordmark above it, but
+   * cannot reach Gallery from a link that is not there.
+   */
+  const rowRef = useRef<HTMLDivElement>(null);
+  const brandRef = useRef<HTMLAnchorElement>(null);
+  const wordmarkRef = useRef<HTMLSpanElement>(null);
+  const subtitleRef = useRef<HTMLSpanElement>(null);
+  const navRef = useRef<HTMLElement>(null);
+  const clusterRef = useRef<HTMLDivElement>(null);
+
+  /* Starts in the safest state. A first paint that is missing links is
+     tidy; a first paint with links on top of the logo is not. */
+  const [fit, setFit] = useState<Fit>("drawer");
+
+  const measure = useCallback(() => {
+    const row = rowRef.current, brand = brandRef.current, nav = navRef.current, cluster = clusterRef.current;
+    if (!row || !brand || !nav || !cluster) return;
+
+    const GAPS = 40;      // the two flex gaps either side of the links
+    const BUFFER = 16;    // never sit exactly on the edge; sub-pixel rounding flickers
+
+    const wordmarkW = wordmarkRef.current?.offsetWidth ?? 0;
+    const subtitleW = subtitleRef.current?.offsetWidth ?? 0;
+    const markW = brand.offsetWidth - Math.max(wordmarkW, subtitleW);   // emblem + its gap
+
+    /* The links' own width, summed from the links themselves.
+       `scrollWidth` is ambiguous here: the row is a flex child with
+       flex-1, so once the content fits, scrollWidth reports the BOX it
+       was stretched to rather than the content inside it — and a
+       measurement that changes meaning depending on the answer cannot
+       decide the answer. Summing the children is unambiguous in both
+       states, which is the whole reason this hook exists. */
+    const kids = Array.from(nav.children) as HTMLElement[];
+    const gap = parseFloat(getComputedStyle(nav).columnGap) || 0;
+    const navW = kids.reduce((n, k) => n + k.offsetWidth, 0) + gap * Math.max(0, kids.length - 1);
+
+    const clusterW = cluster.offsetWidth;
+    const room = row.clientWidth - clusterW - GAPS - BUFFER;
+
+    if (markW + Math.max(wordmarkW, subtitleW) + navW <= room) setFit("full");
+    else if (markW + wordmarkW + navW <= room) setFit("compact");
+    else setFit("drawer");
+  }, []);
+
+  useLayoutEffect(() => {
+    measure();
+    const row = rowRef.current;
+    if (!row || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(measure);
+    ro.observe(row);
+    /* Web fonts land after first paint and change every width. */
+    (document as Document & { fonts?: FontFaceSet }).fonts?.ready.then(measure).catch(() => {});
+    return () => ro.disconnect();
+  }, [measure, lang]);
 
   /* On inner pages (e.g. /gallery) section anchors must return home first */
   const hrefFor = (h: string) => (h.startsWith("#") && pathname !== "/" ? `/${h}` : h);
@@ -103,9 +190,10 @@ export default function Navbar() {
         scrolled ? "glass !bg-obsidian/85 py-3 shadow-[0_10px_40px_rgba(0,0,0,0.35)]" : "bg-transparent py-5"
       )}
     >
-      <div className="mx-auto flex max-w-[1560px] items-center justify-between gap-4 px-4 md:px-5 xl:gap-5 xl:px-8">
+      <div ref={rowRef} className="mx-auto flex max-w-[1760px] items-center justify-between gap-4 px-4 md:px-5 xl:gap-5 xl:px-8">
         {/* ---------- Brand: association emblem + wordmark ---------- */}
         <a
+          ref={brandRef}
           href={hrefFor("#home")}
           className="group flex shrink-0 items-center gap-2.5 md:gap-3.5"
           aria-label="Tamilnadu Women Law Association Madras — home"
@@ -115,7 +203,7 @@ export default function Navbar() {
             <img src={brandMarks.start} alt="" className="h-full w-full object-cover" />
           </span>
           <span className="flex flex-col leading-none">
-            <span className="font-serif text-base font-bold tracking-[0.12em] gold-text md:text-xl md:tracking-[0.14em]">
+            <span ref={wordmarkRef} className="font-serif text-base font-bold tracking-[0.12em] gold-text md:text-xl md:tracking-[0.14em]">
               TNWLA · MADRAS
             </span>
             {/* Two lines, not one. On a single line this ran to roughly
@@ -129,11 +217,17 @@ export default function Navbar() {
                 1600 the line steps aside so the links fit without
                 touching the marks. Below 1366 the drawer takes over and
                 there is room for it again. */}
-            <span className={cn(
-              "mt-1 flex flex-col whitespace-nowrap font-sans text-[7.5px] font-extrabold uppercase leading-[1.45] tracking-[0.18em] transition-colors group-hover:text-gold md:text-[9px] md:tracking-[0.2em]",
-              "min-[1366px]:hidden min-[1600px]:flex",
-              onHeroFilm ? "text-white/80" : "text-ivory-dim"
-            )}>
+            <span
+              ref={subtitleRef}
+              className={cn(
+                "mt-1 flex flex-col whitespace-nowrap font-sans text-[7.5px] font-extrabold uppercase leading-[1.45] tracking-[0.18em] transition-colors group-hover:text-gold md:text-[9px] md:tracking-[0.2em]",
+                /* Hidden only when the links genuinely need the width.
+                   `hidden` rather than a width of zero, so it stops
+                   claiming space but still measures for the next pass. */
+                fit === "compact" && "hidden",
+                onHeroFilm ? "text-white/80" : "text-ivory-dim"
+              )}
+            >
               <span>Tamilnadu Women Law Association</span>
               <span className="text-gold/85">— Madras</span>
             </span>
@@ -142,6 +236,7 @@ export default function Navbar() {
 
         {/* ---------- Desktop links ---------- */}
         <nav
+          ref={navRef}
           className={cn(
             /* Measured, not guessed. The row needs ~757px in English and
                ~668px in Tamil; below 1440px the flex box that holds it is
@@ -166,11 +261,20 @@ export default function Navbar() {
                sideways rather than shrinking, and spilling is what put
                the links on top of the marks. Clipped is recoverable;
                overlapping is not. */
-            "hidden min-w-0 flex-1 items-center justify-center overflow-hidden min-[1366px]:flex",
+            /* Always laid out, so its natural width can be measured.
+               When it does not fit it is taken OUT OF THE FLOW rather
+               than out of the document — `absolute` + `invisible` means
+               it claims no space, shows nothing, catches no clicks, and
+               still reports the scrollWidth that decides when it may
+               come back. There is no `overflow-hidden` any more: that
+               backstop was what sliced the H off HOME and the S off
+               SESSIONS instead of admitting the row did not fit. */
+            "flex min-w-0 flex-1 items-center justify-center whitespace-nowrap",
+            fit === "drawer" && "pointer-events-none invisible absolute left-0 top-0",
             onHeroFilm ? "text-white" : "text-ivory/90",
             ta
-              ? "gap-2 font-tamil text-[10.5px] normal-case tracking-normal min-[1600px]:gap-2.5 min-[1600px]:text-[11px]"
-              : "gap-2.5 font-sans text-[10px] uppercase tracking-[0.08em] min-[1600px]:gap-3.5 min-[1600px]:text-[11px] min-[1600px]:tracking-[0.1em]"
+              ? "gap-2.5 font-tamil text-[11px] normal-case tracking-normal"
+              : "gap-3 font-sans text-[10.5px] uppercase tracking-[0.09em]"
           )}
           aria-label="Primary"
         >
@@ -183,7 +287,7 @@ export default function Navbar() {
         </nav>
 
         {/* ---------- Right cluster ---------- */}
-        <div className="flex shrink-0 items-center gap-2 xl:gap-2.5">
+        <div ref={clusterRef} className="flex shrink-0 items-center gap-2 xl:gap-2.5">
           {/* ---------- The three house marks ----------
               These used to sit inside the centred nav. That row is a
               `justify-center` flex child, and a centred flex row that runs
@@ -272,7 +376,7 @@ export default function Navbar() {
             <Search size={19} />
           </button>
           <button
-            className={cn("min-[1366px]:hidden", onHeroFilm ? "text-white" : "text-ivory")}
+            className={cn(fit !== "drawer" && "hidden", onHeroFilm ? "text-white" : "text-ivory")}
             onClick={() => setOpen(!open)}
             aria-label="Toggle menu"
           >
@@ -284,7 +388,8 @@ export default function Navbar() {
       {/* ---------- Mobile drawer ---------- */}
       <div
         className={cn(
-          "overflow-hidden transition-all duration-500 glass !bg-obsidian/95 min-[1366px]:hidden",
+          "overflow-hidden transition-all duration-500 glass !bg-obsidian/95",
+          fit !== "drawer" && "hidden",
           open ? "max-h-[80vh] border-t border-gold/20" : "max-h-0"
         )}
       >

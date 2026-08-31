@@ -2,7 +2,31 @@ import type { Metadata } from "next";
 import PageShell from "@/components/standfirm/PageShell";
 import SFContact from "@/components/standfirm/SFContact";
 import { sf } from "@/config/standfirm.config";
-import { lawyers, namedPartners } from "@/config/site.config";
+import { lawyers, leadersPanel, namedPartners } from "@/config/site.config";
+
+/**
+ * Who appears on this page.
+ *
+ * The President led it alone, which left a single card floating in a
+ * three-column grid — and the Vice President, who is an advocate of the
+ * same standing, appeared nowhere on the firm's side of the site at all.
+ * She is read from leadersPanel by position rather than by index, so if
+ * the office changes hands the page follows the config instead of
+ * needing an edit here.
+ */
+const vicePresident = leadersPanel.find((l) => /vice\s*president/i.test(l.position));
+
+const advocates = [
+  ...lawyers,
+  ...(vicePresident
+    ? [{
+        name: `Adv. ${vicePresident.name}`,
+        role: vicePresident.position,
+        focus: `${vicePresident.qualification} · ${vicePresident.position}, TNWLA Madras`,
+        photo: vicePresident.photo,
+      }]
+    : []),
+];
 
 export const metadata: Metadata = {
   title: "Our Advocates",
@@ -18,14 +42,30 @@ export default function TeamPage() {
       image="/media/stills/team-2.jpg"
     >
       <section className="bg-obsidian section-pad">
-        <div className="mx-auto grid max-w-6xl gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {lawyers.map((l) => (
+        {/* Two advocates read better centred than pinned to the left of a
+            three-column grid, so the grid tracks the number there are. */}
+        <div className="mx-auto grid max-w-3xl gap-6 sm:grid-cols-2">
+          {advocates.map((l) => (
             <article key={l.name} className="flex flex-col overflow-hidden rounded-2xl glass gold-border">
               {"photo" in l && typeof (l as { photo?: string }).photo === "string" ? (
+                /*
+                  THE WHOLE PHOTOGRAPH, NOT A CROP OF IT.
+
+                  `object-cover` filled the frame by cutting whatever did
+                  not fit — and these are portraits shot at 2:3, so a
+                  short landscape frame sliced the head off. `contain`
+                  fits the entire image inside a portrait frame instead,
+                  on a soft ground, so both advocates appear in full and
+                  the two cards still stand the same height.
+                */
                 /* eslint-disable-next-line @next/next/no-img-element */
-                <img src={(l as { photo: string }).photo} alt={l.name} className="h-64 w-full object-cover object-top" />
+                <img
+                  src={(l as { photo: string }).photo}
+                  alt={l.name}
+                  className="aspect-[3/4] w-full bg-obsidian-soft object-contain object-center"
+                />
               ) : (
-                <div className="flex h-64 w-full items-center justify-center bg-obsidian-soft">
+                <div className="flex aspect-[3/4] w-full items-center justify-center bg-obsidian-soft">
                   <span className="font-serif text-5xl gold-text">
                     {l.name.replace(/^Adv\.\s*/, "").charAt(0)}
                   </span>
