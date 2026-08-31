@@ -33,6 +33,7 @@ import { openGooglePay, platform, upiLinks } from "@/lib/upi";
 import { downloadReceipt, receiptNumber, sendReceiptEmail, sendReceiptWhatsApp } from "@/lib/receipt";
 import PaymentReceipt from "@/components/ui/PaymentReceipt";
 import { cn } from "@/lib/utils";
+import { useLockPageScroll } from "@/lib/useLockPageScroll";
 
 const brandIcons: Record<string, LucideIcon> = { Leaf, Sprout, Shirt };
 
@@ -62,6 +63,9 @@ export default function FoodShop() {
   const [cart, setCart] = useState<Line[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [checkout, setCheckout] = useState(false);
+
+  /* Freeze the page behind the popup — see lib/useLockPageScroll.ts */
+  useLockPageScroll(cartOpen || checkout);
   const [stage, setStage] = useState<"details" | "pay" | "done">("details");
 
   const [buyer, setBuyer] = useState({ name: "", phone: "", email: "", address: "", pin: "", notes: "" });
@@ -78,6 +82,10 @@ export default function FoodShop() {
   const [paidOn, setPaidOn] = useState("");
   const [showErrors, setShowErrors] = useState(false);
   const [handedOff, setHandedOff] = useState(false);
+  /* Set while the order is being registered server-side, and a
+     note if the server priced the basket differently. */
+  const [placing, setPlacing] = useState(false);
+  const [serverNote, setServerNote] = useState("");
   const [plat, setPlat] = useState<"android" | "ios" | "desktop">("desktop");
 
   useEffect(() => setPlat(platform()), []);
@@ -133,17 +141,70 @@ export default function FoodShop() {
   const detailsOk =
     buyer.name.trim() !== "" && buyer.phone.trim().length >= 10 && buyer.address.trim() !== "";
 
-  const goToPay = () => {
+  /**
+   * Move to payment — and register the order on the server first.
+   *
+   * The order number used to be invented here, in the browser, from
+   * the date and a random number. That number existed nowhere else:
+   * nothing was stored, so an order could not be looked up, chased, or
+   * seen in Superadmin, and two customers could in principle be given
+   * the same one. Now the server issues the id and holds the order at
+   * `pending`, and — this is the part that matters — it reprices every
+   * line from its own catalogue, so the amount asked for is the
+   * server's figure and not one the browser could have edited.
+   *
+   * If the request fails we keep going with a local number rather than
+   * blocking the sale. A customer who cannot pay is worse than an
+   * order the office has to reconcile by hand, and the WhatsApp
+   * receipt still reaches us either way.
+   */
+  const goToPay = async () => {
     if (!detailsOk) { setShowErrors(true); return; }
     setShowErrors(false);
+    setPlacing(true);
+
     if (!orderNo) {
-      const d = new Date();
-      setOrderNo(
-        `JENI-${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}-${
-          Math.floor(Math.random() * 9000) + 1000
-        }`
-      );
+      try {
+        const res = await fetch("/api/orders", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            brand: "jeni",
+            lines: cart.map((l) => ({ id: l.id, en: l.en, qty: l.qty, price: l.price })),
+            total,
+            name: buyer.name,
+            phone: buyer.phone,
+            email: buyer.email,
+            address: buyer.address,
+            notes: buyer.notes,
+          }),
+        });
+        const d = await res.json();
+        if (res.ok && d.id) {
+          setOrderNo(d.id);
+          if (typeof d.total === "number" && Math.round(d.total) !== Math.round(total)) {
+            /* The catalogue moved under this basket. Say so plainly
+               rather than charging one figure and showing another. */
+            setServerNote(
+              `Our current price for this basket is ₹${d.total.toLocaleString("en-IN")}. ` +
+              `Please pay that amount — it is what your order is recorded at.`
+            );
+          }
+        } else {
+          throw new Error(d.error ?? "no id");
+        }
+      } catch {
+        const d = new Date();
+        setOrderNo(
+          `JENI-${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}-${
+            Math.floor(Math.random() * 9000) + 1000
+          }`
+        );
+        setServerNote("");
+      }
     }
+
+    setPlacing(false);
     setStage("pay");
   };
 
@@ -161,9 +222,25 @@ export default function FoodShop() {
 
   const refOk = txn.trim().replace(/\s/g, "").length >= 6;
 
-  const confirmPaid = () => {
+  const confirmPaid = async () => {
     if (!refOk) { setShowErrors(true); return; }
     setShowErrors(false);
+
+    /* Hand the reference to the server so the order moves to
+       `awaiting-verification` and shows up in Superadmin for someone
+       to clear against the bank statement. A typed UPI reference is
+       not proof of payment and is never treated as one — which is why
+       this does not mark the order paid. */
+    try {
+      await fetch("/api/payments/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: orderNo, ref: txn.trim() }),
+      });
+    } catch {
+      /* The receipt below is still generated and still sent. */
+    }
+
     setPaidLines(cart);          // freeze what was bought…
     setPaidTotal(total);
     setCart([]);                 // …then empty the basket
@@ -338,7 +415,7 @@ export default function FoodShop() {
 
       {/* ---------- cart drawer ---------- */}
       {cartOpen && (
-        <div className="fixed inset-0 z-[96] flex justify-end bg-black/70 backdrop-blur-sm" onClick={() => setCartOpen(false)}>
+        <div data-lenis-prevent className="fixed inset-0 z-[96] flex justify-end bg-black/70 backdrop-blur-sm" onClick={() => setCartOpen(false)}>
           <div
             className="flex h-full w-full max-w-md flex-col bg-obsidian-soft shadow-2xl"
             onClick={(e) => e.stopPropagation()}
@@ -350,7 +427,7 @@ export default function FoodShop() {
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6">
+            <div data-lenis-prevent className="flex-1 overflow-y-auto p-6 overscroll-contain">
               {cart.length === 0 ? (
                 <p className="py-16 text-center font-sans text-sm text-ivory-dim">
                   {lang === "ta" ? "கூடை காலியாக உள்ளது." : "Your basket is empty."}
@@ -402,7 +479,7 @@ export default function FoodShop() {
 
       {/* ---------- checkout ---------- */}
       {checkout && (
-        <div className="fixed inset-0 z-[97] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm" role="dialog">
+        <div data-lenis-prevent className="fixed inset-0 z-[97] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm" role="dialog">
           <div className="relative flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-obsidian-soft shadow-2xl gold-border">
             <div className="flex items-center justify-between border-b border-[var(--hairline)] px-6 py-4">
               <p className="kicker !tracking-[0.2em]">
@@ -418,7 +495,7 @@ export default function FoodShop() {
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-7">
+            <div data-lenis-prevent className="flex-1 overflow-y-auto p-7 overscroll-contain">
               {/* ---------- STAGE 1 ---------- */}
               {stage === "details" && (
                 <div className="space-y-5">
@@ -487,6 +564,14 @@ export default function FoodShop() {
                       {lang === "ta" ? "ஆர்டர் எண்" : "Order No"}: {orderNo}
                     </p>
                   </div>
+
+                  {/* Only appears when the catalogue changed between the
+                      basket being filled and the order being placed. */}
+                  {serverNote && (
+                    <p className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 font-sans text-[12px] leading-relaxed text-amber-200/90">
+                      {serverNote}
+                    </p>
+                  )}
 
                   <div className="flex flex-col gap-3">
                     <button
@@ -619,9 +704,11 @@ export default function FoodShop() {
                 </button>
 
                 {stage === "details" ? (
-                  <button onClick={goToPay}
-                    className="flex items-center gap-2 rounded-full bg-gold px-7 py-3 font-sans text-xs uppercase tracking-widest text-black transition-all hover:bg-gold-bright">
-                    {lang === "ta" ? "கட்டணத்திற்கு" : "Continue to Payment"} <ChevronRight size={14} />
+                  <button onClick={goToPay} disabled={placing}
+                    className="flex items-center gap-2 rounded-full bg-gold px-7 py-3 font-sans text-xs uppercase tracking-widest text-black transition-all hover:bg-gold-bright disabled:opacity-60">
+                    {placing
+                      ? (lang === "ta" ? "ஆர்டர் பதிவு…" : "Placing order…")
+                      : <>{lang === "ta" ? "கட்டணத்திற்கு" : "Continue to Payment"} <ChevronRight size={14} /></>}
                   </button>
                 ) : (
                   <button

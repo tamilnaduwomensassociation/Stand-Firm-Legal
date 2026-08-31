@@ -1,14 +1,15 @@
 {
-  "name": "standfirm-legal",
+  "name": "tsjh-portals",
   "version": "1.0.0",
   "private": true,
-  "description": "STAND FIRM LEGAL ASSOCIATES \u2014 Cinematic luxury legal experience. Chennai, India.",
+  "description": "TNWLA Madras · Stand Firm Legal Associates · Jeni Enterprises · Harmony Pranic Healing — four brands, one Next.js application.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "prebuild": "node scripts/fetch-news.mjs",
-    "news": "node scripts/fetch-news.mjs"
+    "news": "node scripts/fetch-news.mjs",
+    "hash-password": "node scripts/hash-password.mjs"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",

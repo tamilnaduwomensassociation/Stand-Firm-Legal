@@ -1,6 +1,24 @@
 "use client";
 
 /**
+ * ============================================================
+ * SUPERSEDED — replaced by components/sections/AssociationFilm.tsx.
+ * ============================================================
+ * This is the "Numbers That Stand Firm" band: 10+ years, 500+ clients,
+ * 5,500+ registrations, 490+ cases, 100% client satisfaction.
+ *
+ * It was removed at the client's request, and it should stay removed.
+ * Two of those figures were unverified placeholders, "100% client
+ * satisfaction" is a claim no practice can evidence, and the Bar
+ * Council of India's rules on advertising take a dim view of a lawyer
+ * publishing statistics about their own success rate. Film runs in its
+ * place instead.
+ *
+ * Nothing imports this file.
+ * ============================================================
+ */
+
+/**
  * WHY CHOOSE US — stat wall on a frozen frame (scene-4), counters
  * spin up on entry. force-dark keeps it cinematic in both themes.
  */

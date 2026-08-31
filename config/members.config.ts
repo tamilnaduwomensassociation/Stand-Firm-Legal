@@ -3,9 +3,10 @@
  * MEMBER DIRECTORY — powers "Verify Your Membership"
  * ============================================================
  *
- * This site is a static export with no backend and no database, so
- * there is nothing for the Verify Membership tool to query live.
- * This file IS the directory it searches.
+ * SEED DATA ONLY — the live directory is the `members` collection,
+ * written when a card is issued through /id-card and searched by
+ * /api/members. Rows here stay findable for members recorded before
+ * that store existed, and the stored directory wins on a clash.
  *
  * HOW TO ADD A MEMBER
  * Whenever a physical card is issued through the /id-card tool, copy
@@ -29,6 +30,8 @@ export type MemberRecord = {
   blood: string;
   mobile: string;
   validUpTo: string;
+  /** "MM-DD" — drives the birthday wishes panel. Optional. */
+  dob?: string;
 };
 
 export const members: MemberRecord[] = [

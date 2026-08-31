@@ -4,6 +4,7 @@ import "./globals.css";
 import { site } from "@/config/site.config";
 import { LangProvider } from "@/lib/i18n";
 import SmoothScroll from "@/components/providers/SmoothScroll";
+import ThemeStyle from "@/components/providers/ThemeStyle";
 
 /* Typography: elegant serif display + modern sans body + Tamil */
 const serif = Cormorant_Garamond({
@@ -89,6 +90,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${serif.variable} ${sans.variable} ${tamil.variable} light`}>
       <body className="font-sans">
+        {/* Saved appearance, inlined so the page never flashes the
+            shipped colours first. Renders nothing when unset. */}
+        <ThemeStyle brand="tnwla" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

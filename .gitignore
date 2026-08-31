@@ -5,3 +5,8 @@ out
 *.tsbuildinfo
 next-env.d.ts
 .DS_Store
+.data/
+
+# Local environment (never commit real keys)
+.env
+.env.local

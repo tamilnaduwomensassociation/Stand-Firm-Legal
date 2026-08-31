@@ -1,6 +1,16 @@
 "use client";
 
 /**
+ * ============================================================
+ * SUPERSEDED — replaced by components/standfirm/SFHero.tsx.
+ *
+ * This opened on a scroll-scrubbed film that pinned the page for
+ * three viewport heights. The brief asked for a film that simply
+ * loops, so SFHero uses LoopVideoHero. Nothing imports this.
+ * ============================================================
+ */
+
+/**
  * STAND FIRM LEGAL ASSOCIATES — page masthead.
  *
  * The page opens on the firm's brand film, scrubbed by scroll rather

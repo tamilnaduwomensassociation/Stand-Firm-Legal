@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { useLang } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { useLockPageScroll } from "@/lib/useLockPageScroll";
 
 const MONTHS = {
   en: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
@@ -81,6 +82,9 @@ export default function DatePicker({
   const gridRef = useRef<HTMLDivElement>(null);
 
   const [open, setOpen] = useState(false);
+
+  /* Freeze the page behind the popup — see lib/useLockPageScroll.ts */
+  useLockPageScroll(open);
   const [mode, setMode] = useState<"day" | "month" | "year">("day");
   const [above, setAbove] = useState(false);
   const [sheet, setSheet] = useState(false);
@@ -335,7 +339,7 @@ export default function DatePicker({
 
       {/* ---- year grid ---- */}
       {mode === "year" && (
-        <div ref={yearListRef} className="grid max-h-[248px] grid-cols-4 gap-1.5 overflow-y-auto pr-1">
+        <div ref={yearListRef} data-lenis-prevent className="grid max-h-[248px] grid-cols-4 gap-1.5 overflow-y-auto pr-1 overscroll-contain">
           {years.map((y) => (
             <button
               key={y} type="button" data-active={y === view.y}
@@ -403,7 +407,7 @@ export default function DatePicker({
       {open && !sheet && card}
 
       {open && sheet && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+        <div data-lenis-prevent className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
           {card}
         </div>
       )}

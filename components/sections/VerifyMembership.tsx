@@ -16,19 +16,27 @@
  * the front/back panels below for `<CardFront>`/`<CardBack>` from
  * "@/components/ui/IdCardFaces".
  *
- * DATA SOURCE — this site is a static export with no backend, so
- * there is nothing to query live. The lookup runs against the static
- * directory in config/members.config.ts. Whenever the office issues a
- * physical card through /id-card, add a matching row there (and
- * redeploy) so this tool can find it. See that file for the schema
- * and a fuller explanation.
+ * DATA SOURCE — the lookup is LIVE. It calls /api/members, which
+ * reads the stored directory that /id-card writes to when a card is
+ * issued, falling back to the seed rows in config/members.config.ts
+ * for members recorded before the store existed.
+ *
+ * This replaces a bundled array that shipped inside the page: a card
+ * issued in the morning could not be found in the afternoon, because
+ * finding it required a source edit and a redeploy first. Issuing a
+ * card and being able to verify it are now the same act.
+ *
+ * The number is typed as a SERIAL only — the "TNWLA/2026/" prefix is
+ * rendered beside the field and is not part of the value, so it
+ * cannot be half-deleted into something that will never match. See
+ * config/membership.config.ts.
  */
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, RotateCcw, Search, ShieldCheck, ShieldX } from "lucide-react";
-import { members, type MemberRecord } from "@/config/members.config";
+import { type MemberRecord } from "@/config/members.config";
+import { MEMBERSHIP_PREFIX, toSerial } from "@/config/membership.config";
 import { useLang } from "@/lib/i18n";
 
-const norm = (s: string) => s.trim().toUpperCase().replace(/\s+/g, "");
 
 const INFO_W = 340;
 const INFO_H = 208;
@@ -92,7 +100,11 @@ function InfoBack({ m, lang }: { m: MemberRecord; lang: string }) {
 export default function VerifyMembership() {
   const { lang } = useLang();
   const [tab, setTab] = useState<"verify" | "result">("verify");
-  const [query, setQuery] = useState("TNWLA/2026/");
+  /* Only the SERIAL is state. The "TNWLA/2026/" prefix is furniture
+     rendered beside the input, not a value that can be edited or
+     accidentally deleted — see config/membership.config.ts. */
+  const [serial, setSerial] = useState("");
+  const [busy, setBusy] = useState(false);
   const [found, setFound] = useState<MemberRecord | null>(null);
   const [notFound, setNotFound] = useState(false);
 
@@ -136,14 +148,34 @@ export default function VerifyMembership() {
   };
   const flip = () => { cancelSettle(); setRot((r) => ({ x: 0, y: Math.round(r.y / 180) * 180 + 180 })); };
 
-  const runSearch = () => {
-    const q = norm(query);
-    if (!q) return;
-    const hit = members.find((m) => norm(m.membershipNo) === q || norm(m.enrollmentNo) === q) ?? null;
-    setFound(hit);
-    setNotFound(!hit);
-    setRot({ x: 0, y: 0 });
-    if (hit) setTab("result");
+  /**
+   * Ask the server, not a bundled array.
+   *
+   * The directory used to be a hardcoded list compiled into the page,
+   * so a card issued this morning could not be found this afternoon —
+   * it needed a source edit and a redeploy first. The lookup is live
+   * now: issuing a card and finding it are the same act.
+   */
+  const runSearch = async () => {
+    const q = serial.trim();
+    if (!q || busy) return;
+    setBusy(true);
+    setNotFound(false);
+    try {
+      const res = await fetch(`/api/members?q=${encodeURIComponent(q)}`, { cache: "no-store" });
+      const d = await res.json();
+      const hit = res.ok && d.found ? (d.member as MemberRecord) : null;
+      setFound(hit);
+      setNotFound(!hit);
+      setRot({ x: 0, y: 0 });
+      if (hit) setTab("result");
+    } catch {
+      /* Offline or the directory is unreachable. "Not found" would be
+         a lie — say nothing was reached. */
+      setFound(null);
+      setNotFound(true);
+    }
+    setBusy(false);
   };
 
   return (
@@ -174,21 +206,43 @@ export default function VerifyMembership() {
           <p className="mb-4 font-sans text-sm text-ivory-dim">
             {lang === "ta"
               ? "உங்கள் உறுப்பினர் எண்ணை உள்ளிடவும் — உங்கள் அடையாள அட்டை உடனடியாக காட்டப்படும்."
-              : "Enter your Membership No. (e.g. TNWLA/2026/57) to pull up your ID card."}
+              : "Enter your Membership No. to pull up your ID card — just the number after the prefix."}
           </p>
+          {/* The prefix is PART OF THE FIELD, not part of the value.
+              It sits inside the same bordered box so the whole thing
+              reads as one input, but it cannot be selected, edited or
+              backspaced away — which is what used to break the lookup
+              for members whose cards were perfectly valid. Only the
+              serial is typed, and only the serial is state. */}
           <div className="flex flex-col gap-3 sm:flex-row">
-            <input
-              value={query}
-              onChange={(e) => { setQuery(e.target.value); setNotFound(false); }}
-              onKeyDown={(e) => e.key === "Enter" && runSearch()}
-              placeholder="TNWLA/2026/57"
-              className="w-full rounded-xl bg-obsidian-soft/60 border border-[var(--hairline)] px-4 py-3 font-sans text-sm text-ivory placeholder:text-ivory-faint focus:border-gold/60 focus:outline-none focus:ring-1 focus:ring-gold/30 transition-all"
-            />
+            <div className="flex w-full items-stretch overflow-hidden rounded-xl border border-[var(--hairline)] bg-obsidian-soft/60 transition-all focus-within:border-gold/60 focus-within:ring-1 focus-within:ring-gold/30">
+              <span
+                className="flex select-none items-center whitespace-nowrap border-r border-[var(--hairline)] bg-obsidian/50 px-4 font-sans text-sm text-gold"
+                aria-hidden
+              >
+                {MEMBERSHIP_PREFIX}
+              </span>
+              <input
+                value={serial}
+                onChange={(e) => {
+                  /* Digits only. Someone pasting a whole number gets the
+                     prefix stripped rather than an error. */
+                  setSerial(toSerial(e.target.value).replace(/[^0-9A-Za-z-]/g, ""));
+                  setNotFound(false);
+                }}
+                onKeyDown={(e) => e.key === "Enter" && runSearch()}
+                inputMode="numeric"
+                aria-label={`Membership number, after ${MEMBERSHIP_PREFIX}`}
+                placeholder="57"
+                className="w-full bg-transparent px-4 py-3 font-sans text-sm text-ivory placeholder:text-ivory-faint focus:outline-none"
+              />
+            </div>
             <button
               onClick={runSearch}
-              className="flex items-center justify-center gap-2 rounded-xl bg-gold px-6 py-3 font-sans text-xs uppercase tracking-widest text-black transition-all hover:bg-gold-bright"
+              disabled={busy || !serial.trim()}
+              className="flex items-center justify-center gap-2 rounded-xl bg-gold px-6 py-3 font-sans text-xs uppercase tracking-widest text-black transition-all hover:bg-gold-bright disabled:opacity-40"
             >
-              <Search size={14} /> {lang === "ta" ? "செல்" : "Go"}
+              <Search size={14} /> {busy ? (lang === "ta" ? "தேடுகிறது…" : "Searching…") : (lang === "ta" ? "செல்" : "Go")}
             </button>
           </div>
           {notFound && (

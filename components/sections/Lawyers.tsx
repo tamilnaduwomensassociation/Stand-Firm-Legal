@@ -6,15 +6,17 @@
  * Layout, top to bottom:
  *   · President (left)  |  Meet the Association Members / President's Corner (right)
  *   · Motto & Dreams — full-width rectangular panel
- *   · Main Leaders Panel — four office bearers with positions
- *   · Stand Firm Legal Associates — three partnership advocates
+ *   · Main Leaders Panel — the nine office bearers
+ *
+ * The Stand Firm partnerships block that used to close this page
+ * has moved to /stand-firm/team — it is the firm's, not ours.
  */
 import { useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import { Facebook, Instagram, Linkedin, Quote, Sparkles } from "lucide-react";
 import { gsap } from "@/lib/gsap";
 import {
-  lawyers, leadersPanel, mottoAndDreams, presidentCorner, sflaPartners,
+  lawyers, leadersPanel, mottoAndDreams, presidentCorner,
 } from "@/config/site.config";
 import { useLang } from "@/lib/i18n";
 import SectionHeading from "@/components/ui/SectionHeading";
@@ -123,58 +125,63 @@ export default function Lawyers() {
         </div>
       </div>
 
-      {/* ---------- Main Leaders Panel ---------- */}
+      {/* ---------- Main Leaders Panel ----------
+          Nine office bearers, transcribed from the association's own
+          letterhead. The President is NOT here — she has her own panel
+          at the top of this page, so listing her again would print her
+          twice.
+
+          Three columns rather than four: nine cards divide evenly into
+          three, and a four-column grid leaves one card stranded on its
+          own row looking like an afterthought. */}
       <div className="mx-auto mt-16 max-w-6xl">
         <p className="adv-rise text-center kicker !tracking-[0.25em]">
           {lang === "ta" ? "முக்கிய தலைமைக் குழு" : "Main Leaders Panel"}
         </p>
-        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <h3 className="adv-rise mt-3 text-center font-serif text-3xl gold-text md:text-4xl">
+          {lang === "ta" ? "நிர்வாகிகள்" : "Office Bearers"}
+        </h3>
+
+        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {leadersPanel.map((l, i) => (
-            <TiltCard key={`${l.position}-${i}`} className="adv-rise group">
-              <div className="relative h-52 overflow-hidden">
+            <TiltCard key={`${l.name}-${i}`} className="adv-rise group">
+              {/* A fixed 4:5 frame rather than a fixed pixel height —
+                  these are supplied portraits at assorted sizes, and a
+                  fixed height crops some at the chin and others at the
+                  forehead. `object-top` keeps faces in frame. */}
+              <div className="relative aspect-[4/5] overflow-hidden">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={l.photo} alt={l.name} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" />
-                <div className="absolute inset-0 bg-gradient-to-t from-obsidian-card via-transparent" />
+                <img
+                  src={l.photo}
+                  alt={l.name}
+                  className="h-full w-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-obsidian-card via-transparent to-transparent" />
               </div>
               <div className="p-6 text-center">
                 <p className="font-sans text-[10px] uppercase tracking-luxe text-gold">
                   {lang === "ta" ? l.positionTa : l.position}
                 </p>
-                <h4 className="mt-2 font-serif text-lg text-ivory">{lang === "ta" ? l.nameTa : l.name}</h4>
+                <h4 className="mt-2 font-serif text-lg leading-snug text-ivory">
+                  {lang === "ta" ? l.nameTa : l.name}
+                </h4>
+                {l.qualification ? (
+                  <p className="mt-1.5 font-sans text-[11px] leading-relaxed text-ivory-faint">
+                    {l.qualification}
+                  </p>
+                ) : null}
               </div>
             </TiltCard>
           ))}
         </div>
       </div>
 
-      {/* ---------- SFLA partnerships ---------- */}
-      <div className="mx-auto mt-16 max-w-6xl">
-        <div className="adv-rise flex flex-col items-center gap-3 text-center">
-          <p className="kicker !tracking-[0.25em]">Stand Firm Legal Associates</p>
-          <h3 className="font-serif text-3xl md:text-4xl gold-text">
-            {lang === "ta" ? "பங்குதாரர்கள்" : "Partnerships"}
-          </h3>
-        </div>
-
-        <div className="mt-8 grid gap-8 md:grid-cols-3">
-          {sflaPartners.map((p, i) => (
-            <TiltCard key={`${p.role}-${i}`} className="adv-rise group">
-              <div className="relative h-60 overflow-hidden">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={p.photo} alt={p.name} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" />
-                <div className="absolute inset-0 bg-gradient-to-t from-obsidian-card via-transparent" />
-              </div>
-              <div className="p-7 text-center">
-                <h4 className="font-serif text-xl text-ivory">{lang === "ta" ? p.nameTa : p.name}</h4>
-                <p className="mt-1 font-sans text-sm text-gold">{lang === "ta" ? p.roleTa : p.role}</p>
-                <a href="#contact" className="mt-5 inline-block rounded-full gold-border px-5 py-2 text-[11px] uppercase tracking-luxe text-gold transition-all duration-300 hover:bg-gold hover:text-black">
-                  {t("consult")}
-                </a>
-              </div>
-            </TiltCard>
-          ))}
-        </div>
-      </div>
+      {/* ---------- ITEM 4: SFLA Partnerships has MOVED ----------
+          The "Stand Firm Legal Associates — Partnerships" block used to
+          sit here, on the association's own advocates page. It belongs
+          to the firm, not the association, so it now lives at
+          /stand-firm/team. Nothing replaces it here. */}
     </section>
   );
 }

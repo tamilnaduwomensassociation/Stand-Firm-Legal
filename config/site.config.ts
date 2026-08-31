@@ -15,7 +15,23 @@ export const site = {
   tagline: "We Defend Your Rights",
   subTagline: ["Justice.", "Integrity.", "Trust."],
   motto: "We Listen. We Fight. You Win.",
-  url: "https://standfirmlegal.in", // TODO: replace with final domain
+  /**
+   * The canonical origin, used by metadataBase, the sitemap, robots.txt
+   * and every Open Graph tag.
+   *
+   * Set NEXT_PUBLIC_SITE_URL in Vercel to your real domain. Getting
+   * this wrong does not break the site visibly — it silently publishes
+   * a sitemap and share-preview tags pointing at the wrong host, which
+   * is the kind of thing nobody notices until search results are wrong.
+   *
+   * VERCEL_PROJECT_PRODUCTION_URL is injected automatically, so preview
+   * deployments resolve correctly with nothing set at all.
+   */
+  url:
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : "http://localhost:3000"),
   phones: ["+91 99625 02244", "+91 89396 26242"],
   landline: "044-4798 3374",
   whatsapp: "919962502244",
@@ -165,11 +181,98 @@ export const mottoAndDreams = {
 };
 
 /* Main Leaders Panel — the four office bearers */
+/**
+ * ============================================================
+ * MAIN LEADERS PANEL — the association's office bearers
+ * ============================================================
+ * Names, qualifications and designations are transcribed exactly from
+ * the association's own letterhead (the reference scan is kept at
+ * /media/team/office-bearers-reference.jpeg). Do not paraphrase them:
+ * "L.L.B(Hons)" and "B.Ed." are how the association writes its own
+ * members' degrees, and a tidied-up version would be wrong.
+ *
+ * THE PRESIDENT IS NOT IN THIS LIST. Adv. M. Jenifer Arokia Mary is
+ * rendered from `lawyers[0]` in her own panel above this one, with her
+ * photograph, her quote and the President's Corner beside it. Adding
+ * her here would print her twice.
+ *
+ * Order follows the letterhead: Vice President, Secretary, Joint
+ * Secretary, Treasurer, then the Executive Committee Members.
+ */
 export const leadersPanel = [
-  { name: "[PH: Name]", nameTa: "[PH: பெயர்]", position: "Vice President", positionTa: "துணைத் தலைவர்", photo: "/media/stills/team-2.jpg" },
-  { name: "[PH: Name]", nameTa: "[PH: பெயர்]", position: "General Secretary", positionTa: "பொதுச் செயலாளர்", photo: "/media/stills/team-3.jpg" },
-  { name: "[PH: Name]", nameTa: "[PH: பெயர்]", position: "Treasurer", positionTa: "பொருளாளர்", photo: "/media/stills/team-1.jpg" },
-  { name: "[PH: Name]", nameTa: "[PH: பெயர்]", position: "Joint Secretary", positionTa: "இணைச் செயலாளர்", photo: "/media/stills/team-2.jpg" },
+  {
+    name: "N. Shanmuga Priya",
+    nameTa: "ந. சண்முகப் பிரியா",
+    qualification: "B.B.A., L.L.B(Hons)., M.Sc(Psy)",
+    position: "Vice President",
+    positionTa: "துணைத் தலைவர்",
+    photo: "/media/team/leaders/n-shanmugapriya.jpeg",
+  },
+  {
+    name: "S. Chithra",
+    nameTa: "ச. சித்ரா",
+    qualification: "B.B.A., L.L.B(Hons)",
+    position: "Secretary",
+    positionTa: "செயலாளர்",
+    photo: "/media/team/leaders/chithra.jpeg",
+  },
+  {
+    name: "C. Sanjuna Devi",
+    nameTa: "சி. சஞ்சுனா தேவி",
+    qualification: "B.Tech., L.L.B(Hons)",
+    position: "Joint Secretary",
+    positionTa: "இணைச் செயலாளர்",
+    photo: "/media/team/leaders/sanjuna.jpeg",
+  },
+  {
+    name: "G. Maheswari",
+    nameTa: "ஜி. மகேஸ்வரி",
+    qualification: "B.B.A., L.L.B(Hons)",
+    position: "Treasurer",
+    positionTa: "பொருளாளர்",
+    photo: "/media/team/leaders/maheswari.jpeg",
+  },
+  {
+    name: "M. Kavitha",
+    nameTa: "ம. கவிதா",
+    qualification: "M.A., B.Ed., L.L.B",
+    position: "Executive Committee Member",
+    positionTa: "செயற்குழு உறுப்பினர்",
+    photo: "/media/team/leaders/kavitha.jpeg",
+  },
+  {
+    name: "K. Sarala Devi",
+    nameTa: "கே. சரளா தேவி",
+    qualification: "B.B.A., L.L.B",
+    position: "Executive Committee Member",
+    positionTa: "செயற்குழு உறுப்பினர்",
+    photo: "/media/team/leaders/sarala-devi.jpeg",
+  },
+  {
+    name: "M. Mahalakshmi",
+    nameTa: "ம. மகாலட்சுமி",
+    qualification: "B.A., L.L.B(Hons)",
+    position: "Executive Committee Member",
+    positionTa: "செயற்குழு உறுப்பினர்",
+    photo: "/media/team/leaders/mahalakshmi.jpeg",
+  },
+  {
+    name: "C. Sumathi",
+    nameTa: "சி. சுமதி",
+    qualification: "M.Sc., B.Ed., L.L.B(Hons)",
+    position: "Executive Committee Member",
+    positionTa: "செயற்குழு உறுப்பினர்",
+    photo: "/media/team/leaders/sumathi.jpeg",
+  },
+  {
+    /* Not on the letterhead scan; designation confirmed separately. */
+    name: "M. Preethi",
+    nameTa: "ம. பிரீத்தி",
+    qualification: "",
+    position: "Executive Committee Member",
+    positionTa: "செயற்குழு உறுப்பினர்",
+    photo: "/media/team/leaders/m-preethi.jpeg",
+  },
 ];
 
 /* Stand Firm Legal Associates — partnership advocates */
@@ -370,13 +473,15 @@ export const caseStudies = [
 export const navLinks = [
   { label: "Home", ta: "முகப்பு", href: "#home" },
   { label: "About", ta: "எங்களை பற்றி", href: "#about" },
-  { label: "Practice Areas", ta: "சட்டத் துறைகள்", href: "#practice" },
+  { label: "Activity", ta: "செயல்பாடுகள்", href: "#practice" },
   { label: "Team", ta: "அணி", href: "#team" },
   { label: "Blog", ta: "வலைப்பதிவு", href: "#blog" },
   { label: "Case Studies", ta: "வழக்கு ஆய்வுகள்", href: "#case-studies" },
   { label: "Contact", ta: "தொடர்பு", href: "#contact" },
   { label: "Gallery", ta: "படத்தொகுப்பு", href: "/gallery" },
   { label: "Legal News", ta: "சட்ட செய்திகள்", href: "/legal-news" },
+  { label: "Books", ta: "புத்தகங்கள்", href: "/books" },
+  { label: "Sessions", ta: "அமர்வுகள்", href: "/events" },
 ];
 
 /* Header marks — circular, transparent-cornered, ~30-140 KB each.

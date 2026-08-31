@@ -1,6 +1,18 @@
 "use client";
 
 /**
+ * ============================================================
+ * SUPERSEDED — replaced by components/jeni/JeniHome.tsx and the
+ * per-counter pages under app/jeni/[vertical].
+ *
+ * Here the five verticals were buttons that set a value on an
+ * enquiry form; they looked like navigation and went nowhere,
+ * which is what "every tab should work" was about. Each vertical
+ * is now its own page. Nothing imports this.
+ * ============================================================
+ */
+
+/**
  * JENI ENTERPRISES — the sister brand.
  * Reached from the second house mark in the header. Five verticals,
  * one counter. Enquiries route to the same WhatsApp / email desk.

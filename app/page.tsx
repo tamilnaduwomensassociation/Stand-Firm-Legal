@@ -19,8 +19,13 @@ import CursorGlow from "@/components/effects/CursorGlow";
 
 /* Code-split the rest of the journey */
 const PracticeAreas = dynamic(() => import("@/components/sections/PracticeAreas"));
-const FormsSection = dynamic(() => import("@/components/sections/FormsSection"));
-const Stats = dynamic(() => import("@/components/sections/Stats"));
+/* ITEM 15 — the "Numbers That Stand Firm" band is gone; film runs
+   in its place. See components/sections/AssociationFilm.tsx. */
+const AssociationFilm = dynamic(() => import("@/components/sections/AssociationFilm"));
+const WomenDevelopment = dynamic(() => import("@/components/sections/WomenDevelopment"));
+/* ITEM 13d — sessions surface on the home page. `limit` shows the
+   next three; the section renders nothing when none are on. */
+const EventsSection = dynamic(() => import("@/components/events/EventsSection"));
 const Lawyers = dynamic(() => import("@/components/sections/Lawyers"));
 const Testimonials = dynamic(() => import("@/components/sections/Testimonials"));
 const CaseStudies = dynamic(() => import("@/components/sections/CaseStudies"));
@@ -29,6 +34,7 @@ const FAQ = dynamic(() => import("@/components/sections/FAQ"));
 const Contact = dynamic(() => import("@/components/sections/Contact"));
 const Footer = dynamic(() => import("@/components/layout/Footer"));
 const FloatingActions = dynamic(() => import("@/components/features/FloatingActions"));
+const WishesPanel = dynamic(() => import("@/components/features/WishesPanel"));
 const Chatbot = dynamic(() => import("@/components/features/Chatbot"));
 const SearchOverlay = dynamic(() => import("@/components/features/SearchOverlay"));
 
@@ -42,18 +48,22 @@ export default function Home() {
         <Hero />
         <About />
         <PracticeAreas />
-        {/* TNWLA membership registration — the association's own form */}
-        <FormsSection only="member" />
-        <Stats />
+        {/* ITEM 9 — Women Development, after the motto and before the
+            people who deliver it. */}
+        <WomenDevelopment />
+        <AssociationFilm />
         <Lawyers />
         <Testimonials />
         <Blog />
         <FAQ />
         <CaseStudies />
         <Contact />
+        {/* After Free Legal Aid — the Contact block is that CTA's target. */}
+        <EventsSection limit={3} />
       </main>
       <Footer />
       <FloatingActions />
+      <WishesPanel />
       <Chatbot />
       <SearchOverlay />
     </>

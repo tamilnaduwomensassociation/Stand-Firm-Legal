@@ -1,6 +1,19 @@
 "use client";
 
 /**
+ * ============================================================
+ * SUPERSEDED for the three brand pages — see LoopVideoHero.tsx.
+ *
+ * The scroll-scrubbing effect here is intact and still works; it
+ * is simply not what was wanted. The heroes now autoplay on a
+ * loop. Its only remaining importers are the two superseded
+ * components above, so this file is effectively dead too. Kept
+ * because the notes below on keyframe density and mobile decode
+ * priming are hard-won and worth not losing.
+ * ============================================================
+ */
+
+/**
  * SCRUB HERO — a pinned section whose video is driven by scroll
  * position rather than by a clock. Used for the brand-reveal films at
  * the top of /jeni and /stand-firm.

@@ -68,10 +68,32 @@ function answer(q: string): string {
   return `I can help with Indian & Tamil Nadu law — property & registration, the new criminal codes, family matters, consumer complaints, accident claims, labour, MSME, company registrations, wills, writs and women's rights. Ask me anything specific, or call ${site.phones[0]} to speak with our advocates.`;
 }
 
-export default function Chatbot({ brandIcon }: { brandIcon?: string } = {}) {
+/**
+ * `brand` names whose assistant this is. It defaults to the
+ * association because the association's site is where the chatbot
+ * started — but on /stand-firm the panel must say Stand Firm, or the
+ * visitor is once again being greeted by an organisation whose page
+ * they are not on.
+ */
+export default function Chatbot({
+  brandIcon,
+  brand = "TNWLA",
+  brandId = "tnwla",
+  greeting,
+}: {
+  brandIcon?: string;
+  brand?: string;
+  /** Which system prompt /api/chat should use. See lib/server/grok.ts. */
+  brandId?: "tnwla" | "stand-firm" | "jeni" | "harmonic";
+  greeting?: string;
+} = {}) {
   const [open, setOpen] = useState(false);
   const [msgs, setMsgs] = useState<Msg[]>([
-    { from: "bot", text: "Vanakkam! I am the TNWLA legal assistant — trained on Indian and Tamil Nadu law. Ask me about property, family, criminal, consumer, business matters or women's rights." },
+    {
+      from: "bot",
+      text: greeting ??
+        `Vanakkam! I am the ${brand} legal assistant — trained on Indian and Tamil Nadu law. Ask me about property, family, criminal, consumer, business matters or women's rights.`,
+    },
   ]);
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
@@ -87,26 +109,59 @@ export default function Chatbot({ brandIcon }: { brandIcon?: string } = {}) {
     bodyRef.current?.scrollTo({ top: bodyRef.current.scrollHeight, behavior: "smooth" });
   }, [msgs, typing]);
 
-  const send = (text: string) => {
+  /** Type an answer out, however it was produced. */
+  const reveal = (full: string) => {
+    setMsgs((m) => [...m, { from: "bot", text: "" }]);
+    let i = 0;
+    const iv = setInterval(() => {
+      i += 4;
+      setMsgs((m) => {
+        const copy = [...m];
+        copy[copy.length - 1] = { from: "bot", text: full.slice(0, i) };
+        return copy;
+      });
+      if (i >= full.length) clearInterval(iv);
+    }, 16);
+  };
+
+  /**
+   * Ask Grok first, fall back to the keyword answers.
+   *
+   * The fallback is not a degraded mode — it is the same knowledge base
+   * this component has always used, and it is genuinely good on the
+   * questions it covers. Grok adds the ability to answer everything
+   * else. If there is no key, if the call fails, or if it takes too
+   * long, the visitor gets the keyword answer and never learns anything
+   * went wrong; the one thing that never happens is a fabricated reply.
+   */
+  const send = async (text: string) => {
     if (!text.trim()) return;
     setMsgs((m) => [...m, { from: "user", text }]);
     setInput("");
     setTyping(true);
-    setTimeout(() => {
-      setTyping(false);
-      const full = answer(text);
-      setMsgs((m) => [...m, { from: "bot", text: "" }]);
-      let i = 0;
-      const iv = setInterval(() => {
-        i += 4;
-        setMsgs((m) => {
-          const copy = [...m];
-          copy[copy.length - 1] = { from: "bot", text: full.slice(0, i) };
-          return copy;
-        });
-        if (i >= full.length) clearInterval(iv);
-      }, 16);
-    }, 900);
+
+    let full: string | null = null;
+    try {
+      const history = msgs.slice(-6).map((m) => ({
+        role: m.from === "user" ? "user" : "assistant",
+        content: m.text,
+      }));
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ brand: brandId, question: text, history }),
+      });
+      if (res.ok) {
+        const d = await res.json();
+        if (typeof d.answer === "string" && d.answer.trim()) full = d.answer.trim() + DISCLAIMER;
+      }
+    } catch {
+      /* Offline, or the route is unreachable. The keyword answer
+         below is a complete reply, not an apology. */
+    }
+
+    setTyping(false);
+    reveal(full ?? answer(text));
   };
 
   return (
@@ -132,14 +187,14 @@ export default function Chatbot({ brandIcon }: { brandIcon?: string } = {}) {
                 )}
               </span>
               <div>
-                <p className="font-serif text-ivory">TNWLA Assistant</p>
+                <p className="font-serif text-ivory">{brand} Assistant</p>
                 <p className="text-[10px] uppercase tracking-luxe text-gold/80">India & TN legal knowledge</p>
               </div>
             </div>
             <button onClick={() => setOpen(false)} aria-label="Close assistant" className="text-ivory-dim hover:text-gold"><X size={18} /></button>
           </div>
 
-          <div ref={bodyRef} className="flex-1 space-y-3 overflow-y-auto px-5 py-4">
+          <div ref={bodyRef} data-lenis-prevent className="flex-1 space-y-3 overflow-y-auto px-5 py-4 overscroll-contain">
             {msgs.map((m, i) => (
               <div
                 key={i}

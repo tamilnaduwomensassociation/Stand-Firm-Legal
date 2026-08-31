@@ -13,12 +13,16 @@ import { galleryImages } from "@/config/site.config";
 import { useLang } from "@/lib/i18n";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { cn } from "@/lib/utils";
+import { useLockPageScroll } from "@/lib/useLockPageScroll";
 
 export default function Gallery() {
   const root = useRef<HTMLElement>(null);
   const { lang } = useLang();
   const [revealed, setRevealed] = useState<Set<number>>(new Set());
   const [lightbox, setLightbox] = useState<(typeof galleryImages)[number] | null>(null);
+
+  /* Freeze the page behind the popup — see lib/useLockPageScroll.ts */
+  useLockPageScroll(lightbox !== null);
 
   const show = (id: number) => setRevealed((p) => new Set(p).add(id));
   const hide = (id: number) =>
@@ -119,7 +123,7 @@ export default function Gallery() {
       {/* Lightbox — full size, full clarity */}
       {lightbox && (
         <div
-          className="fixed inset-0 z-[97] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm"
+          data-lenis-prevent className="fixed inset-0 z-[97] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm"
           role="dialog"
           aria-label={lang === "ta" ? lightbox.ta : lightbox.en}
           onClick={() => setLightbox(null)}

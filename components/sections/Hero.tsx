@@ -18,7 +18,7 @@
  */
 import { useRef, useState } from "react";
 import { useGSAP } from "@gsap/react";
-import { ChevronDown, UserPlus } from "lucide-react";
+import { ChevronDown, Newspaper, UserPlus } from "lucide-react";
 import { gsap } from "@/lib/gsap";
 import { site } from "@/config/site.config";
 import { useLang } from "@/lib/i18n";
@@ -174,20 +174,21 @@ export default function Hero() {
           ))}
         </div>
         <div className="mt-12 flex flex-wrap items-center justify-center gap-4">
-          {/* Primary action — straight into the membership registration */}
+          {/* Primary action — opens the registration PAGE.
+              This used to scroll the home page down to a section, which
+              on a page this long reads as nothing having happened: the
+              viewport slides and you have to work out you arrived. It
+              is a real route now. */}
           <span className="hero-cta">
-            {/* Lands on the Digital Forms section itself — heading, tabs
-                and category cards — with the Membership tab preselected */}
-            <MagneticButton
-              href="#form"
-              onClick={() =>
-                window.setTimeout(
-                  () => window.dispatchEvent(new CustomEvent("sf:openForm", { detail: { mode: "member" } })),
-                  120
-                )
-              }
-            >
+            <MagneticButton href="/membership">
               <UserPlus size={15} /> {t("memberRegister")}
+            </MagneticButton>
+          </span>
+          {/* ITEM 10a — Legal News sits BETWEEN New Membership and
+              Free Legal Aids, which is the order asked for. */}
+          <span className="hero-cta">
+            <MagneticButton variant="ghost" href="/legal-news">
+              <Newspaper size={15} /> {t("legalNews")}
             </MagneticButton>
           </span>
           <span className="hero-cta"><MagneticButton variant="ghost" href="#contact">{t("bookConsult")}</MagneticButton></span>

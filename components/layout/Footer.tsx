@@ -64,7 +64,7 @@ export default function Footer() {
                 <li key={p.en}><a href={hrefFor("#practice")} className="text-ivory-dim hover:text-gold transition-colors">{lang === "ta" ? p.ta : p.en}</a></li>
               ))}
               {propertyServices.slice(0, 3).map((p) => (
-                <li key={p.en}><a href="/stand-firm#services" className="text-ivory-dim hover:text-gold transition-colors">{lang === "ta" ? p.ta : p.en}</a></li>
+                <li key={p.en}><a href="/stand-firm/services#property" className="text-ivory-dim hover:text-gold transition-colors">{lang === "ta" ? p.ta : p.en}</a></li>
               ))}
               <li><a href="/stand-firm" className="text-gold/90 hover:text-gold transition-colors">Stand Firm Legal Associates →</a></li>
               <li><a href="/legal-news" className="text-gold/90 hover:text-gold transition-colors">{lang === "ta" ? "சட்ட செய்திகள்" : "Legal News"} →</a></li>

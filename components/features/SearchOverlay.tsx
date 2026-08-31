@@ -13,6 +13,7 @@ import {
   practiceAreas, propertyServices, sflaMatters, sflaPartners, testimonials,
 } from "@/config/site.config";
 import { membershipCategories } from "@/config/forms.config";
+import { useLockPageScroll } from "@/lib/useLockPageScroll";
 
 /* `keywords` carries the Tamil term and any extra words worth matching
    on, so a search hits even when they aren't in the visible label.
@@ -24,23 +25,26 @@ type Item = { label: string; sub?: string; href: string; keywords?: string; open
 
 export default function SearchOverlay() {
   const [open, setOpen] = useState(false);
+
+  /* Freeze the page behind the popup — see lib/useLockPageScroll.ts */
+  useLockPageScroll(open);
   const [q, setQ] = useState("");
 
   const index: Item[] = useMemo(
     () => [
       ...navLinks.map((n) => ({ label: n.label, sub: "Page section", href: n.href.startsWith("#") ? `/${n.href}` : n.href, keywords: n.ta })),
       ...practiceAreas.map((p) => ({ label: p.en, sub: "Practice Area", href: "/#practice", keywords: `${p.ta} ${p.desc}` })),
-      ...propertyServices.map((p) => ({ label: p.en, sub: "Property E-Service · Stand Firm", href: "/stand-firm#services", keywords: p.ta })),
+      ...propertyServices.map((p) => ({ label: p.en, sub: "Property E-Service · Stand Firm", href: "/stand-firm/services#property", keywords: p.ta })),
       ...deeds.map((d, i) => ({
-        label: d.en, sub: "Deed — order & form", href: "/stand-firm#deed-forms",
+        label: d.en, sub: "Deed — order & form", href: "/stand-firm/services#deeds",
         keywords: `${d.ta} deed preparation agreement`,
         open: { mode: "deed" as const, deedIndex: i },
       })),
-      ...businessServices.map((b) => ({ label: b.en, sub: "Registration & Online Service · Stand Firm", href: "/stand-firm#services", keywords: b.ta })),
+      ...businessServices.map((b) => ({ label: b.en, sub: "Registration & Online Service · Stand Firm", href: "/stand-firm/services#business", keywords: b.ta })),
       /* Membership */
       ...membershipCategories.map((m) => ({
         label: `${m.en} — Membership`, sub: `Joining ₹${m.joiningFee} · Renewal ₹${m.renewalFee}/yr`,
-        href: "/#form", keywords: `${m.ta} membership registration join TNWLA form ${m.blurb}`,
+        href: "/membership", keywords: `${m.ta} membership registration join TNWLA form ${m.blurb}`,
         open: { mode: "member" as const },
       })),
       /* Stand Firm Legal Associates */
@@ -106,7 +110,7 @@ export default function SearchOverlay() {
           initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
           animate={{ opacity: 1, backdropFilter: "blur(20px)" }}
           exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
-          className="fixed inset-0 z-[96] bg-obsidian-deep/90 px-6"
+          data-lenis-prevent className="fixed inset-0 z-[96] bg-obsidian-deep/90 px-6"
           role="dialog"
           aria-label="Site search"
         >
@@ -132,7 +136,7 @@ export default function SearchOverlay() {
               />
             </motion.div>
 
-            <div className="mt-6 max-h-[58vh] space-y-1 overflow-y-auto">
+            <div data-lenis-prevent className="mt-6 max-h-[58vh] space-y-1 overflow-y-auto overscroll-contain">
               <AnimatePresence>
                 {results.map((r, i) => (
                   <motion.a

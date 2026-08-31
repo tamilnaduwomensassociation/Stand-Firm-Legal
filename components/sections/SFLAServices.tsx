@@ -4,8 +4,10 @@
  * STAND FIRM LEGAL ASSOCIATES — banking & secured-asset practice.
  *
  * Matter type is chosen from a dropdown; each opens a general intake
- * form. The generated document carries the dual-logo letterhead
- * (SFLA left, TNWLA right, "in association with" centred).
+ * form. The generated document carries the firm's own letterhead.
+ * It used to carry two logos — the firm's and the association's,
+ * with "in association with" between them. It does not any more:
+ * this is a Stand Firm instruction on Stand Firm paper.
  *
  * NOTE ON LEGAL CONTENT: the intake captures the facts a matter of
  * this type needs. It deliberately does NOT contain drafted legal
@@ -23,7 +25,9 @@ import { useLang } from "@/lib/i18n";
 import SectionHeading from "@/components/ui/SectionHeading";
 import MagneticButton from "@/components/ui/MagneticButton";
 import DatePicker from "@/components/ui/DatePicker";
+import { sf } from "@/config/standfirm.config";
 import { cn } from "@/lib/utils";
+import { useLockPageScroll } from "@/lib/useLockPageScroll";
 
 const inputCls =
   "w-full rounded-xl bg-obsidian-soft/60 border border-[var(--hairline)] px-5 py-3.5 font-sans text-sm text-ivory placeholder:text-ivory-faint focus:border-gold/60 focus:outline-none focus:ring-1 focus:ring-gold/30 transition-all";
@@ -55,6 +59,9 @@ export default function SFLAServices() {
   const [formOpen, setFormOpen] = useState(false);
   const [vals, setVals] = useState<Record<string, string>>({});
   const [preview, setPreview] = useState(false);
+
+  /* Freeze the page behind the popup — see lib/useLockPageScroll.ts */
+  useLockPageScroll(formOpen || preview);
 
   const matter = sflaMatters.find((m) => m.id === matterId);
 
@@ -133,25 +140,24 @@ export default function SFLAServices() {
 
       {/* ================= INTAKE FORM — POPUP ONLY ================= */}
       {formOpen && matter && (
-        <div className="fixed inset-0 z-[96] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm" role="dialog">
+        <div data-lenis-prevent className="fixed inset-0 z-[96] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm" role="dialog">
           <div className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-obsidian-soft shadow-2xl gold-border">
             <div className="flex items-center justify-between border-b border-[var(--hairline)] px-6 py-4">
               <p className="kicker !tracking-[0.2em]">{lang === "ta" ? matter.ta : matter.en}</p>
               <button onClick={() => setFormOpen(false)} aria-label={tr("close")} className="text-ivory-dim hover:text-gold"><X size={20} /></button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-8">
-            {/* Dual-logo letterhead */}
-            <div className="mb-7 flex items-center justify-between gap-4 border-b border-[var(--hairline)] pb-6">
+            <div data-lenis-prevent className="flex-1 overflow-y-auto p-8 overscroll-contain">
+            {/* Letterhead — the firm's own. The association's emblem
+                used to sit on the right of this row; it does not
+                belong on a Stand Firm instruction. */}
+            <div className="mb-7 flex items-center gap-4 border-b border-[var(--hairline)] pb-6">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/media/sfla-logo.png" alt="Stand Firm Legal Associates" className="h-14 w-auto shrink-0 md:h-16" />
-              <div className="text-center">
-                <p className="font-serif text-lg text-ivory md:text-xl">Stand Firm Legal Associates</p>
-                <p className="mt-1 font-sans text-[10px] uppercase tracking-[0.18em] text-ivory-faint">In association with</p>
-                <p className="font-serif text-sm text-gold">Tamil Nadu Women Law Association — Madras</p>
+              <img src={sf.mark} alt="" className="h-14 w-14 shrink-0 rounded-full ring-1 ring-gold/40 md:h-16 md:w-16" />
+              <div>
+                <p className="font-serif text-lg text-ivory md:text-xl">{sf.name}</p>
+                <p className="mt-1 font-sans text-[10px] uppercase tracking-[0.18em] text-ivory-faint">{sf.reg}</p>
               </div>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/media/tnwla-logo.png" alt="TNWLA Madras" className="h-14 w-14 shrink-0 rounded-full md:h-16 md:w-16" />
             </div>
 
             <p className="mb-6 font-serif text-2xl text-ivory">{lang === "ta" ? matter.ta : matter.en}</p>
@@ -211,27 +217,25 @@ export default function SFLAServices() {
 
       {/* Preview */}
       {preview && matter && (
-        <div className="fixed inset-0 z-[97] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" role="dialog">
+        <div data-lenis-prevent className="fixed inset-0 z-[97] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" role="dialog">
           <div className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-obsidian-soft shadow-2xl gold-border">
             <div className="flex items-center justify-between border-b border-[var(--hairline)] px-6 py-4">
               <p className="kicker !tracking-[0.25em]">{tr("docPreview")}</p>
               <button onClick={() => setPreview(false)} aria-label={tr("close")} className="text-ivory-dim hover:text-gold"><X size={20} /></button>
             </div>
 
-            <div className="flex-1 overflow-y-auto bg-neutral-200 p-4 md:p-6">
+            <div data-lenis-prevent className="flex-1 overflow-y-auto bg-neutral-200 p-4 md:p-6 overscroll-contain">
               <div ref={docRef} className="mx-auto max-w-[640px] bg-white px-8 py-10 text-black shadow-lg">
                 {/* Dual-logo letterhead, per the approved banner */}
                 <div className="flex items-center justify-between gap-3 border-b-2 border-black/70 pb-4">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/media/sfla-logo.png" alt="SFLA" className="h-16 w-auto" />
+                  <img src={sf.mark} alt="" className="h-16 w-16 rounded-full" />
                   <div className="text-center">
-                    <p className="font-serif text-lg font-bold leading-tight">Stand Firm Legal Associates</p>
-                    <p className="mt-0.5 text-[9px] uppercase tracking-[0.18em]">In association with</p>
-                    <p className="text-[11px] font-semibold">Tamil Nadu Women Law Association — Madras</p>
-                    <p className="mt-0.5 text-[9px]">TN.Govt.Reg.No: 68/2024 · Firm No: 182/2024</p>
+                    <p className="font-serif text-lg font-bold leading-tight">{sf.name}</p>
+                    <p className="mt-0.5 text-[9px]">{sf.reg}</p>
+                    <p className="mt-0.5 text-[9px]">{sf.address}</p>
+                    <p className="mt-0.5 text-[9px]">{sf.phones.join(" · ")} · {sf.email}</p>
                   </div>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/media/tnwla-logo.png" alt="TNWLA" className="h-16 w-16 rounded-full" />
                 </div>
 
                 <p className="mt-4 text-center text-sm font-bold uppercase underline tracking-wide">

@@ -47,7 +47,25 @@ html.light {
   --hairline: rgba(255, 255, 255, 0.1);
 }
 
-html { scroll-behavior: initial; /* Lenis owns scrolling */ }
+html {
+  scroll-behavior: initial;          /* Lenis owns scrolling */
+  scrollbar-gutter: stable;          /* no sideways jump when a popup locks the page */
+}
+
+/* Applied by useLockPageScroll while any popup is open. Lenis is
+   stopped at the same time — this alone would not hold it, because
+   Lenis animates the page rather than scrolling it. */
+html.scroll-locked, html.scroll-locked body {
+  overflow: hidden;
+  touch-action: none;                /* stops the rubber-band drag behind a sheet on iOS */
+}
+
+/* Popup panels scroll natively. `overscroll-contain` stops the leftover
+   delta at the end of a panel from chaining to the page behind it. */
+[data-lenis-prevent] {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch; /* momentum scrolling inside dialogs on iOS */
+}
 
 body {
   @apply bg-obsidian text-ivory antialiased;
@@ -155,3 +173,21 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ---------- Superadmin theme overrides ----------
+   Emitted by components/providers/ThemeStyle.tsx as custom properties
+   on :root. Each rule below is a no-op until the matching property is
+   set, so an unthemed site behaves exactly as it did before.
+
+   `--type-scale` and `--radius-scale` default to 1 rather than being
+   unset, because `calc(1rem * var(--type-scale))` with no value is an
+   invalid declaration and would drop the font-size entirely. */
+:root {
+  --type-scale: 1;
+  --radius-scale: 1;
+}
+
+html { font-size: calc(16px * var(--type-scale)); }
+
+.font-serif { font-family: var(--font-heading-override, var(--font-serif)), Georgia, serif; }
+.font-sans  { font-family: var(--font-body-override, var(--font-sans)), system-ui, sans-serif; }

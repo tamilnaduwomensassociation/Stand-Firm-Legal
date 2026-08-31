@@ -121,7 +121,7 @@ export default function Navbar() {
               "mt-1 whitespace-nowrap font-sans text-[7.5px] font-extrabold uppercase tracking-[0.18em] transition-colors group-hover:text-gold md:text-[9px] md:tracking-[0.2em]",
               onHeroFilm ? "text-white/80" : "text-ivory-dim"
             )}>
-              Tamilnadu Women Law Association
+              Tamilnadu Women Law Association — Madras
             </span>
           </span>
         </a>

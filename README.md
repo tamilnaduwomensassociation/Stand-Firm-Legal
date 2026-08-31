@@ -1,3 +1,17 @@
+> ## ⚠️ This is no longer a static export
+>
+> It is a Next.js **server** application. `output: "export"` has been
+> removed because the Superadmin login, the stored orders and the
+> verified payments cannot exist on a static site — on a static site
+> the only place to check a password is the browser.
+>
+> **Read [DEPLOYMENT.md](./DEPLOYMENT.md) before deploying.** In
+> particular: on Vercel, without a KV store configured, every order is
+> silently lost.
+>
+> Superadmin: `/superadmin` — `Master - TSJH` / `Enterprises@2026`
+> (change it: `npm run hash-password -- "new password"`).
+
 # STAND FIRM LEGAL ASSOCIATES — Cinematic Luxury Website
 
 Next.js 15 · React 19 · TypeScript · Tailwind CSS · GSAP + ScrollTrigger · Lenis · Framer Motion

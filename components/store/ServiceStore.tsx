@@ -1,6 +1,24 @@
 "use client";
 
 /**
+ * ============================================================
+ * SUPERSEDED — do not re-wire this component.
+ *
+ * This is the old priced Stand Firm store: it showed a charge on
+ * every card, ran a cart and took a UPI payment before anyone at
+ * the firm had seen the matter. The brief was to remove pricing
+ * from the service pages entirely, so /stand-firm/services now
+ * renders components/standfirm/ServiceEnquiry.tsx instead —
+ * card opens a particulars form, the sheet goes to the office on
+ * WhatsApp, and the fee is quoted after the papers are read.
+ *
+ * Nothing imports this file. It is kept only so the old checkout
+ * and receipt code is available for reference; putting it back on
+ * a page would reintroduce the pricing that was asked to go.
+ * ============================================================
+ */
+
+/**
  * SERVICE STORE — the Stand Firm Legal Associates shop front.
  *
  * Catalogue → cart → checkout → UPI payment → order sent.
@@ -31,6 +49,7 @@ import { openGooglePay, platform, upiLinks } from "@/lib/upi";
 import { downloadReceipt, receiptNumber, sendReceiptEmail, sendReceiptWhatsApp } from "@/lib/receipt";
 import PaymentReceipt from "@/components/ui/PaymentReceipt";
 import { cn } from "@/lib/utils";
+import { useLockPageScroll } from "@/lib/useLockPageScroll";
 
 const catIcons: Record<string, LucideIcon> = { LandPlot, FileSignature, Building2 };
 
@@ -60,6 +79,9 @@ export default function ServiceStore() {
   const [cart, setCart] = useState<Line[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [checkout, setCheckout] = useState(false);
+
+  /* Freeze the page behind the popup — see lib/useLockPageScroll.ts */
+  useLockPageScroll(cartOpen || checkout);
   const [stage, setStage] = useState<"details" | "pay" | "done">("details");
   const [qrOk, setQrOk] = useState(true);
   const [orderNo, setOrderNo] = useState("");
@@ -408,14 +430,14 @@ export default function ServiceStore() {
 
       {/* ================= CART DRAWER ================= */}
       {cartOpen && (
-        <div className="fixed inset-0 z-[95] flex justify-end bg-black/70 backdrop-blur-sm" role="dialog">
+        <div data-lenis-prevent className="fixed inset-0 z-[95] flex justify-end bg-black/70 backdrop-blur-sm" role="dialog">
           <div className="flex h-full w-full max-w-md flex-col bg-obsidian-soft shadow-2xl">
             <div className="flex items-center justify-between border-b border-[var(--hairline)] px-6 py-5">
               <p className="kicker !tracking-[0.2em]">{lang === "ta" ? "உங்கள் ஆர்டர்" : "Your Order"}</p>
               <button onClick={() => setCartOpen(false)} aria-label="Close cart"><X size={20} className="text-ivory-dim hover:text-gold" /></button>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-6 py-5">
+            <div data-lenis-prevent className="flex-1 overflow-y-auto px-6 py-5 overscroll-contain">
               {cart.length === 0 ? (
                 <p className="py-16 text-center font-sans text-sm text-ivory-faint">
                   {lang === "ta" ? "ஆர்டர் காலியாக உள்ளது." : "Nothing added yet."}
@@ -466,7 +488,7 @@ export default function ServiceStore() {
 
       {/* ================= CHECKOUT ================= */}
       {checkout && (
-        <div className="fixed inset-0 z-[97] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm" role="dialog">
+        <div data-lenis-prevent className="fixed inset-0 z-[97] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm" role="dialog">
           <div className="relative flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-obsidian-soft shadow-2xl gold-border">
             <div className="flex items-center justify-between border-b border-[var(--hairline)] px-6 py-4">
               <p className="kicker !tracking-[0.2em]">
@@ -477,7 +499,7 @@ export default function ServiceStore() {
               <button onClick={() => setCheckout(false)} aria-label="Close"><X size={20} className="text-ivory-dim hover:text-gold" /></button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-7">
+            <div data-lenis-prevent className="flex-1 overflow-y-auto p-7 overscroll-contain">
               {/* ---------- STAGE 1 ---------- */}
               {stage === "details" && (
                 <div className="space-y-5">

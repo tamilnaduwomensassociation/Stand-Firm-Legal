@@ -7,11 +7,13 @@
  * cart, the order summary and the UPI amount are all driven from
  * one place.
  *
- * ⚠️  PRICES ARE INDICATIVE STARTING CHARGES — REVIEW BEFORE LAUNCH.
- * They are the firm's PROFESSIONAL FEE only. Government fees,
- * stamp duty, registration charges and statutory levies are
- * always extra and are quoted on the actual document value.
- * Edit `price` on any line and the whole store follows.
+ * ⚠️  `price` IS NO LONGER SHOWN OR CHARGED ANYWHERE ON THE SITE.
+ * /stand-firm/services is an enquiry flow now, not a checkout: a
+ * card opens a particulars form, the sheet goes to the office on
+ * WhatsApp, and the fee is quoted after the papers are read. The
+ * field is kept only as the office's own internal starting figure
+ * and is deliberately absent from `config/catalogue.server.ts`, so
+ * nothing here can be billed online even by accident.
  * ============================================================
  */
 
@@ -144,6 +146,6 @@ export const allStoreItems = storeCategories.flatMap((c) =>
 );
 
 export const storeNotice = {
-  en: "Listed amounts are our professional charges only. Government fees, stamp duty, registration charges and statutory levies are payable separately and are quoted on the actual value of your document before any work begins.",
-  ta: "காட்டப்பட்டுள்ள தொகைகள் எங்கள் தொழில்முறை கட்டணம் மட்டுமே. அரசு கட்டணம், முத்திரைத்தாள், பதிவுக் கட்டணம் மற்றும் சட்டப்பூர்வ வரிகள் தனியாக செலுத்த வேண்டும் — பணி தொடங்கும் முன் உங்கள் ஆவண மதிப்பின் அடிப்படையில் தெரிவிக்கப்படும்.",
+  en: "Our professional charge is quoted once we have seen your particulars, and always before any work begins. Government fees, stamp duty, registration charges and statutory levies are payable in addition and are billed at actuals on the value of your document.",
+  ta: "உங்கள் விவரங்களைப் பார்த்த பிறகு, பணி தொடங்கும் முன்பே எங்கள் தொழில்முறை கட்டணம் தெரிவிக்கப்படும். அரசு கட்டணம், முத்திரைத்தாள், பதிவுக் கட்டணம் மற்றும் சட்டப்பூர்வ வரிகள் தனியாக செலுத்த வேண்டும்.",
 };

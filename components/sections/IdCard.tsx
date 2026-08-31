@@ -25,7 +25,7 @@
  * cannot rasterise a node that isn't laid out.
  */
 import { useEffect, useRef, useState } from "react";
-import { Download, IdCard as IdCardIcon, Move, RotateCcw, Upload, X } from "lucide-react";
+import { Download, IdCard as IdCardIcon, Move, RotateCcw, Save, Upload, X } from "lucide-react";
 import { site } from "@/config/site.config";
 import { useLang } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -74,6 +74,12 @@ export default function IdCardSection() {
   });
   const [photo, setPhoto] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  /* Saving the card into the member directory. Separate from `busy`,
+     which belongs to the PNG export — the two can run independently
+     and sharing one flag makes both buttons disable together. */
+  const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   /* Free 3D rotation, driven by dragging the card.
      rotY runs unbounded so the card can be spun through as many full
@@ -152,6 +158,54 @@ export default function IdCardSection() {
         window.setTimeout(() => { URL.revokeObjectURL(url); resolve(); }, 450);
       }, "image/png");
     });
+
+  /**
+   * Write this card into the member directory.
+   *
+   * Until now a card was generated, downloaded and printed, and that
+   * was the end of it — "Verify Your Membership" had no idea it
+   * existed. This is what closes that loop: the same details that are
+   * printed on the card are stored, and the public lookup finds them
+   * immediately.
+   *
+   * The endpoint requires a Superadmin session, which is deliberate.
+   * This page is public, and a membership number that any visitor
+   * could mint into the directory is a membership number that proves
+   * nothing. A 401 here is not a bug — it means sign in first.
+   */
+  const saveToDirectory = async () => {
+    if (saving) return;
+    if (!data.memberName.trim() || !data.membershipNo.trim()) {
+      setSaveMsg({ ok: false, text: lang === "ta"
+        ? "பெயர் மற்றும் உறுப்பினர் எண் தேவை."
+        : "Enter the member's name and membership number first." });
+      return;
+    }
+    setSaving(true);
+    setSaveMsg(null);
+    try {
+      const res = await fetch("/api/members", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...data, enrollmentNo: `${enrolNo}/${enrolYear}`, photo: photo ?? "" }),
+      });
+      const d = await res.json();
+      if (res.status === 401) {
+        setSaveMsg({ ok: false, text: lang === "ta"
+          ? "சூப்பர்அட்மின் உள்நுழைவு தேவை."
+          : "Sign in to Superadmin first — only the office can issue a card." });
+      } else if (!res.ok) {
+        setSaveMsg({ ok: false, text: d.error ?? "Could not save the card" });
+      } else {
+        setSaveMsg({ ok: true, text: lang === "ta"
+          ? `${d.member.membershipNo} சேமிக்கப்பட்டது — இப்போது சரிபார்க்கலாம்.`
+          : `${d.member.membershipNo} saved — it can be looked up now.` });
+      }
+    } catch {
+      setSaveMsg({ ok: false, text: lang === "ta" ? "இணைப்பு பிழை." : "Could not reach the directory." });
+    }
+    setSaving(false);
+  };
 
   const download = async () => {
     setBusy(true);
@@ -286,6 +340,13 @@ export default function IdCardSection() {
                   ? lang === "ta" ? "தயாராகிறது…" : "Preparing…"
                   : lang === "ta" ? "PNG பதிவிறக்கு" : "Download PNG"}
               </button>
+              <button onClick={saveToDirectory} disabled={saving}
+                className="flex items-center gap-2 rounded-full gold-border px-6 py-3 font-sans text-xs uppercase tracking-widest text-gold transition-all hover:bg-gold hover:text-black disabled:opacity-50">
+                <Save size={14} />{" "}
+                {saving
+                  ? lang === "ta" ? "சேமிக்கிறது…" : "Saving…"
+                  : lang === "ta" ? "பதிவேட்டில் சேமி" : "Save to directory"}
+              </button>
               <button onClick={flip}
                 className="flex items-center gap-2 rounded-full gold-border px-6 py-3 font-sans text-xs uppercase tracking-widest text-gold transition-all hover:bg-gold hover:text-black">
                 <RotateCcw size={14} /> {lang === "ta" ? "திருப்பு" : "Flip"}
@@ -294,6 +355,15 @@ export default function IdCardSection() {
                 className="flex items-center gap-2 rounded-full border border-[var(--hairline)] px-6 py-3 font-sans text-xs uppercase tracking-widest text-ivory-dim transition-all hover:bg-white/10 hover:text-ivory">
                 {lang === "ta" ? "நேராக்கு" : "Reset view"}
               </button>
+
+              {saveMsg && (
+                <p className={cn(
+                  "w-full font-sans text-[12px] leading-relaxed",
+                  saveMsg.ok ? "text-gold" : "text-amber-300/90"
+                )}>
+                  {saveMsg.text}
+                </p>
+              )}
             </div>
           </div>
 

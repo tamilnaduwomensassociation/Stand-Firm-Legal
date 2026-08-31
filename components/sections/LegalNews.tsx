@@ -3,7 +3,8 @@
 /**
  * LEGAL NEWS — read on this page, not somewhere else.
  *
- * Stories come from config/news.data.json, which scripts/fetch-news.mjs
+ * Stories come from /api/news, refreshed hourly by a scheduled job.
+ * config/news.data.json is the seed, written by scripts/fetch-news.mjs
  * writes during `npm run build`. Each story carries the publisher's own
  * summary paragraph, so the page reads as a news page rather than a
  * list of links — headline, standfirst, source, and only then an
@@ -95,8 +96,38 @@ export default function LegalNews() {
   const [checkedAt, setCheckedAt] = useState<number | null>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
 
+  /**
+   * Stories now come from the SERVER, refreshed hourly by a cron job
+   * (see lib/server/news.ts and vercel.json). Older items fall down
+   * the list because everything is sorted by the publisher's own
+   * timestamp, not by when we happened to fetch it.
+   *
+   * The build-time file in config/news.data.json is still the seed —
+   * it renders instantly on first paint and stands in whenever the
+   * store is empty or unreachable, so the page is never blank.
+   *
+   * The old client-side CORS-relay sweep is kept below as a last
+   * resort for a deployment with no store configured at all.
+   */
+  const [live, setLive] = useState<Story[]>([]);
+
   const refresh = useCallback(async () => {
     setChecking(true);
+    try {
+      const res = await fetch("/api/news", { cache: "no-store" });
+      if (res.ok) {
+        const d = await res.json();
+        if (Array.isArray(d.items) && d.items.length) {
+          setLive(d.items as Story[]);
+          setCheckedAt(Date.now());
+          setChecking(false);
+          return;
+        }
+      }
+    } catch {
+      /* Fall through to the relay sweep. */
+    }
+
     const results = await Promise.all(newsSources.map((s) => sweep(s)));
     const known = new Set(BUILT.map((s) => s.link));
     const merged = results
@@ -122,22 +153,26 @@ export default function LegalNews() {
    * never turns to a blank leaf.
    */
   const pages = useMemo(() => {
+    /* The live list wins when the hourly job has run; the build-time
+       file stands in until then. Both are sorted the same way, so a
+       reader never sees the order change under them. */
+    const source = live.length ? live : BUILT;
     const front = {
       id: "front",
       en: "Front Page",
       ta: "முதல் பக்கம்",
-      stories: [...BUILT].sort((a, b) => b.date - a.date),
+      stories: [...source].sort((a, b) => b.date - a.date),
     };
     const sections = newsBuckets
       .map((b) => ({
         id: b.id,
         en: b.en as string,
         ta: b.ta as string,
-        stories: BUILT.filter((s) => s.bucket === b.id).sort((a, b2) => b2.date - a.date),
+        stories: source.filter((s) => s.bucket === b.id).sort((a, b2) => b2.date - a.date),
       }))
       .filter((p) => p.stories.length > 0);
     return [front, ...sections];
-  }, []);
+  }, [live]);
 
   const [page, setPage] = useState(0);
   const safePage = Math.min(page, Math.max(pages.length - 1, 0));

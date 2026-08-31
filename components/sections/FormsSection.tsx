@@ -25,6 +25,7 @@ import MagneticButton from "@/components/ui/MagneticButton";
 import MembershipRegistration from "@/components/sections/MembershipRegistration";
 import DatePicker from "@/components/ui/DatePicker";
 import { cn } from "@/lib/utils";
+import { useLockPageScroll } from "@/lib/useLockPageScroll";
 
 const inputCls =
   "w-full rounded-xl bg-obsidian-soft/60 border border-[var(--hairline)] px-5 py-3.5 font-sans text-sm text-ivory placeholder:text-ivory-faint focus:border-gold/60 focus:outline-none focus:ring-1 focus:ring-gold/30 transition-all";
@@ -96,6 +97,9 @@ export default function FormsSection(
   const deedFields = useMemo(() => deedForms[deed.en] ?? [], [deed.en]);
 
   const [preview, setPreview] = useState<Preview | null>(null);
+
+  /* Freeze the page behind the popup — see lib/useLockPageScroll.ts */
+  useLockPageScroll(deedOpen || preview !== null);
 
   useGSAP(
     () => {
@@ -236,7 +240,7 @@ export default function FormsSection(
     <>
       {/* ================= DEED FORM — POPUP ================= */}
       {deedOpen && mode === "deed" && (
-        <div className="fixed inset-0 z-[96] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm" role="dialog">
+        <div data-lenis-prevent className="fixed inset-0 z-[96] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm" role="dialog">
           <div className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-obsidian-soft shadow-2xl gold-border">
             {/* Letterhead */}
             <div className="relative border-b border-[var(--hairline)] px-8 py-6">
@@ -259,7 +263,7 @@ export default function FormsSection(
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-8 py-7">
+            <div data-lenis-prevent className="flex-1 overflow-y-auto px-8 py-7 overscroll-contain">
               <div className="grid gap-6 sm:grid-cols-2">
                 {deedFields.map((f) => (
                   <div key={f.id} className={f.type === "textarea" ? "sm:col-span-2" : undefined}>
@@ -311,7 +315,7 @@ export default function FormsSection(
 
       {/* ================= PREVIEW & SEND MODAL ================= */}
       {preview && (
-        <div className="fixed inset-0 z-[97] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" role="dialog" aria-label={t("docPreview")}>
+        <div data-lenis-prevent className="fixed inset-0 z-[97] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" role="dialog" aria-label={t("docPreview")}>
           <div className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-obsidian-soft shadow-2xl gold-border">
             <div className="flex items-center justify-between border-b border-[var(--hairline)] px-6 py-4">
               <p className="kicker !tracking-[0.25em]">{t("docPreview")}</p>
@@ -319,7 +323,7 @@ export default function FormsSection(
             </div>
 
             {/* The formal document — this exact node becomes the PDF */}
-            <div className="flex-1 overflow-y-auto bg-neutral-200 p-4 md:p-6">
+            <div data-lenis-prevent className="flex-1 overflow-y-auto bg-neutral-200 p-4 md:p-6 overscroll-contain">
               <div ref={docRef} className="mx-auto max-w-[640px] bg-white px-8 py-10 text-black shadow-lg">
                 <div className="border-b-2 border-black/70 pb-4 text-center">
                   {/* Official TNWLA seal — extracted from the association's records */}

@@ -20,7 +20,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useGSAP } from "@gsap/react";
 import {
-  ArrowLeft, Briefcase, Check, CheckCircle2, ChevronLeft, ChevronRight, Download, Eye,
+  ArrowLeft, Briefcase, Check, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Download, Eye,
   GraduationCap, Mail, MessageCircle, PackageCheck, Scale, Smartphone,
   Upload, Wallet, X, type LucideIcon,
 } from "lucide-react";
@@ -39,6 +39,7 @@ import VerifyMembership from "@/components/sections/VerifyMembership";
 import MagneticButton from "@/components/ui/MagneticButton";
 import DatePicker from "@/components/ui/DatePicker";
 import { cn } from "@/lib/utils";
+import { useLockPageScroll } from "@/lib/useLockPageScroll";
 
 const icons: Record<string, LucideIcon> = { Scale, Briefcase, GraduationCap };
 
@@ -152,6 +153,9 @@ export default function MembershipRegistration({ embedded = false }: { embedded?
   const [agree, setAgree] = useState(false);
   const [txn, setTxn] = useState("");
   const [preview, setPreview] = useState(false);
+
+  /* Freeze the page behind the popup — see lib/useLockPageScroll.ts */
+  useLockPageScroll(preview);
   const [qrOk, setQrOk] = useState(true);
 
   /* Receipt state — see the note above the payment block */
@@ -366,7 +370,24 @@ export default function MembershipRegistration({ embedded = false }: { embedded?
     window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(site.formEmail)}&su=${encodeURIComponent(cat?.formHeading ?? "Membership")}&body=${encodeURIComponent(asText())}`, "_blank");
   };
 
-  /* ================= CATEGORY CHOOSER ================= */
+  /* ================= CATEGORY CHOOSER =================
+     A dropdown, not three cards, and no fees on it.
+
+     WHAT CHANGED AND WHY
+     The three cards each carried a joining fee and a renewal fee in
+     large gold type, which meant the first thing a prospective member
+     saw was a price — before they had read what the category even was.
+     The fees have not been deleted from the data; they still appear at
+     the Payment step, which is where a fee belongs. They are simply
+     not the opening screen any more.
+
+     The select starts EMPTY. That is deliberate: a pre-selected first
+     option is a decision made on the visitor's behalf, and here it
+     would silently put a law student into the advocates' form. Nothing
+     below the select renders until a real choice has been made — which
+     is also what keeps the step tabs from appearing before there is a
+     form for them to step through.
+  */
   if (!cat) {
     return (
       <section
@@ -375,43 +396,69 @@ export default function MembershipRegistration({ embedded = false }: { embedded?
         className={embedded ? "overflow-visible" : "bg-obsidian-deep section-pad overflow-hidden"}
       >
         {!embedded && <SectionHeading kicker={tr("newMemberReg")} title={tr("memberRegister")} />}
-        <p className={cn("mx-auto max-w-2xl text-center font-sans text-ivory-dim", embedded ? "mt-0" : "mt-5")}>
-          {tr("chooseCategory")}
-        </p>
 
-        <div className="reg-panel mx-auto mt-10 grid max-w-5xl gap-6 md:grid-cols-3">
-          {membershipCategories.map((c) => {
-            const Icon = icons[c.icon] ?? Scale;
-            return (
-              <button
-                key={c.id}
-                onClick={() => {
-                  setCat(c);
+        <div className="reg-panel mx-auto mt-10 max-w-2xl">
+          <div className="rounded-2xl glass gold-border p-8 md:p-10">
+            <label
+              htmlFor="member-category"
+              className="mb-2.5 block font-sans text-[11px] uppercase tracking-widest text-ivory-faint"
+            >
+              {lang === "ta" ? "உறுப்பினர் பிரிவு *" : "Membership category *"}
+            </label>
+
+            <div className="relative">
+              <select
+                id="member-category"
+                value=""
+                onChange={(e) => {
+                  const chosen = membershipCategories.find((c) => c.id === e.target.value);
+                  if (!chosen) return;
+                  setCat(chosen);
                   setStep(0);
                   setShowErrors(false);
-                  // Start the wizard from the top of the section
-                  window.dispatchEvent(new CustomEvent("sf:scrollTo", { detail: { target: "#form" } }));
                 }}
-                className="group flex flex-col rounded-2xl glass gold-border p-8 text-left transition-all duration-500 hover:border-gold/70 hover:shadow-[0_20px_60px_-20px_rgba(201,162,75,0.35)]"
+                className="w-full appearance-none rounded-xl border border-[var(--hairline)] bg-obsidian-soft/60 px-5 py-4 pr-12 font-sans text-sm text-ivory transition-all focus:border-gold/60 focus:outline-none focus:ring-1 focus:ring-gold/30"
               >
-                <Icon size={30} className="mb-5 text-gold transition-transform duration-500 group-hover:-translate-y-1" />
-                <h3 className="font-serif text-2xl text-ivory">{lang === "ta" ? c.ta : c.en}</h3>
-                <p className="prose-justify mt-3 flex-1 font-sans text-sm leading-relaxed text-ivory-dim">
-                  {lang === "ta" ? c.blurbTa : c.blurb}
-                </p>
-                <div className="mt-6 border-t border-[var(--hairline)] pt-4">
-                  <p className="font-sans text-xs uppercase tracking-widest text-ivory-faint">{tr("joiningFee")}</p>
-                  <p className="font-serif text-3xl gold-text">₹{c.joiningFee}</p>
-                  <p className="mt-1 font-sans text-[11px] text-ivory-faint">
-                    {tr("renewalFee")}: ₹{c.renewalFee} / year
-                  </p>
-                </div>
-                <span className="mt-6 inline-flex items-center gap-2 text-[11px] uppercase tracking-luxe text-gold">
-                  {tr("selectCategory")} <ChevronRight size={13} className="transition-transform group-hover:translate-x-1" />
-                </span>
-              </button>
-            );
-          })}
+                <option value="" disabled>
+                  {lang === "ta" ? "— தேர்ந்தெடுக்கவும் —" : "— Select —"}
+                </option>
+                {membershipCategories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {lang === "ta" ? c.ta : c.en}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                size={18}
+                className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gold"
+              />
+            </div>
+
+            <p className="mt-4 font-sans text-[12.5px] leading-relaxed text-ivory-dim">
+              {lang === "ta"
+                ? "பிரிவைத் தேர்ந்தெடுத்ததும் விண்ணப்பப் படிவம் திறக்கும்."
+                : "Choose a category and the application form opens below. Nothing is charged at this stage — the fee is shown at the payment step, after you have filled the form in."}
+            </p>
+
+            {/* The categories described, so the choice is informed —
+                without a price being the headline of each one. */}
+            <ul className="mt-7 space-y-3 border-t border-[var(--hairline)] pt-6">
+              {membershipCategories.map((c) => {
+                const Icon = icons[c.icon] ?? Scale;
+                return (
+                  <li key={c.id} className="flex gap-3.5">
+                    <Icon size={17} className="mt-0.5 shrink-0 text-gold" />
+                    <div>
+                      <p className="font-sans text-[13.5px] text-ivory">{lang === "ta" ? c.ta : c.en}</p>
+                      <p className="prose-justify mt-1 font-sans text-[12px] leading-relaxed text-ivory-faint">
+                        {lang === "ta" ? c.blurbTa : c.blurb}
+                      </p>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         </div>
 
         <VerifyMembership />
@@ -439,17 +486,30 @@ export default function MembershipRegistration({ embedded = false }: { embedded?
             <p className="mt-2 kicker !tracking-[0.2em]">{lang === "ta" ? cat.formHeadingTa : cat.formHeading}</p>
           </div>
 
-          {/* Progress */}
-          <div className="mb-8 flex items-center gap-2">
+          {/* Progress — an INDICATOR, not navigation.
+              These were buttons that jumped straight to any step, which
+              let someone land on Payment without having filled in a
+              name. Steps are now reached only by completing the one in
+              front of them (Back still works, via the footer). The
+              markup is a list, not a row of buttons, so a keyboard or a
+              screen reader is not offered a control that does nothing. */}
+          <ol className="mb-8 flex items-center gap-2" aria-label={tr("stepOf")}>
             {steps.map((s, i) => (
-              <button key={s.en} onClick={() => setStep(i)} className="group flex-1" aria-label={lang === "ta" ? s.ta : s.en}>
+              <li
+                key={s.en}
+                className="flex-1"
+                aria-current={i === step ? "step" : undefined}
+              >
                 <div className={cn("h-1 rounded-full transition-all duration-500", i <= step ? "bg-gold" : "bg-[var(--hairline)]")} />
-                <p className={cn("mt-2 hidden md:block text-[10px] font-sans uppercase tracking-wider transition-colors", i === step ? "text-gold" : "text-ivory-faint")}>
+                <p className={cn(
+                  "mt-2 hidden font-sans text-[10px] uppercase tracking-wider transition-colors md:block",
+                  i === step ? "text-gold" : i < step ? "text-ivory-dim" : "text-ivory-faint"
+                )}>
                   {lang === "ta" ? s.ta : s.en}
                 </p>
-              </button>
+              </li>
             ))}
-          </div>
+          </ol>
 
           <p className="mb-6 font-serif text-2xl text-ivory">
             {tr("stepOf")} {step + 1}/{steps.length} — {lang === "ta" ? stepData.ta : stepData.en}
@@ -744,14 +804,14 @@ export default function MembershipRegistration({ embedded = false }: { embedded?
 
       {/* ================= PREVIEW ================= */}
       {preview && (
-        <div className="fixed inset-0 z-[97] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" role="dialog">
+        <div data-lenis-prevent className="fixed inset-0 z-[97] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" role="dialog">
           <div className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-obsidian-soft shadow-2xl gold-border">
             <div className="flex items-center justify-between border-b border-[var(--hairline)] px-6 py-4">
               <p className="kicker !tracking-[0.25em]">{tr("docPreview")}</p>
               <button onClick={() => setPreview(false)} aria-label={tr("close")} className="text-ivory-dim hover:text-gold"><X size={20} /></button>
             </div>
 
-            <div className="flex-1 overflow-y-auto bg-neutral-200 p-4 md:p-6">
+            <div data-lenis-prevent className="flex-1 overflow-y-auto bg-neutral-200 p-4 md:p-6 overscroll-contain">
               <div ref={docRef} className="mx-auto max-w-[640px] bg-white px-8 py-10 text-black shadow-lg">
                 <div className="border-b-2 border-black/70 pb-4 text-center">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
