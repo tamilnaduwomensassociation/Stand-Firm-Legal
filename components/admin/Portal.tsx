@@ -31,13 +31,16 @@
  * that survives the save, so a change is live on the next page load —
  * no rebuild, no deploy.
  */
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  CalendarDays, ClipboardList, FileText, LayoutGrid, Loader2, LogOut, Package,
-  Newspaper, Palette, PenLine, RefreshCw, Search, Settings2,
+  CalendarDays, ClipboardList, FileText, IndianRupee, LayoutGrid, Loader2, LogOut,
+  Moon, Package, Newspaper, Palette, PenLine, RefreshCw, Search, Settings2, Sun,
 } from "lucide-react";
 import { brands, type BrandId } from "@/config/brands.config";
+import { hasPricing } from "@/config/priceable.config";
+import PricingPanel from "@/components/admin/PricingPanel";
+import { useLang } from "@/lib/i18n";
 import OrdersPanel from "@/components/admin/OrdersPanel";
 import EnquiriesPanel from "@/components/admin/EnquiriesPanel";
 import ContentPanel from "@/components/admin/ContentPanel";
@@ -49,7 +52,26 @@ import { cn } from "@/lib/utils";
 
 export type Row = Record<string, unknown> & { id: string; createdAt: string };
 
-type PanelId = "overview" | "orders" | "enquiries" | "content" | "events" | "theme" | "letterhead" | "blog";
+type PanelId = "overview" | "orders" | "enquiries" | "content" | "pricing" | "events" | "theme" | "letterhead" | "blog";
+
+/* The portal chrome, in both languages. The panels themselves stay in
+   English: they are operational tools, and a half-translated table is
+   harder to work than an untranslated one. */
+const T = {
+  title:    { en: "Superadmin",  ta: "மேலாண்மை" },
+  refresh:  { en: "Refresh",     ta: "புதுப்பி" },
+  signOut:  { en: "Sign out",    ta: "வெளியேறு" },
+  search:   { en: "Search…",     ta: "தேடு…" },
+  overview: { en: "Overview",    ta: "மொத்தப் பார்வை" },
+  sessions: { en: "Sessions",    ta: "அமர்வுகள்" },
+  orders:   { en: "Orders",      ta: "ஆர்டர்கள்" },
+  enquiries:{ en: "Enquiries",   ta: "விசாரணைகள்" },
+  content:  { en: "Content",     ta: "உள்ளடக்கம்" },
+  pricing:  { en: "Pricing",     ta: "விலை" },
+  blog:     { en: "Blog",        ta: "வலைப்பதிவு" },
+  theme:    { en: "Appearance",  ta: "தோற்றம்" },
+  letter:   { en: "Letterhead",  ta: "கடிதத்தாள்" },
+} as const;
 
 export default function Portal({
   user, initialOrders, initialEnquiries, initialContent, initialEvents = [],
@@ -73,6 +95,27 @@ export default function Portal({
   const [events, setEvents] = useState<Row[]>(initialEvents);
   const [query, setQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+
+  const { lang, setLang } = useLang();
+  const ta = lang === "ta";
+  const tr = (k: keyof typeof T) => (ta ? T[k].ta : T[k].en);
+
+  /* Light is the default here as it is on the public site, and the
+     choice is shared with it — one `sf-theme` key, so an admin who
+     works in dark does not get flashed white every time they follow
+     "View the site". */
+  const [light, setLight] = useState(true);
+  useEffect(() => {
+    const isLight = localStorage.getItem("sf-theme") !== "dark";
+    setLight(isLight);
+    document.documentElement.classList.toggle("light", isLight);
+  }, []);
+  const toggleTheme = () => {
+    const next = !light;
+    setLight(next);
+    document.documentElement.classList.toggle("light", next);
+    localStorage.setItem("sf-theme", next ? "light" : "dark");
+  };
 
   const current = brands.find((b) => b.id === brand)!;
 
@@ -103,14 +146,16 @@ export default function Portal({
   const brandEnquiries = useMemo(() => enquiries.filter((e) => e.brand === brand), [enquiries, brand]);
 
   const panels: { id: PanelId; label: string; icon: typeof LayoutGrid; show: boolean }[] = [
-    { id: "overview", label: "Overview", icon: LayoutGrid, show: true },
-    { id: "events", label: "Sessions", icon: CalendarDays, show: current.panels.includes("events") },
-    { id: "orders", label: "Orders", icon: Package, show: current.panels.includes("orders") },
-    { id: "enquiries", label: "Enquiries", icon: ClipboardList, show: current.panels.includes("enquiries") },
-    { id: "content", label: "Content", icon: Settings2, show: current.panels.includes("content") },
-    { id: "blog", label: "Blog", icon: Newspaper, show: current.panels.includes("blog") },
-    { id: "theme", label: "Appearance", icon: Palette, show: current.panels.includes("theme") },
-    { id: "letterhead", label: "Letterhead", icon: PenLine, show: current.panels.includes("letterhead") },
+    { id: "overview", label: tr("overview"), icon: LayoutGrid, show: true },
+    { id: "events", label: tr("sessions"), icon: CalendarDays, show: current.panels.includes("events") },
+    { id: "orders", label: tr("orders"), icon: Package, show: current.panels.includes("orders") },
+    /* Only the two brands that actually sell things carry a price list. */
+    { id: "pricing", label: tr("pricing"), icon: IndianRupee, show: hasPricing(brand) },
+    { id: "enquiries", label: tr("enquiries"), icon: ClipboardList, show: current.panels.includes("enquiries") },
+    { id: "content", label: tr("content"), icon: Settings2, show: current.panels.includes("content") },
+    { id: "blog", label: tr("blog"), icon: Newspaper, show: current.panels.includes("blog") },
+    { id: "theme", label: tr("theme"), icon: Palette, show: current.panels.includes("theme") },
+    { id: "letterhead", label: tr("letter"), icon: PenLine, show: current.panels.includes("letterhead") },
   ];
 
   /* Switching brand can land on a panel that brand does not have. */
@@ -127,18 +172,34 @@ export default function Portal({
               <FileText size={16} className="text-gold" />
             </span>
             <div className="min-w-0">
-              <p className="truncate font-serif text-base leading-tight gold-text md:text-lg">Superadmin</p>
+              <p className="truncate font-serif text-base leading-tight gold-text md:text-lg">{tr("title")}</p>
               <p className="truncate font-sans text-[10px] uppercase tracking-widest text-ivory-faint">{user}</p>
             </div>
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
             <button
+              onClick={() => setLang(ta ? "en" : "ta")}
+              className="flex h-11 items-center justify-center rounded-lg border border-[var(--hairline)] px-3 font-sans text-[11px] tracking-widest text-ivory-dim transition-all hover:border-gold/50 hover:text-gold"
+              aria-label="Switch language"
+              title={ta ? "English" : "தமிழ்"}
+            >
+              {ta ? "EN" : "தமிழ்"}
+            </button>
+            <button
+              onClick={toggleTheme}
+              className="flex h-11 w-11 items-center justify-center rounded-lg border border-[var(--hairline)] text-ivory-dim transition-all hover:border-gold/50 hover:text-gold"
+              aria-label={light ? "Switch to dark theme" : "Switch to light theme"}
+              title={light ? "Dark" : "Light"}
+            >
+              {light ? <Moon size={16} /> : <Sun size={16} />}
+            </button>
+            <button
               onClick={refresh}
               disabled={refreshing}
               className="flex h-11 w-11 items-center justify-center rounded-lg border border-[var(--hairline)] text-ivory-dim transition-all hover:border-gold/50 hover:text-gold disabled:opacity-50"
-              aria-label="Refresh"
-              title="Refresh"
+              aria-label={tr("refresh")}
+              title={tr("refresh")}
             >
               {refreshing ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
             </button>
@@ -147,7 +208,7 @@ export default function Portal({
               className="flex h-11 items-center gap-2 rounded-lg border border-[var(--hairline)] px-3.5 text-ivory-dim transition-all hover:border-red-400/50 hover:text-red-300"
             >
               <LogOut size={15} />
-              <span className="hidden font-sans text-[11px] uppercase tracking-widest sm:inline">Sign out</span>
+              <span className="hidden font-sans text-[11px] uppercase tracking-widest sm:inline">{tr("signOut")}</span>
             </button>
           </div>
         </div>
@@ -216,7 +277,7 @@ export default function Portal({
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Name, phone or reference…"
+                placeholder={ta ? "பெயர், தொலைபேசி அல்லது குறிப்பு…" : "Name, phone or reference…"}
                 className="w-full bg-transparent font-sans text-sm text-ivory placeholder:text-ivory-faint focus:outline-none"
               />
             </div>
@@ -243,6 +304,7 @@ export default function Portal({
         {activePanel === "enquiries" && <EnquiriesPanel rows={brandEnquiries} query={query} />}
         {activePanel === "events" && <EventsPanel rows={events} onChanged={refresh} />}
         {activePanel === "blog" && <BlogPanel />}
+        {activePanel === "pricing" && <PricingPanel brand={brand} />}
         {activePanel === "theme" && <ThemePanel brand={brand} />}
         {activePanel === "letterhead" && <Letterhead />}
         {activePanel === "content" && (

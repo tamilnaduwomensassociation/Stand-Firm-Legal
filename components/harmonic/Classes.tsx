@@ -8,9 +8,10 @@
  * putting a ₹0 order through the order book would fill it with rows
  * nobody needs to fulfil, and there is nothing to verify.
  */
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Check, Clock, Loader2, MessageCircle } from "lucide-react";
-import { courses, harmony } from "@/config/harmonic.config";
+import { courses as shippedCourses, harmony, type HarmonyCourse } from "@/config/harmonic.config";
+import { usePrices } from "@/lib/usePrices";
 import { useLang } from "@/lib/i18n";
 import { useContent } from "@/lib/useContent";
 import { useLockPageScroll } from "@/lib/useLockPageScroll";
@@ -27,6 +28,19 @@ export default function Classes() {
   const { lang } = useLang();
   const ta = lang === "ta";
   const c = useContent("harmonic");
+  const prices = usePrices("harmonic");
+
+  /* Fees carry the same overrides as the shop, so a course repriced in
+     Superadmin is repriced on the card, in the dialog and in the amount
+     the server charges. A course taken off sale stops being listed —
+     which is how a class is closed for the term without deleting it. */
+  const courses = useMemo(
+    () => shippedCourses
+      .filter((x) => !prices.offSale(x.id))
+      .map((x): HarmonyCourse => ({ ...x, fee: prices.price(x.id, x.fee) })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [prices.price, prices.offSale]
+  );
 
   const [chosen, setChosen] = useState<(typeof courses)[number] | null>(null);
   const [form, setForm] = useState({ name: "", phone: "", email: "", notes: "" });

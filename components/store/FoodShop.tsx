@@ -25,7 +25,8 @@ import {
   Search, ShieldCheck, Shirt, ShoppingBag, Smartphone, Sprout, Trash2, Wallet, X,
   type LucideIcon,
 } from "lucide-react";
-import { allFoodItems, foodBrands, foodsNotice, type FoodItem } from "@/config/foods.config";
+import { foodBrands as shippedFoodBrands, foodsNotice, type FoodItem } from "@/config/foods.config";
+import { usePrices } from "@/lib/usePrices";
 import { paymentConfig } from "@/config/forms.config";
 import { site } from "@/config/site.config";
 import { useLang } from "@/lib/i18n";
@@ -58,7 +59,31 @@ export default function FoodShop() {
   const { lang } = useLang();
   const receiptRef = useRef<HTMLDivElement>(null);
 
-  const [activeBrand, setActiveBrand] = useState(foodBrands[0].id);
+  const prices = usePrices("jeni");
+
+  /* Superadmin's price overrides are folded into the catalogue ONCE,
+     here, rather than at each place a figure is printed. Everything
+     downstream — the cards, the strike-throughs, the cart lines and the
+     total — then reads one already-effective number, so a price cannot
+     be right on the card and stale in the basket. Lines taken off sale
+     are dropped from the list entirely. */
+  const priced = <T extends FoodItem>(i: T): T => ({
+    ...i, price: prices.price(i.id, i.price), mrp: prices.mrp(i.id, i.mrp),
+  });
+  const foodBrands = useMemo(
+    () => shippedFoodBrands.map((b) => ({ ...b, items: b.items.filter((i) => !prices.offSale(i.id)).map(priced) })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [prices.price, prices.mrp, prices.offSale]
+  );
+  /* Mirrors the shape config/foods.config.ts exports: search and the
+     result cards both read the maker off the item, so flattening
+     without those fields breaks them. */
+  const allFoodItems = useMemo(
+    () => foodBrands.flatMap((b) => b.items.map((i) => ({ ...i, brandId: b.id, brand: b.brand, maker: b.maker }))),
+    [foodBrands]
+  );
+
+  const [activeBrand, setActiveBrand] = useState(shippedFoodBrands[0].id);
   const [query, setQuery] = useState("");
   const [cart, setCart] = useState<Line[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
@@ -116,7 +141,7 @@ export default function FoodShop() {
         i.brand.toLowerCase().includes(q) ||
         i.desc.toLowerCase().includes(q)
     );
-  }, [query]);
+  }, [query, allFoodItems]);
 
   const qtyOf = (id: string) => cart.find((l) => l.id === id)?.qty ?? 0;
   const count = cart.reduce((s, l) => s + l.qty, 0);

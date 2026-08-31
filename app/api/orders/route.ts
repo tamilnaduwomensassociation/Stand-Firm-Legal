@@ -36,7 +36,11 @@ export async function POST(req: NextRequest) {
       return fail(Object.assign(new Error("The order is empty"), { status: 400 }));
     }
 
-    const { priceOf } = await import("@/config/catalogue.server");
+    /* The shipped price book with Superadmin's overrides applied on
+       top — see lib/server/prices.server.ts. Read once for the whole
+       basket so two lines of one order cannot straddle a price edit. */
+    const { loadPriceBook } = await import("@/lib/server/prices.server");
+    const book = await loadPriceBook();
 
     let total = 0;
     const lines = rawLines.map((l) => {
@@ -45,10 +49,10 @@ export async function POST(req: NextRequest) {
       /* Server price wins. Falls back to the quoted one only for items
          with no fixed price (made-to-order work), which are then
          flagged for a human to quote. */
-      const known = priceOf(id);
+      const known = book.price(id);
       const price = known ?? 0;
       total += price * qty;
-      return { id, en: clean(l.en, 160), qty, price, quoted: known === null };
+      return { id, en: clean(l.en, 160), qty, price, quoted: known === null, offSale: book.outOfStock(id) };
     });
 
     const claimed = Number(b.total);

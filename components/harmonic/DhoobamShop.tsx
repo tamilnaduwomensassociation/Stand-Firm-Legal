@@ -7,7 +7,8 @@
  */
 import { useMemo, useState } from "react";
 import { Check, Loader2, Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
-import { dhoobamCatalogue, dhoobamGroups, harmony } from "@/config/harmonic.config";
+import { dhoobamCatalogue as shippedDhoobam, dhoobamGroups, harmony, type HarmonyItem } from "@/config/harmonic.config";
+import { usePrices } from "@/lib/usePrices";
 import { paymentConfig } from "@/config/forms.config";
 import { useLang } from "@/lib/i18n";
 import { useLockPageScroll } from "@/lib/useLockPageScroll";
@@ -25,6 +26,8 @@ export default function DhoobamShop() {
   const { lang } = useLang();
   const ta = lang === "ta";
 
+  const prices = usePrices("harmonic");
+
   const [group, setGroup] = useState("all");
   const [cart, setCart] = useState<Line[]>([]);
   const [open, setOpen] = useState(false);
@@ -34,6 +37,20 @@ export default function DhoobamShop() {
 
   useLockPageScroll(open);
   const { state, start, submitUpiRef, reset } = useCheckout("harmonic");
+
+  /* Superadmin's price overrides are folded into the catalogue ONCE,
+     here, rather than at each place a figure is printed. Everything
+     downstream — the cards, the strike-throughs, the cart lines and the
+     total — then reads one already-effective number, so a price cannot
+     be right on the card and stale in the basket. Lines taken off sale
+     are dropped from the list entirely. */
+  const dhoobamCatalogue = useMemo(
+    () => shippedDhoobam
+      .filter((i) => !prices.offSale(i.id))
+      .map((i): HarmonyItem => ({ ...i, price: prices.price(i.id, i.price), mrp: prices.mrp(i.id, i.mrp) })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [prices.price, prices.mrp, prices.offSale]
+  );
 
   const visible = useMemo(
     () => (group === "all" ? dhoobamCatalogue : dhoobamCatalogue.filter((i) => i.group === group)),

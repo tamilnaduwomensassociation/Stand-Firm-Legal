@@ -41,6 +41,7 @@ const BEARERS = [
 
 export default function Letterhead() {
   const sheetRef = useRef<HTMLDivElement>(null);
+  const scalerRef = useRef<HTMLDivElement>(null);
 
   const [f, setF] = useState({
     ref: "",
@@ -65,10 +66,63 @@ export default function Letterhead() {
     setError(""); return true;
   };
 
+  /**
+   * WHY EVERY EXPORT GOES THROUGH THIS.
+   *
+   * The sheet is 794 × 1123 CSS pixels — A4 at 96dpi — and the preview
+   * shows it inside a wrapper carrying `scale(0.52)` … `scale(0.68)` so
+   * it fits the panel. html2canvas walks the live DOM: it takes each
+   * text node's metrics from the page as it currently is, but paints
+   * into a canvas sized from the node's own unscaled box. With a
+   * transform on an ancestor those two disagree by the scale factor, so
+   * every run of text is laid out at roughly 55–68% of the width it is
+   * then drawn at. The result is the letter that came back: boxes,
+   * rules and the masthead all correct, but the words inside them
+   * crushed together — "TAMILNADU WOMEN" as "TAMILNADUWOMEN",
+   * "Adv. M. Jenifer Arokia Mary" as "AdvM JeniferArokMary", with
+   * whole letters swallowed where two words collide.
+   *
+   * So the transform is lifted for the duration of the capture and the
+   * sheet is parked off-screen while it happens, which keeps the panel
+   * from jumping. It is restored in `finally`, so a thrown error cannot
+   * leave a full-size sheet stranded across the page.
+   *
+   * Fonts are awaited too. html2canvas measures with whatever is
+   * resolved at that instant; capturing mid-swap measures Georgia and
+   * paints Times, which is a subtler version of the same bug.
+   */
+  const atFullSize = async <T,>(job: () => Promise<T>): Promise<T> => {
+    const el = scalerRef.current;
+    const prev = el
+      ? { transform: el.style.transform, position: el.style.position, left: el.style.left, top: el.style.top, zIndex: el.style.zIndex }
+      : null;
+    try {
+      if (el) {
+        el.style.transform = "none";
+        el.style.position = "fixed";
+        el.style.left = "-20000px";
+        el.style.top = "0px";
+        el.style.zIndex = "-1";
+      }
+      try { await (document as Document & { fonts?: FontFaceSet }).fonts?.ready; } catch { /* older browser */ }
+      /* One frame, so the un-transformed layout is committed before we measure. */
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      return await job();
+    } finally {
+      if (el && prev) {
+        el.style.transform = prev.transform;
+        el.style.position = prev.position;
+        el.style.left = prev.left;
+        el.style.top = prev.top;
+        el.style.zIndex = prev.zIndex;
+      }
+    }
+  };
+
   const savePdf = async () => {
     if (!guard() || !sheetRef.current) return;
     setBusy("pdf");
-    try { await downloadReceipt(sheetRef.current, stem); }
+    try { await atFullSize(() => downloadReceipt(sheetRef.current!, stem)); }
     catch { setError("Could not build the PDF."); }
     setBusy(null);
   };
@@ -79,7 +133,15 @@ export default function Letterhead() {
     setBusy("png");
     try {
       const html2canvas = (await import("html2canvas")).default;
-      const canvas = await html2canvas(sheetRef.current, { scale: 3, backgroundColor: "#ffffff", useCORS: true, logging: false });
+      const canvas = await atFullSize(() =>
+        html2canvas(sheetRef.current!, {
+          scale: 3, backgroundColor: "#ffffff", useCORS: true, logging: false,
+          /* Pin the geometry rather than letting html2canvas infer it
+             from a window that is a different size to the sheet. */
+          width: 794, height: 1123, windowWidth: 794, windowHeight: 1123,
+          scrollX: 0, scrollY: 0,
+        })
+      );
       const a = document.createElement("a");
       a.href = canvas.toDataURL("image/png");
       a.download = `${stem}.png`;
@@ -94,11 +156,11 @@ export default function Letterhead() {
     if (!guard() || !sheetRef.current) return;
     setBusy("wa");
     try {
-      await sendReceiptWhatsApp(
-        sheetRef.current,
+      await atFullSize(() => sendReceiptWhatsApp(
+        sheetRef.current!,
         `${stem}.pdf`,
         `*${site.shortName}*\n${f.subject || "Letter"}${f.ref ? `\nRef: ${f.ref}` : ""}`
-      );
+      ));
     } catch { setError("Could not open WhatsApp."); }
     setBusy(null);
   };
@@ -110,7 +172,7 @@ export default function Letterhead() {
       /* The PDF downloads first: no browser can attach a file to a
          mailto: draft, so the honest flow is to save it and tell the
          sender it is waiting in Downloads. */
-      const pdf = await pdfFromNode(sheetRef.current);
+      const pdf = await atFullSize(() => pdfFromNode(sheetRef.current!));
       pdf?.save(`${stem}.pdf`);
       const body = `${f.subject ? `${f.subject}\n\n` : ""}The letter is attached as ${stem}.pdf — it has just been saved to your Downloads folder, please attach it before sending.`;
       window.open(
@@ -215,7 +277,7 @@ export default function Letterhead() {
             On screen it is scaled down to fit; the node itself stays at
             full A4 pixel size so the capture is sharp. */}
         <div className="overflow-x-auto">
-          <div className="origin-top-left scale-[0.52] sm:scale-[0.62] lg:scale-[0.58] xl:scale-[0.68]" style={{ width: 794, height: 1123 }}>
+          <div ref={scalerRef} className="origin-top-left scale-[0.52] sm:scale-[0.62] lg:scale-[0.58] xl:scale-[0.68]" style={{ width: 794, height: 1123 }}>
             <LetterSheet ref={sheetRef} f={f} />
           </div>
         </div>
@@ -323,7 +385,7 @@ function LetterSheet({
           <div style={{ position: "relative", marginTop: 18, fontSize: 12 }}>
             <div>{f.signOff}</div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/media/president-signature.png" alt="" style={{ height: 42, objectFit: "contain", margin: "6px 0 2px" }} />
+            <img src="/media/president-signature.png" alt="" style={{ height: 46, objectFit: "contain", display: "block", margin: "4px 0 2px" }} />
             <div style={{ fontWeight: 700, color: NAVY }}>{f.signatory}</div>
             <div style={{ fontSize: 10.5, color: GOLD }}>{f.signatoryRole}</div>
             <div style={{ fontSize: 10, color: "#6a6a78" }}>Tamilnadu Women Law Association — Madras</div>

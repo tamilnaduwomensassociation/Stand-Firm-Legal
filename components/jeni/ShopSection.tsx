@@ -19,6 +19,7 @@ import {
   Sparkles, Trash2, X, type LucideIcon,
 } from "lucide-react";
 import { itemsInSection, shopNotice, type ShopItem, type ShopSection as Section } from "@/config/shop.config";
+import { usePrices } from "@/lib/usePrices";
 import { jeni } from "@/config/jeni.config";
 import { paymentConfig } from "@/config/forms.config";
 import { useLang } from "@/lib/i18n";
@@ -43,7 +44,21 @@ export default function ShopSection({ section }: { section: Section }) {
   /* Superadmin can reword the notice under the grid. */
   const c = useContent("jeni");
 
-  const all = useMemo(() => itemsInSection(section.id), [section.id]);
+  const prices = usePrices("jeni");
+
+  /* Superadmin's price overrides are folded into the catalogue ONCE,
+     here, rather than at each place a figure is printed. Everything
+     downstream — the cards, the strike-throughs, the cart lines and the
+     total — then reads one already-effective number, so a price cannot
+     be right on the card and stale in the basket. Lines taken off sale
+     are dropped from the list entirely. */
+  const all = useMemo(
+    () => itemsInSection(section.id)
+      .filter((i) => !prices.offSale(i.id))
+      .map((i): ShopItem => ({ ...i, price: prices.price(i.id, i.price), mrp: prices.mrp(i.id, i.mrp) })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [section.id, prices.price, prices.mrp, prices.offSale]
+  );
   const [group, setGroup] = useState<string>("all");
   const [query, setQuery] = useState("");
   const [sizes, setSizes] = useState<Record<string, string>>({});

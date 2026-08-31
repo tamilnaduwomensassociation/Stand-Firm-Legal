@@ -27,11 +27,29 @@ export async function pdfFromNode(node: HTMLElement): Promise<Jspdf | null> {
   const html2canvas = (await import("html2canvas")).default;
   const { jsPDF } = await import("jspdf");
 
+  /* Geometry is pinned to the node's own box rather than inferred from
+     the window. html2canvas takes text metrics from the live page and
+     paints into a canvas sized from the node, so anything that makes
+     those two disagree — a transformed ancestor, a window narrower than
+     the node — crushes the text together while leaving boxes and rules
+     correct. Callers that scale a preview must un-scale before calling
+     this; see atFullSize() in components/admin/Letterhead.tsx. */
+  try { await (document as Document & { fonts?: FontFaceSet }).fonts?.ready; } catch { /* older browser */ }
+
+  const w0 = node.offsetWidth || undefined;
+  const h0 = node.offsetHeight || undefined;
+
   const canvas = await html2canvas(node, {
     scale: 2,
     backgroundColor: "#ffffff",
     useCORS: true,
     logging: false,
+    width: w0,
+    height: h0,
+    windowWidth: w0,
+    windowHeight: h0,
+    scrollX: 0,
+    scrollY: 0,
   });
 
   const pdf = new jsPDF({ unit: "mm", format: "a4" });
