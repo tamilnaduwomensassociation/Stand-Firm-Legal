@@ -1,15 +1,21 @@
 /**
  * ============================================================
- * GROK — xAI, over plain REST. No SDK.
+ * GROQ — fast inference, over plain REST. No SDK.
  * ============================================================
  * The npm registry is unreachable from this build, so this is `fetch`
- * and nothing else. xAI's API is OpenAI-shaped, which makes that easy.
+ * and nothing else. Groq's API is OpenAI-shaped, which makes that easy.
+ *
+ * NOTE: Groq (fast inference, console.groq.com) is a different company
+ * from xAI's Grok (console.x.ai) — easy to mix up. This file talks to
+ * Groq's endpoint. The env var names (GROK_API_KEY etc.) were kept as
+ * a fallback for backwards compatibility, but the key itself must be a
+ * Groq key.
  *
  * WITHOUT A KEY
  * `isLive()` is false and every caller falls back to the keyword
  * answers the site already had. Nothing breaks, nothing pretends to be
  * an AI, and the chatbot keeps working exactly as it does today. Set
- * GROK_API_KEY (console.x.ai) and it comes alive.
+ * GROQ_API_KEY (console.groq.com) and it comes alive.
  *
  * ---------------------------------------------------------------
  * THE SYSTEM PROMPTS ARE THE SAFETY MECHANISM, NOT DECORATION
@@ -32,9 +38,13 @@
  * answer at all.
  */
 
-const KEY = process.env.GROK_API_KEY || process.env.XAI_API_KEY || "";
-const MODEL = process.env.GROK_MODEL || "grok-3";
-const ENDPOINT = "https://api.x.ai/v1/chat/completions";
+const KEY =
+  process.env.GROQ_API_KEY ||
+  process.env.GROK_API_KEY ||
+  process.env.XAI_API_KEY ||
+  "";
+const MODEL = process.env.GROQ_MODEL || process.env.GROK_MODEL || "llama-3.3-70b-versatile";
+const ENDPOINT = "https://api.groq.com/openai/v1/chat/completions";
 
 export const isLive = () => Boolean(KEY);
 
@@ -158,7 +168,7 @@ stated wrongly is a serious discourtesy in this tradition.`,
 export type ChatTurn = { role: "user" | "assistant"; content: string };
 
 /**
- * Ask Grok. Returns null — never throws, never a fabricated answer —
+ * Ask Groq. Returns null — never throws, never a fabricated answer —
  * when there is no key, the call fails, or the response is empty, so
  * every caller can fall back cleanly.
  */
@@ -202,7 +212,7 @@ export async function ask(
     clearTimeout(timer);
 
     if (!res.ok) {
-      console.error("[grok]", res.status, (await res.text()).slice(0, 300));
+      console.error("[groq]", res.status, (await res.text()).slice(0, 300));
       return null;
     }
 
@@ -210,7 +220,7 @@ export async function ask(
     const text = json.choices?.[0]?.message?.content?.trim();
     return text || null;
   } catch (e) {
-    console.error("[grok]", e instanceof Error ? e.message : e);
+    console.error("[groq]", e instanceof Error ? e.message : e);
     return null;
   }
 }
