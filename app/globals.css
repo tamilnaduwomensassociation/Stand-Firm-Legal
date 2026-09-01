@@ -1,0 +1,211 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   STAND FIRM LEGAL — theme variables (dark default, light opt-in)
+   ============================================================ */
+
+:root {
+  --c-bg: 10 10 11;
+  --c-bg-deep: 5 5 6;
+  --c-bg-soft: 17 17 19;
+  --c-card: 20 20 22;
+  --c-text: 243 238 227;
+  --c-text-dim: 185 179 164;
+  --c-text-faint: 138 133 122;
+  --glass-bg: rgba(255, 255, 255, 0.04);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --hairline: rgba(255, 255, 255, 0.1);
+  --gold: #c9a24b;
+}
+
+/* Light theme — toggled via <html class="light"> */
+html.light {
+  --c-bg: 247 244 237;
+  --c-bg-deep: 240 236 227;
+  --c-bg-soft: 251 249 244;
+  --c-card: 255 255 255;
+  --c-text: 30 27 22;
+  --c-text-dim: 92 86 74;
+  --c-text-faint: 140 133 120;
+  --glass-bg: rgba(255, 255, 255, 0.6);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --hairline: rgba(0, 0, 0, 0.1);
+}
+
+/* Sections that sit on photography stay cinematic-dark in BOTH themes */
+.force-dark {
+  --c-bg: 10 10 11;
+  --c-bg-deep: 5 5 6;
+  --c-card: 20 20 22;
+  --c-text: 243 238 227;
+  --c-text-dim: 185 179 164;
+  --c-text-faint: 158 153 142;
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --hairline: rgba(255, 255, 255, 0.1);
+}
+
+html {
+  scroll-behavior: initial;          /* Lenis owns scrolling */
+  scrollbar-gutter: stable;          /* no sideways jump when a popup locks the page */
+}
+
+/* Applied by useLockPageScroll while any popup is open. Lenis is
+   stopped at the same time — this alone would not hold it, because
+   Lenis animates the page rather than scrolling it. */
+html.scroll-locked, html.scroll-locked body {
+  overflow: hidden;
+  touch-action: none;                /* stops the rubber-band drag behind a sheet on iOS */
+}
+
+/* Popup panels scroll natively. `overscroll-contain` stops the leftover
+   delta at the end of a panel from chaining to the page behind it. */
+[data-lenis-prevent] {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch; /* momentum scrolling inside dialogs on iOS */
+}
+
+body {
+  @apply bg-obsidian text-ivory antialiased;
+  overscroll-behavior: none;
+  transition: background-color 0.6s ease;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: rgb(var(--c-bg)); }
+::-webkit-scrollbar-thumb { background: rgb(var(--c-text-faint) / 0.4); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+
+::selection { background: rgba(201, 162, 75, 0.35); }
+
+/* ---------- Reusable luxury utilities ---------- */
+
+.gold-text {
+  background: linear-gradient(120deg, #9a7a2e 0%, #e3c878 38%, #f5e7bf 50%, #e3c878 62%, #9a7a2e 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.gold-shimmer { animation: shimmer 2.4s linear infinite; }
+
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid var(--glass-border);
+}
+
+.gold-border { border: 1px solid rgba(201, 162, 75, 0.28); }
+
+.section-pad { @apply px-6 md:px-12 lg:px-24 py-14 md:py-20; }
+
+.kicker { @apply font-sans text-xs md:text-sm uppercase tracking-luxe text-gold; }
+
+/* Justified body prose — even left/right edges, hyphenated so
+   justification never opens rivers of whitespace. */
+.prose-justify {
+  text-align: justify;
+  text-justify: inter-word;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+}
+/* Tamil doesn't hyphenate — keep it justified but unbroken */
+:lang(ta) .prose-justify { hyphens: none; -webkit-hyphens: none; }
+
+/* Cinematic vignette over freeze-frames (always dark — sits on imagery) */
+.vignette::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at center, transparent 45%, rgba(5, 5, 6, 0.55) 100%),
+    linear-gradient(to bottom, rgba(5, 5, 6, 0.55), transparent 30%, transparent 65%, rgba(5, 5, 6, 0.9));
+}
+
+.ripple-ink {
+  position: absolute;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(0);
+  animation: ripple 0.7s ease-out forwards;
+  pointer-events: none;
+}
+@keyframes ripple { to { transform: scale(4); opacity: 0; } }
+
+.marquee-row { animation: marquee 45s linear infinite; }
+.marquee-row:hover { animation-play-state: paused; }
+
+/* Timeline node — slow gold breathing halo */
+.node-pulse { animation: nodePulse 2.6s ease-in-out infinite; }
+@keyframes nodePulse {
+  0%, 100% { transform: scale(1); opacity: 0.55; }
+  50%      { transform: scale(1.9); opacity: 0.15; }
+}
+
+/* ---------- Gallery: real-phone flip tiles ---------- */
+.flip-tile { perspective: 1200px; }
+.flip-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.75s cubic-bezier(0.4, 0.2, 0.2, 1);
+}
+.flip-tile.is-flipped .flip-inner { transform: rotateY(180deg); }
+.flip-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  overflow: hidden;
+  border-radius: 0.75rem;
+}
+.flip-back { transform: rotateY(180deg); }
+
+/* Reduce motion — accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---------- Superadmin theme overrides ----------
+   Emitted by components/providers/ThemeStyle.tsx as custom properties
+   on :root. Each rule below is a no-op until the matching property is
+   set, so an unthemed site behaves exactly as it did before.
+
+   `--type-scale` and `--radius-scale` default to 1 rather than being
+   unset, because `calc(1rem * var(--type-scale))` with no value is an
+   invalid declaration and would drop the font-size entirely. */
+:root {
+  --type-scale: 1;
+  --radius-scale: 1;
+}
+
+html { font-size: calc(16px * var(--type-scale)); }
+
+.font-serif { font-family: var(--font-heading-override, var(--font-serif)), Georgia, serif; }
+.font-sans  { font-family: var(--font-body-override, var(--font-sans)), system-ui, sans-serif; }
+
+/* ------------------------------------------------------------------
+   The Superadmin letterhead preview.
+
+   The A4 sheet is a fixed 794x1123 node so the capture is sharp; the
+   panel shrinks it to fit. The scale is a custom property rather than a
+   Tailwind class because the component has to READ it back — the loupe
+   converts a cursor position into sheet coordinates, and a hard-coded
+   copy of four breakpoint values would be wrong at three of them.
+   ------------------------------------------------------------------ */
+.sheet-stage { --sheet-scale: 0.52; }
+@media (min-width: 640px)  { .sheet-stage { --sheet-scale: 0.62; } }
+@media (min-width: 1024px) { .sheet-stage { --sheet-scale: 0.58; } }
+@media (min-width: 1280px) { .sheet-stage { --sheet-scale: 0.68; } }
+
+/* The loupe follows the pointer; nothing inside it should be selectable
+   or draggable, and it must never become a scroll target. */
+.sheet-stage * { -webkit-user-drag: none; }
