@@ -13,6 +13,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, Loader2, Send, Sparkles, X } from "lucide-react";
 import { site } from "@/config/site.config";
+import { useLang } from "@/lib/i18n";
 import ThinkingOrb, { type OrbState } from "@/components/ui/ThinkingOrb";
 
 type Msg = { from: "bot" | "user"; text: string };
@@ -76,7 +77,8 @@ const SUGGESTED_BY_BRAND: Record<string, string[]> = {
   ],
 };
 
-const DISCLAIMER = " (General information, not legal advice — consult us for your specific case.)";
+const DISCLAIMER_EN = " (General information, not legal advice — consult us for your specific case.)";
+const DISCLAIMER_TA = " (இது பொது தகவல் மட்டும், சட்ட ஆலோசனை அல்ல — உங்கள் குறிப்பிட்ட வழக்கிற்கு எங்களை அணுகவும்.)";
 
 /* Keyword-scored knowledge base — India & Tamil Nadu */
 const KB: { keys: string[]; a: string }[] = [
@@ -108,15 +110,22 @@ const KB: { keys: string[]; a: string }[] = [
   { keys: ["consult", "book", "appointment", "contact", "address", "office", "where"], a: `Book right on this page (scroll to "Begin Your Case"), call ${site.phones[0]}, or WhatsApp us. Chambers: ${site.address}. Landline ${site.landline}. Same-day slots are usually available.` },
 ];
 
-function answer(q: string): string {
+function answer(q: string, lang: "en" | "ta"): string {
   const s = q.toLowerCase();
   let best: { score: number; a: string } = { score: 0, a: "" };
   for (const item of KB) {
     const score = item.keys.reduce((n, k) => n + (s.includes(k) ? k.split(" ").length + 1 : 0), 0);
     if (score > best.score) best = { score, a: item.a };
   }
-  if (best.score > 0) return best.a + DISCLAIMER;
-  return `I can help with Indian & Tamil Nadu law — property & registration, the new criminal codes, family matters, consumer complaints, accident claims, labour, MSME, company registrations, wills, writs and women's rights. Ask me anything specific, or call ${site.phones[0]} to speak with our advocates.`;
+  /* This keyword base is English-only. When it is the one answering
+     (the AI is unreachable) on the Tamil site, the disclaimer and the
+     closing line still switch to Tamil so the reply isn't purely
+     English top to bottom — but see the note above KB: a full Tamil
+     translation of every entry is a separate, larger job. */
+  if (best.score > 0) return best.a + (lang === "ta" ? DISCLAIMER_TA : DISCLAIMER_EN);
+  return lang === "ta"
+    ? `நான் இந்திய & தமிழ்நாடு சட்டம் தொடர்பாக உதவ முடியும் — சொத்து & பதிவு, புதிய குற்றவியல் சட்டங்கள், குடும்ப விவகாரங்கள், நுகர்வோர் புகார்கள், விபத்து இழப்பீடுகள், தொழிலாளர் உரிமைகள், MSME, நிறுவனப் பதிவுகள், உயில்கள், ரிட் மனுக்கள் மற்றும் பெண்களின் உரிமைகள். குறிப்பிட்ட கேள்வி கேளுங்கள், அல்லது எங்கள் வழக்கறிஞர்களுடன் பேச ${site.phones[0]} ஐ அழைக்கவும்.`
+    : `I can help with Indian & Tamil Nadu law — property & registration, the new criminal codes, family matters, consumer complaints, accident claims, labour, MSME, company registrations, wills, writs and women's rights. Ask me anything specific, or call ${site.phones[0]} to speak with our advocates.`;
 }
 
 /**
@@ -139,6 +148,7 @@ export default function Chatbot({
   greeting?: string;
 } = {}) {
   const [open, setOpen] = useState(false);
+  const { lang } = useLang();
   const [msgs, setMsgs] = useState<Msg[]>([
     {
       from: "bot",
@@ -211,19 +221,21 @@ export default function Chatbot({
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ brand: brandId, question: text, history }),
+        body: JSON.stringify({ brand: brandId, question: text, history, lang }),
       });
       /* The moment the server answers the socket, the wait stops being
          "can we reach it" and becomes "what will it say". */
       setOrbState("thinking");
       if (res.ok) {
         const d = await res.json();
-        if (typeof d.answer === "string" && d.answer.trim()) full = d.answer.trim() + DISCLAIMER;
+        if (typeof d.answer === "string" && d.answer.trim()) {
+          full = d.answer.trim() + (lang === "ta" ? DISCLAIMER_TA : DISCLAIMER_EN);
+        }
         if (d.proposal && typeof d.proposal === "object") {
           setProposal(d.proposal as Proposal);
           /* The model may propose without saying anything; the card has
              to be introduced or it appears from nowhere. */
-          if (!full) full = "Here is what I have — please check it and confirm.";
+          if (!full) full = lang === "ta" ? "இதோ கிடைத்தது — சரிபார்த்து உறுதிப்படுத்தவும்." : "Here is what I have — please check it and confirm.";
         }
       }
     } catch {
@@ -233,7 +245,7 @@ export default function Chatbot({
 
     setOrbState("settling");
     setTyping(false);
-    reveal(full ?? answer(text));
+    reveal(full ?? answer(text, lang));
   };
 
   /** The customer's press — the only thing in this component that writes. */
