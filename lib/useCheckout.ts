@@ -82,7 +82,12 @@ export type CheckoutState =
   | { stage: "paying"; orderId: string; total: number }
   | { stage: "upi"; orderId: string; total: number }      // no gateway — manual reference
   | { stage: "verifying" }
-  | { stage: "done"; orderId: string; total: number; paid: boolean }
+  | {
+      stage: "done"; orderId: string; total: number; paid: boolean;
+      /** UPI reference the customer typed, or Razorpay's payment id — for the receipt. */
+      reference?: string;
+      method?: "razorpay" | "upi";
+    }
   | { stage: "error"; message: string };
 
 export function useCheckout(brand: string) {
@@ -162,7 +167,7 @@ export function useCheckout(brand: string) {
               const vd = await v.json();
               if (!v.ok) throw new Error(vd.error ?? "Payment could not be verified");
               /* `paid` comes from the server, never from the widget. */
-              setState({ stage: "done", orderId: id, total, paid: vd.status === "paid" });
+              setState({ stage: "done", orderId: id, total, paid: vd.status === "paid", reference: r.razorpay_payment_id, method: "razorpay" });
             } catch (e) {
               setState({ stage: "error", message: e instanceof Error ? e.message : "Verification failed" });
             }
@@ -194,7 +199,7 @@ export function useCheckout(brand: string) {
       });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error ?? "Could not record the reference");
-      setState({ stage: "done", orderId, total, paid: false });
+      setState({ stage: "done", orderId, total, paid: false, reference: ref, method: "upi" });
     } catch (e) {
       setState({ stage: "error", message: e instanceof Error ? e.message : "Failed" });
     }

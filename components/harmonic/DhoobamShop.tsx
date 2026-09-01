@@ -4,9 +4,15 @@
  * Dhoobam sales. Same server-priced order flow as the Jeni shop — the
  * total is recomputed on our side and a payment only counts once its
  * signature verifies. See lib/useCheckout.ts.
+ *
+ * The "done" screen is the same printed-receipt experience as Jeni
+ * Foods (components/store/FoodShop.tsx) — a Payment Recorded card with
+ * a downloadable PDF, a WhatsApp share (the visitor's own tap, via
+ * lib/receipt.ts — never sent from the server, see the long note
+ * there) and an email draft, rather than a bare acknowledgement line.
  */
-import { useMemo, useState } from "react";
-import { Check, Loader2, Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Check, Download, Loader2, Mail, MessageCircle, Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
 import { dhoobamCatalogue as shippedDhoobam, dhoobamGroups, harmony, type HarmonyItem } from "@/config/harmonic.config";
 import { usePrices } from "@/lib/usePrices";
 import { paymentConfig } from "@/config/forms.config";
@@ -14,6 +20,8 @@ import { useLang } from "@/lib/i18n";
 import { useLockPageScroll } from "@/lib/useLockPageScroll";
 import { useCheckout } from "@/lib/useCheckout";
 import { upiLinks } from "@/lib/upi";
+import { downloadReceipt, receiptNumber, sendReceiptEmail, sendReceiptWhatsApp } from "@/lib/receipt";
+import PaymentReceipt from "@/components/ui/PaymentReceipt";
 import { cn } from "@/lib/utils";
 
 const inputCls =
@@ -25,6 +33,7 @@ type Line = { id: string; en: string; ta: string; qty: number; price: number };
 export default function DhoobamShop() {
   const { lang } = useLang();
   const ta = lang === "ta";
+  const receiptRef = useRef<HTMLDivElement>(null);
 
   const prices = usePrices("harmonic");
 
@@ -34,9 +43,25 @@ export default function DhoobamShop() {
   const [buyer, setBuyer] = useState({ name: "", phone: "", email: "", address: "", notes: "" });
   const [showErrors, setShowErrors] = useState(false);
   const [ref, setRef] = useState("");
+  const [receiptNo, setReceiptNo] = useState("");
+  const [paidOn, setPaidOn] = useState("");
 
   useLockPageScroll(open);
   const { state, start, submitUpiRef, reset } = useCheckout("harmonic");
+
+  /* A receipt number is minted the moment the order lands on the
+     "done" screen, once per order — not on every render — and cleared
+     the moment the customer leaves it (Done, or the X), so a second
+     order gets a number of its own rather than reusing the last one. */
+  useEffect(() => {
+    if (state.stage === "done") {
+      setReceiptNo((prev) => prev || receiptNumber("HARMONY/DHOOBAM"));
+      setPaidOn((prev) => prev || new Date().toISOString());
+    } else {
+      setReceiptNo("");
+      setPaidOn("");
+    }
+  }, [state.stage]);
 
   /* Superadmin's price overrides are folded into the catalogue ONCE,
      here, rather than at each place a figure is printed. Everything
@@ -76,6 +101,68 @@ export default function DhoobamShop() {
     if (invalid) { setShowErrors(true); return; }
     start(cart.map(({ id, en, qty, price }) => ({ id, en, qty, price })), buyer, total);
   };
+
+  /* ---------- receipt: PDF / WhatsApp / Email, all client-side ----------
+     Every send here is the visitor's own tap — a share sheet or a wa.me
+     link they choose to send, exactly like the rest of this codebase.
+     There is no server-side automatic message; see lib/receipt.ts. */
+  const receiptFile = () =>
+    `Receipt-${(receiptNo || (state.stage === "done" ? state.orderId : "") || "HARMONY").replace(/[^A-Za-z0-9-]/g, "-")}`;
+
+  const receiptText = () => {
+    if (state.stage !== "done") return "";
+    return (
+      `*Harmony Pranic Healing — Dhoobam*\nPayment Acknowledgement\n\n` +
+      `Receipt No: ${receiptNo}\nOrder No: ${state.orderId}\n` +
+      `Date: ${new Date(paidOn || Date.now()).toLocaleDateString("en-IN")}\n\n` +
+      `Received from: ${buyer.name}\nPhone: ${buyer.phone}\n` +
+      (buyer.address ? `Deliver to: ${buyer.address}\n\n` : "\n") +
+      cart.map((l) => `• ${l.en} × ${l.qty} — ₹${inr(l.price * l.qty)}`).join("\n") +
+      `\n\n*Total ${state.paid ? "paid" : "reported"}: ₹${inr(state.total)}*\n` +
+      `Mode: ${state.method === "razorpay" ? "Razorpay" : "UPI"}${state.reference ? ` · Ref: ${state.reference}` : ""}\n\n` +
+      (state.paid
+        ? "Payment verified — your order will be despatched shortly.\n"
+        : "This acknowledges a payment reported against the reference above; the credit is confirmed against the bank account before despatch.\n") +
+      `${harmony.phones[0]}`
+    );
+  };
+
+  const orderText = () => {
+    if (state.stage !== "done") return "";
+    return (
+      `*Harmony Pranic Healing — Dhoobam Order*\n` +
+      `Order No: ${state.orderId}\n\n` +
+      `Name: ${buyer.name}\nPhone: ${buyer.phone}\n` +
+      (buyer.address ? `Delivery address: ${buyer.address}\n` : "") +
+      `\n` +
+      cart.map((l) => `• ${l.en} × ${l.qty} — ₹${inr(l.price * l.qty)}`).join("\n") +
+      `\n\n*Total: ₹${inr(state.total)}*\n` +
+      (state.reference ? `Reference: ${state.reference}\n` : "")
+    );
+  };
+
+  const receiptPdf = async () => {
+    if (receiptRef.current) await downloadReceipt(receiptRef.current, receiptFile());
+  };
+  const receiptWhatsApp = async () => {
+    if (receiptRef.current) await sendReceiptWhatsApp(receiptRef.current, receiptFile(), receiptText());
+  };
+  const receiptEmail = async () => {
+    if (!receiptRef.current) return;
+    await sendReceiptEmail(receiptRef.current, receiptFile(), {
+      to: buyer.email || harmony.email,
+      cc: buyer.email ? harmony.email : undefined,
+      subject: `Order Receipt ${receiptNo} — Harmony Pranic Healing`,
+      body: receiptText().replace(/\*/g, ""),
+    });
+  };
+  /* Same wa.me hand-off used everywhere else in this codebase — opens
+     the visitor's own WhatsApp with the order pre-filled; they press
+     Send. See the note at the top of lib/receipt.ts for why this,
+     rather than a server-sent message, is the whole notification
+     system here. */
+  const sendOrderToOffice = () =>
+    window.open(`https://wa.me/${harmony.whatsapp}?text=${encodeURIComponent(orderText())}`, "_blank", "noopener");
 
   return (
     <section className="bg-obsidian section-pad">
@@ -176,18 +263,64 @@ export default function DhoobamShop() {
 
             <div data-lenis-prevent className="flex-1 overflow-y-auto overscroll-contain px-7 py-6">
               {state.stage === "done" ? (
-                <div className="py-6 text-center">
-                  <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-gold-faint">
+                <div className="flex flex-col items-center gap-6 py-4 text-center">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gold-faint">
                     <Check size={30} className="text-gold" />
                   </div>
-                  <h3 className="font-serif text-2xl gold-text">
-                    {state.paid ? (ta ? "கட்டணம் உறுதி" : "Payment confirmed") : (ta ? "ஆர்டர் பெறப்பட்டது" : "Order received")}
-                  </h3>
-                  <p className="mx-auto mt-3 max-w-sm font-sans text-sm leading-relaxed text-ivory-dim">
-                    {ta ? `ஆர்டர் ${state.orderId}.` : `Order ${state.orderId}. We will confirm on WhatsApp.`}
+
+                  <div>
+                    <h3 className="font-serif text-2xl gold-text">
+                      {ta ? "கட்டணம் பதிவு செய்யப்பட்டது" : "Payment Recorded"}
+                    </h3>
+                    <p className="mt-2 font-serif text-4xl gold-text">₹{inr(state.total)}</p>
+                  </div>
+
+                  <dl className="w-full max-w-sm space-y-2 rounded-xl border border-gold/30 bg-gold-faint p-5 text-left font-sans text-[12px]">
+                    {[
+                      [ta ? "ரசீது எண்" : "Receipt No", receiptNo],
+                      [ta ? "ஆர்டர் எண்" : "Order No", state.orderId],
+                      [ta ? "UTR / குறிப்பு" : "UTR / Reference", state.reference || ""],
+                      [ta ? "வழங்கும் இடம்" : "Deliver to", buyer.address.slice(0, 40)],
+                    ].map(([k, v]) => (
+                      <div key={k} className="flex justify-between gap-4">
+                        <dt className="uppercase tracking-widest text-ivory-faint">{k}</dt>
+                        <dd className="text-right text-ivory">{v || "—"}</dd>
+                      </div>
+                    ))}
+                  </dl>
+
+                  <div className="flex w-full max-w-md flex-wrap justify-center gap-3">
+                    <button onClick={receiptPdf}
+                      className="flex items-center gap-2 rounded-full gold-border px-5 py-2.5 font-sans text-xs uppercase tracking-widest text-gold transition-all hover:bg-gold hover:text-black">
+                      <Download size={14} /> {ta ? "ரசீது PDF" : "Receipt PDF"}
+                    </button>
+                    <button onClick={receiptWhatsApp}
+                      className="flex items-center gap-2 rounded-full bg-[#25D366] px-5 py-2.5 font-sans text-xs uppercase tracking-widest text-white transition-all hover:brightness-110">
+                      <MessageCircle size={14} /> {ta ? "வாட்ஸ்அப்" : "WhatsApp"}
+                    </button>
+                    <button onClick={receiptEmail}
+                      className="flex items-center gap-2 rounded-full bg-gold px-5 py-2.5 font-sans text-xs uppercase tracking-widest text-black transition-all hover:bg-gold-bright">
+                      <Mail size={14} /> {buyer.email ? (ta ? "மின்னஞ்சல்" : "Email to me") : (ta ? "மின்னஞ்சல்" : "Email")}
+                    </button>
+                  </div>
+
+                  <button onClick={sendOrderToOffice}
+                    className="font-sans text-[11px] uppercase tracking-widest text-gold underline-offset-4 hover:underline">
+                    {ta ? "ஆர்டரை அலுவலகத்திற்கு அனுப்பு" : "Send the order to our office on WhatsApp"}
+                  </button>
+
+                  <p className="prose-justify max-w-md font-sans text-[11px] leading-relaxed text-ivory-faint">
+                    {state.paid
+                      ? (ta
+                          ? "உங்கள் கட்டணம் சரிபார்க்கப்பட்டது. விரைவில் அனுப்பப்படும்."
+                          : "Your payment is verified. We'll despatch shortly and keep you posted on WhatsApp.")
+                      : (ta
+                          ? "இது நீங்கள் தெரிவித்த கட்டணத்திற்கான ஒப்புகை. வங்கிக் கணக்கில் வரவு உறுதி செய்யப்பட்ட பின் அனுப்பப்படும்."
+                          : "This acknowledges the payment you reported. We confirm the credit in the bank account and despatch after that.")}
                   </p>
+
                   <button onClick={() => { setCart([]); setOpen(false); reset(); }}
-                    className="mt-7 rounded-full bg-gold px-7 py-3.5 font-sans text-[11px] uppercase tracking-widest text-black">
+                    className="rounded-full bg-gold px-7 py-3.5 font-sans text-[11px] uppercase tracking-widest text-black">
                     {ta ? "முடிந்தது" : "Done"}
                   </button>
                 </div>
@@ -273,7 +406,7 @@ export default function DhoobamShop() {
                     </div>
                     <div className="sm:col-span-2">
                       <label className="mb-1.5 block font-sans text-[11px] uppercase tracking-widest text-ivory-faint">{ta ? "முகவரி" : "Delivery address"}</label>
-                      <textarea rows={3} value={buyer.notes} onChange={(e) => setBuyer((p) => ({ ...p, notes: e.target.value }))}
+                      <textarea rows={3} value={buyer.address} onChange={(e) => setBuyer((p) => ({ ...p, address: e.target.value }))}
                         className={cn(inputCls, "resize-y")} />
                     </div>
                   </div>
@@ -284,6 +417,25 @@ export default function DhoobamShop() {
                 </>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Receipt — off-screen, rasterised on demand by receiptPdf/receiptWhatsApp/receiptEmail */}
+      {receiptNo && state.stage === "done" && (
+        <div className="pointer-events-none fixed -left-[9999px] top-0" aria-hidden>
+          <div ref={receiptRef}>
+            <PaymentReceipt
+              receiptNo={receiptNo}
+              dateISO={paidOn}
+              towards={`Harmony Pranic Healing — Dhoobam order ${state.orderId}`}
+              payer={{ name: buyer.name, phone: buyer.phone, email: buyer.email, address: buyer.address }}
+              lines={cart.map((l) => ({ label: ta ? l.ta : l.en, qty: l.qty, amount: l.price * l.qty }))}
+              total={state.total}
+              reference={state.reference || ""}
+              method={state.method === "razorpay" ? "Razorpay" : "UPI"}
+              footNote="Courier charges are extra and confirmed separately."
+            />
           </div>
         </div>
       )}
