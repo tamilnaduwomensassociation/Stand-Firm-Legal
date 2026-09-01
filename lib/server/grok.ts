@@ -43,7 +43,7 @@ const KEY =
   process.env.GROK_API_KEY ||
   process.env.XAI_API_KEY ||
   "";
-const MODEL = process.env.GROQ_MODEL || process.env.GROK_MODEL || "llama-3.3-70b-versatile";
+const MODEL = process.env.GROQ_MODEL || process.env.GROK_MODEL || "openai/gpt-oss-120b";
 const ENDPOINT = "https://api.groq.com/openai/v1/chat/completions";
 
 export const isLive = () => Boolean(KEY);
