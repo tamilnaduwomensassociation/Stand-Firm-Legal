@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
       return ok({
         ok: false,
         skipped: "no-key",
-        message: "Set GROK_API_KEY to have the weekly draft written automatically.",
+        message: "Set GROQ_API_KEY to have the weekly draft written automatically.",
       });
     }
 

@@ -42,7 +42,7 @@ come back.
 |---|---|---|
 | 10b | Legal news auto-refresh hourly, old items falling down | Needs a scheduled job, not a page change |
 | 11 | Birthday / festival wishes panel with notifications | Needs the members' dates of birth, and a notification transport |
-| 12 | Grok across all four brands | Built server-side, reading `GROK_API_KEY`; falls back to the current keyword bot until you add a key from console.x.ai |
+| 12 | Grok across all four brands | Built server-side, reading `GROQ_API_KEY`; falls back to the current keyword bot until you add a key from console.groq.com |
 | 13 | Event booking — seats, dates, voting threshold, post-session certificate forms | The largest single piece; a booking system in its own right |
 | 14 | Weekly TNWLA blogs | Depends on 12 for drafting |
 | 16 | Membership expiry notifications | Shares the transport with 11 |
@@ -106,7 +106,7 @@ production build outright — the easiest kind of thing to ship broken.
 
 | Variable | Without it |
 |---|---|
-| `GROK_API_KEY` | Chatbots use the keyword answers; the blog job reports it was skipped. Nothing breaks. |
+| `GROQ_API_KEY` | Chatbots use the keyword answers; the blog job reports it was skipped. Nothing breaks. |
 | `CRON_SECRET` | The hourly news refresh and Monday blog job refuse cron callers. Superadmin can still trigger both by hand. |
 | `BLOB_READ_WRITE_TOKEN` | Colours, fonts and sizes still work; only image upload is disabled, with a line saying why. |
 | `KV_REST_API_URL` + `KV_REST_API_TOKEN` | **On Vercel, every order, booking and event is lost.** This is the one that is not optional. |

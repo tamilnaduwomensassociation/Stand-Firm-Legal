@@ -26,7 +26,7 @@ Then, in Vercel:
    | `SUPERADMIN_USER` | `Master - TSJH` | yes |
    | `NEXT_PUBLIC_SITE_URL` | your final domain | yes |
    | `CRON_SECRET` | another generated string | yes |
-   | `GROK_API_KEY` | console.x.ai — turns the assistant on | optional |
+   | `GROQ_API_KEY` | console.groq.com — turns the assistant on | optional |
    | `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` | **live** keys only, Production only | when approved |
 
 3. **Redeploy.** New variables do nothing until you do.

@@ -2,7 +2,7 @@
  * ============================================================
  * THE TOOL-CALLING LOOP
  * ============================================================
- * xAI's API is OpenAI-shaped, so this is the standard loop: send the
+ * Groq's API is OpenAI-shaped, so this is the standard loop: send the
  * messages and the tool list, and if the reply contains tool calls,
  * run them, append the results, and go round again.
  *

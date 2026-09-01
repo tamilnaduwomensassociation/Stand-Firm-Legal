@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { list } from "@/lib/server/db";
 import { clean, fail, ok } from "@/lib/server/http";
-import { ask, isLive, PROMPTS, type BrandId, type ChatTurn } from "@/lib/server/grok";
+import { ask, isLive, PROMPTS, languageInstruction, type BrandId, type ChatTurn, type Lang } from "@/lib/server/grok";
 import { runAgent } from "@/lib/server/agent";
 
 export const runtime = "nodejs";
@@ -52,6 +52,10 @@ export async function POST(req: NextRequest) {
     const question = clean(b.question, 2000);
     if (!question) return fail(Object.assign(new Error("Ask something"), { status: 400 }));
 
+    /* The site's own EN/தமிழ் toggle, sent by the client — not guessed
+       from the question's wording. See languageInstruction() for why. */
+    const lang: Lang = b.lang === "ta" ? "ta" : "en";
+
     if (!isLive()) return ok({ answer: null, live: false });
 
     const history: ChatTurn[] = Array.isArray(b.history)
@@ -94,9 +98,11 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const system = context
-      ? `${PROMPTS[brand]}\n\nCurrent information you may use, and should prefer over your own memory:\n${context}`
-      : PROMPTS[brand];
+    const system = [
+      PROMPTS[brand],
+      context ? `Current information you may use, and should prefer over your own memory:\n${context}` : "",
+      languageInstruction(lang),
+    ].filter(Boolean).join("\n\n");
 
     const { answer, proposal } = await runAgent(brand, system, question, history);
 
@@ -104,7 +110,7 @@ export async function POST(req: NextRequest) {
        round limit — fall back to a plain answer before giving up on the
        model altogether. Two chances, then the keyword bot. */
     if (!answer && !proposal) {
-      const plain = await ask(brand, question, history, context);
+      const plain = await ask(brand, question, history, context, lang);
       return ok({ answer: plain, proposal: null, live: true });
     }
 

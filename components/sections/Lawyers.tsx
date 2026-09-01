@@ -16,7 +16,7 @@ import { useGSAP } from "@gsap/react";
 import { Facebook, Instagram, Linkedin, Quote, Sparkles } from "lucide-react";
 import { gsap } from "@/lib/gsap";
 import {
-  lawyers, leadersPanel, mottoAndDreams, presidentCorner,
+  lawyers, leadersPanel, mottoAndDreams, presidentCorner, site,
 } from "@/config/site.config";
 import { useLang } from "@/lib/i18n";
 import SectionHeading from "@/components/ui/SectionHeading";
@@ -73,9 +73,9 @@ export default function Lawyers() {
             <p className="mt-1 text-sm text-gold font-sans">{lang === "ta" ? president.roleTa : president.role}</p>
             <p className="mt-2 text-xs font-sans tracking-wide text-ivory-faint leading-relaxed">{president.focus}</p>
             <div className="mt-6 flex items-center justify-center gap-5 text-ivory-dim">
-              <a href="#" aria-label="LinkedIn" className="hover:text-gold transition-colors"><Linkedin size={17} /></a>
-              <a href="#" aria-label="Instagram" className="hover:text-gold transition-colors"><Instagram size={17} /></a>
-              <a href="#" aria-label="Facebook" className="hover:text-gold transition-colors"><Facebook size={17} /></a>
+              <a href={site.social.linkedin || "#"} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" className="hover:text-gold transition-colors"><Linkedin size={17} /></a>
+              <a href={site.social.instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="hover:text-gold transition-colors"><Instagram size={17} /></a>
+              <a href={site.social.facebook} target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="hover:text-gold transition-colors"><Facebook size={17} /></a>
             </div>
           </div>
         </TiltCard>

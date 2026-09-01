@@ -51,6 +51,7 @@ export const site = {
     { d: "Sunday", dTa: "ஞாயிறு", h: "By Appointment" },
   ],
   social: {
+    linkedin: "", // TODO: paste Adv. Jenifer's or TNWLA's LinkedIn URL here
     instagram: "https://instagram.com/TNWLA_Madras",
     facebook: "https://facebook.com/TNWLA-Madras",
     twitter: "https://x.com/tnwlam",
