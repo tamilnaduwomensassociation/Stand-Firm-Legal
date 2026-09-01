@@ -30,9 +30,13 @@ import { loadPriceBook } from "@/lib/server/prices.server";
 import { AGENT_RULES, WRITE_TOOLS, toolsFor } from "@/lib/server/agentTools";
 import type { BrandId, ChatTurn } from "@/lib/server/grok";
 
-const KEY = process.env.GROK_API_KEY || process.env.XAI_API_KEY || "";
-const MODEL = process.env.GROK_MODEL || "grok-3";
-const ENDPOINT = "https://api.x.ai/v1/chat/completions";
+const KEY =
+  process.env.GROQ_API_KEY ||
+  process.env.GROK_API_KEY ||
+  process.env.XAI_API_KEY ||
+  "";
+const MODEL = process.env.GROQ_MODEL || process.env.GROK_MODEL || "llama-3.3-70b-versatile";
+const ENDPOINT = "https://api.groq.com/openai/v1/chat/completions";
 const MAX_ROUNDS = 2;
 
 export type Proposal = {
