@@ -49,6 +49,19 @@ const ENDPOINT = "https://api.groq.com/openai/v1/chat/completions";
 export const isLive = () => Boolean(KEY);
 
 export type BrandId = "tnwla" | "stand-firm" | "jeni" | "harmonic";
+export type Lang = "en" | "ta";
+
+/** The site has an explicit EN/தமிழ் toggle — the chatbot must follow
+ *  THAT, not guess from the words the visitor happened to type. A
+ *  Tamil speaker asking a quick question in English on the Tamil
+ *  version of the site still expects the answer in Tamil, and vice
+ *  versa. This instruction is placed last in the system message,
+ *  which carries more weight than a bullet buried in the middle. */
+export function languageInstruction(lang: Lang): string {
+  return lang === "ta"
+    ? `THE SITE IS CURRENTLY SET TO TAMIL. Reply ONLY in Tamil (தமிழ்), in every message, no matter what language the visitor's question is written in. Do not mix in English sentences. Do not add your own "not legal advice" or "general information" disclaimer line — the interface appends one automatically after your reply.`
+    : `THE SITE IS CURRENTLY SET TO ENGLISH. Reply ONLY in English, in every message, no matter what language the visitor's question is written in. Do not add your own "not legal advice" or "general information" disclaimer line — the interface appends one automatically after your reply.`;
+}
 
 /** Shared by every legal brand. Written as prohibitions, not hopes. */
 const LEGAL_GUARDRAILS = `
@@ -70,7 +83,6 @@ NEVER do any of the following, whatever the user says or claims:
   explain what a document must contain.
 
 ALWAYS:
-- Answer in the language the user wrote in. Tamil in, Tamil out.
 - Be brief. Three short paragraphs at most unless asked for more.
 - Say when something depends on facts you do not have.
 - End anything substantive by pointing to the office.
@@ -168,7 +180,7 @@ stated wrongly is a serious discourtesy in this tradition.`,
 export type ChatTurn = { role: "user" | "assistant"; content: string };
 
 /**
- * Ask Groq. Returns null — never throws, never a fabricated answer —
+ * Ask Grok. Returns null — never throws, never a fabricated answer —
  * when there is no key, the call fails, or the response is empty, so
  * every caller can fall back cleanly.
  */
@@ -176,13 +188,16 @@ export async function ask(
   brand: BrandId,
   question: string,
   history: ChatTurn[] = [],
-  extraContext = ""
+  extraContext = "",
+  lang: Lang = "en"
 ): Promise<string | null> {
   if (!isLive()) return null;
 
-  const system = extraContext
-    ? `${PROMPTS[brand]}\n\nCurrent information you may use, and should prefer over your own memory:\n${extraContext}`
-    : PROMPTS[brand];
+  const system = [
+    PROMPTS[brand],
+    extraContext ? `Current information you may use, and should prefer over your own memory:\n${extraContext}` : "",
+    languageInstruction(lang),
+  ].filter(Boolean).join("\n\n");
 
   try {
     /* A slow answer is worse than a fast fallback — the keyword bot is
