@@ -33,6 +33,7 @@ import { jeni } from "@/config/jeni.config";
 import { useContent } from "@/lib/useContent";
 import { useLang } from "@/lib/i18n";
 import { openGooglePay, platform, upiLinks } from "@/lib/upi";
+import { loadRazorpay } from "@/lib/loadRazorpay";
 import { downloadReceipt, receiptNumber, sendReceiptEmail, sendReceiptWhatsApp } from "@/lib/receipt";
 import PaymentReceipt from "@/components/ui/PaymentReceipt";
 import { cn } from "@/lib/utils";
@@ -115,6 +116,19 @@ export default function FoodShop() {
   const [placing, setPlacing] = useState(false);
   const [serverNote, setServerNote] = useState("");
   const [plat, setPlat] = useState<"android" | "ios" | "desktop">("desktop");
+  /* How the payment actually happened, for the receipt and the
+     confirmation screen — "razorpay" means the server verified a real
+     signature; "upi" means the customer reported a reference for the
+     office to check by hand. Only ever set once, at the moment the
+     payment stage resolves. */
+  const [payMethod, setPayMethod] = useState<"" | "razorpay" | "upi">("");
+  const [gatewayVerified, setGatewayVerified] = useState(false);
+  /* "opening" hides the manual UPI block behind a spinner while
+     Razorpay Checkout is being loaded/opened, so the two payment paths
+     never compete for the same screen. Falls back to "unavailable" —
+     which reveals the manual block underneath, unchanged — the moment
+     the gateway can't be used for any reason. */
+  const [gatewayState, setGatewayState] = useState<"idle" | "opening" | "unavailable">("idle");
 
   useEffect(() => setPlat(platform()), []);
 
@@ -218,6 +232,16 @@ export default function FoodShop() {
               `Please pay that amount — it is what your order is recorded at.`
             );
           }
+          /* Razorpay keys are configured server-side — open Checkout on
+             top of the manual UPI block below. If it succeeds the
+             handler moves straight to "done"; if it's dismissed, fails,
+             or can't load, gatewayState drops to "unavailable" and the
+             manual block (already rendered) is the fallback the
+             customer sees, exactly as before this change. */
+          if (d.live && d.razorpayOrder) {
+            setGatewayState("opening");
+            openRazorpayCheckout(d.id, d.razorpayOrder, buyer);
+          }
         } else {
           throw new Error(d.error ?? "no id");
         }
@@ -234,6 +258,73 @@ export default function FoodShop() {
 
     setPlacing(false);
     setStage("pay");
+  };
+
+  /**
+   * The gateway half of checkout — mirrors lib/useCheckout.ts's `start`,
+   * kept local because this component owns its own stage machine and
+   * receipt flow rather than the shared hook's. Same rule applies:
+   * `paid` is only ever set from the server's verify response, never
+   * from the widget closing.
+   */
+  const openRazorpayCheckout = async (
+    orderId: string,
+    rzpOrder: { id: string; amount: number },
+    b: typeof buyer
+  ) => {
+    const loaded = await loadRazorpay();
+    if (!loaded || !window.Razorpay) {
+      setGatewayState("unavailable");
+      return;
+    }
+
+    const keyRes = await fetch("/api/payments/order");
+    const { keyId } = (await keyRes.json()) as { keyId: string | null };
+
+    const rzp = new window.Razorpay({
+      key: keyId,
+      order_id: rzpOrder.id,
+      amount: rzpOrder.amount,
+      currency: "INR",
+      name: "Jeni Enterprises",
+      image: "/media/marks/jeni-mark.png",
+      description: `Order ${orderId}`,
+      prefill: { name: b.name, contact: b.phone, email: b.email || "" },
+      notes: { order: orderId, brand: "jeni" },
+      theme: { color: "#c9a24b", backdrop_color: "rgba(10,10,11,0.72)" },
+      handler: async (r: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) => {
+        try {
+          const v = await fetch("/api/payments/verify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: orderId, ...r }),
+          });
+          const vd = await v.json();
+          setPaidLines(cart);
+          setPaidTotal(total);
+          setCart([]);
+          setTxn(r.razorpay_payment_id);
+          setPayMethod("razorpay");
+          setGatewayVerified(v.ok && vd.status === "paid");
+          setReceiptNo(receiptNumber("JENI/FOODS"));
+          setPaidOn(new Date().toISOString());
+          setStage("done");
+        } catch {
+          /* Verification call itself failed — do not claim success.
+             Fall back to the manual block so the customer can still
+             report the payment for the office to check by hand. */
+          setGatewayState("unavailable");
+        }
+      },
+      modal: {
+        /* Closed without paying — the manual block underneath is
+           already rendered, so there is nothing else to do here. */
+        ondismiss: () => setGatewayState("unavailable"),
+      },
+    });
+
+    rzp.on("payment.failed", () => setGatewayState("unavailable"));
+    rzp.open();
   };
 
   const upiRequest = {
@@ -272,6 +363,8 @@ export default function FoodShop() {
     setPaidLines(cart);          // freeze what was bought…
     setPaidTotal(total);
     setCart([]);                 // …then empty the basket
+    setPayMethod("upi");
+    setGatewayVerified(false);
     setReceiptNo(receiptNumber("JENI/FOODS"));
     setPaidOn(new Date().toISOString());
     setStage("done");
@@ -314,9 +407,15 @@ export default function FoodShop() {
     `Received from: ${buyer.name}\nPhone: ${buyer.phone}\n` +
     `Deliver to: ${buyer.address}${buyer.pin ? ` — ${buyer.pin}` : ""}\n\n` +
     doneLines.map((l) => `• ${l.en} (${l.pack}) × ${l.qty} — ₹${inr(l.price * l.qty)}`).join("\n") +
-    `\n\n*Total received: ₹${inr(doneTotal)}*\nMode: UPI · UTR/Ref: ${txn}\n\n` +
-    `This acknowledges a payment reported against the reference above; ` +
-    `the credit is confirmed against the bank account before despatch. ` +
+    `\n\n*Total received: ₹${inr(doneTotal)}*\n` +
+    (payMethod === "razorpay"
+      ? `Mode: Razorpay · Payment ID: ${txn}\n\n` +
+        (gatewayVerified
+          ? `This payment was verified by Razorpay at the time of purchase. `
+          : `This payment was made through Razorpay; the credit is confirmed against the bank account before despatch. `)
+      : `Mode: UPI · UTR/Ref: ${txn}\n\n` +
+        `This acknowledges a payment reported against the reference above; ` +
+        `the credit is confirmed against the bank account before despatch. `) +
     `${foodsNotice.en}\n${c("phone1", jeni.phones[0])}`;
 
   const receiptPdf = async () => {
@@ -342,6 +441,7 @@ export default function FoodShop() {
     setBuyer({ name: "", phone: "", email: "", address: "", pin: "", notes: "" });
     setTxn(""); setOrderNo(""); setReceiptNo(""); setPaidOn(""); setHandedOff(false);
     setPaidLines([]); setPaidTotal(0);
+    setPayMethod(""); setGatewayVerified(false); setGatewayState("idle");
   };
 
   /* ================================================================= */
@@ -601,6 +701,22 @@ export default function FoodShop() {
                     </p>
                   )}
 
+                  {gatewayState === "opening" ? (
+                    <div className="flex flex-col items-center gap-3 py-10">
+                      <div className="h-7 w-7 animate-spin rounded-full border-2 border-gold border-t-transparent" />
+                      <p className="font-sans text-sm text-ivory-dim">
+                        {lang === "ta" ? "பாதுகாப்பான கட்டணச் சாளரம் திறக்கிறது…" : "Opening the secure payment window…"}
+                      </p>
+                    </div>
+                  ) : (
+                  <>
+                  {gatewayState === "unavailable" && (
+                    <p className="rounded-xl border border-gold/30 bg-gold-faint px-4 py-3 text-center font-sans text-[12px] leading-relaxed text-ivory-dim">
+                      {lang === "ta"
+                        ? "தானியங்கு கட்டணம் முடியவில்லை — கீழே UPI மூலம் செலுத்தவும்."
+                        : "Automatic payment didn't go through — pay by UPI below instead."}
+                    </p>
+                  )}
                   <div className="flex flex-col gap-3">
                     <button
                       onClick={payWithGooglePay}
@@ -656,6 +772,8 @@ export default function FoodShop() {
                       </p>
                     </div>
                   )}
+                  </>
+                  )}
                 </div>
               )}
 
@@ -668,7 +786,9 @@ export default function FoodShop() {
 
                   <div>
                     <h3 className="font-serif text-3xl text-ivory">
-                      {lang === "ta" ? "கட்டணம் பதிவு செய்யப்பட்டது" : "Payment Recorded"}
+                      {gatewayVerified
+                        ? (lang === "ta" ? "கட்டணம் உறுதி செய்யப்பட்டது" : "Payment Confirmed")
+                        : (lang === "ta" ? "கட்டணம் பதிவு செய்யப்பட்டது" : "Payment Recorded")}
                     </h3>
                     <p className="mt-2 font-serif text-4xl gold-text">₹{inr(doneTotal)}</p>
                   </div>
@@ -677,7 +797,12 @@ export default function FoodShop() {
                     {[
                       [lang === "ta" ? "ரசீது எண்" : "Receipt No", receiptNo],
                       [lang === "ta" ? "ஆர்டர் எண்" : "Order No", orderNo],
-                      [lang === "ta" ? "UTR / குறிப்பு" : "UTR / Reference", txn],
+                      [
+                        payMethod === "razorpay"
+                          ? (lang === "ta" ? "பணப் பரிமாற்ற ஐடி" : "Payment ID")
+                          : (lang === "ta" ? "UTR / குறிப்பு" : "UTR / Reference"),
+                        txn,
+                      ],
                       [lang === "ta" ? "வழங்கும் இடம்" : "Deliver to", buyer.pin || buyer.address.slice(0, 28)],
                     ].map(([k, v]) => (
                       <div key={k} className="flex justify-between gap-4">
@@ -708,9 +833,17 @@ export default function FoodShop() {
                   </button>
 
                   <p className="prose-justify max-w-md font-sans text-[11px] leading-relaxed text-ivory-faint">
-                    {lang === "ta"
-                      ? "இது நீங்கள் தெரிவித்த கட்டணத்திற்கான ஒப்புகை. வங்கிக் கணக்கில் வரவு உறுதி செய்யப்பட்ட பின் பொருட்கள் அனுப்பப்படும். "
-                      : "This acknowledges the payment you reported. We confirm the credit in the bank account and despatch after that. "}
+                    {gatewayVerified
+                      ? (lang === "ta"
+                          ? "இந்த கட்டணம் Razorpay மூலம் சரிபார்க்கப்பட்டது. "
+                          : "This payment was verified by Razorpay at the time of purchase. ")
+                      : payMethod === "razorpay"
+                        ? (lang === "ta"
+                            ? "Razorpay மூலம் செலுத்தப்பட்டது. வங்கிக் கணக்கில் வரவு உறுதி செய்யப்பட்ட பின் பொருட்கள் அனுப்பப்படும். "
+                            : "This was paid through Razorpay. We confirm the credit in the bank account and despatch after that. ")
+                        : (lang === "ta"
+                            ? "இது நீங்கள் தெரிவித்த கட்டணத்திற்கான ஒப்புகை. வங்கிக் கணக்கில் வரவு உறுதி செய்யப்பட்ட பின் பொருட்கள் அனுப்பப்படும். "
+                            : "This acknowledges the payment you reported. We confirm the credit in the bank account and despatch after that. ")}
                     {lang === "ta" ? foodsNotice.ta : foodsNotice.en}
                   </p>
 
