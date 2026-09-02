@@ -718,7 +718,7 @@ function LetterSheet({
       <div style={{ height: HEADER_H, boxSizing: "border-box", padding: "24px 40px 0", flexShrink: 0 }}>
         <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/media/tnwla-logo.png" alt="" width={98} height={98} style={{ borderRadius: "50%", flexShrink: 0 }} />
+          <img src="/media/tnwla-letterhead-crest.png" alt="" width={98} height={98} style={{ borderRadius: "50%", flexShrink: 0 }} />
 
           <div style={{ flex: 1, textAlign: "center", color: NAVY }}>
             <div style={{ fontSize: 24, fontWeight: 700, lineHeight: 1.18, letterSpacing: 0.3, color: NAVY }}>
@@ -771,7 +771,7 @@ function LetterSheet({
         {/* watermark */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/media/tnwla-logo.png"
+          src="/media/tnwla-letterhead-crest.png"
           alt=""
           style={{
             position: "absolute", top: "50%", left: "50%",
