@@ -5,13 +5,20 @@
  *
  * The front and back are the association's own template images
  * (public/media/id-card/template-front.png and template-back.png —
- * pixel-identical to what they supplied). Nothing about the artwork
- * is redrawn, cropped, or covered — the live data (member fields,
- * the photo, the QR code, the emergency contact number) is
- * positioned on top, landing exactly on the blank lines already
- * printed on the template. The signature, address, phone, email,
- * declaration text and seal badge are all part of the template
- * artwork itself and are never touched.
+ * pixel-identical to what they supplied). The live data (member
+ * fields, the photo, the emergency contact number) is positioned on
+ * top, landing exactly on the blank lines already printed on the
+ * template. The signature, address, phone, email, declaration text
+ * and seal badge are all part of the template artwork itself and are
+ * never touched.
+ *
+ * THE ONE PIECE OF ARTWORK THAT IS COVERED — the QR panel printed on
+ * the back template is a placeholder graphic, not a working code tied
+ * to any member. A real QR encoding data.verifyUrl (a link straight
+ * to this member's entry on the public verification page) is drawn
+ * opaque on top of it at export time, so what actually ships on a
+ * printed card always scans to the right person. See QR_BOX and the
+ * note in CardBack below.
  *
  * ASPECT RATIO — CARD_W/CARD_H match the FRONT template's own native
  * proportions exactly, so the front face fills the card edge-to-edge
@@ -49,9 +56,13 @@
  * re-measuring against the new file.
  */
 import type { CSSProperties, RefObject } from "react";
+import QrCode from "@/components/ui/QrCode";
 
 export const CARD_W = 480;
-export const CARD_H = 255;
+/* Matches template-front.png's native aspect ratio exactly (556/1107
+   × 480) so the front face fills the card edge-to-edge with zero
+   cropping — see the ASPECT RATIO note above. */
+export const CARD_H = 480 * (556 / 1107);
 
 const INK = "#12203D";
 const VAL = "#1B4FA8";
@@ -98,54 +109,60 @@ const noDrag = {
 };
 
 /* ---------------- FRONT template geometry ----------------
-   Source image: template-front.png, native 1721×914 — CARD_W/CARD_H
+   Source image: template-front.png, native 1107×556 — CARD_W/CARD_H
    match this image's exact aspect ratio, so scale is uniform on both
-   axes and there is no letterboxing to compute for the front face. */
-const F_SCALE = CARD_W / 1721;
+   axes and there is no letterboxing to compute for the front face.
+   Every coordinate below was read directly off the supplied
+   template-front reference (colon column, ruled-line pixel rows, the
+   photo-box border) with a pixel probe, not eyeballed. */
+const F_SCALE = CARD_W / 1107;
 const fx = (x: number) => x * F_SCALE;
 const fy = (y: number) => y * F_SCALE;
 
-/* Photo box, measured from the template: x[28,400] y[345,878] */
-const PHOTO_BOX = { left: fx(28), top: fy(345), width: fx(400 - 28), height: fy(878 - 345) };
-/* Value column sits right after the colon (colon centre ≈ x796,
-   aligned in a single column across all 8 rows) and stops before the
-   Lady Justice watermark begins (≈ x1215) */
-const VALUE_X = fx(825);
-const VALUE_W = fx(1210 - 825);
-/* Ruled-line y-position for each of the 8 rows, in template pixels.
-   The 8th ("Valid Up To") has no printed rule of its own — it's
-   extrapolated from the consistent ~69px row pitch of the other
+/* Photo box border, probed directly: x[21,249] y[217,525] */
+const PHOTO_BOX = { left: fx(21), top: fy(217), width: fx(249 - 21), height: fy(525 - 217) };
+/* Value column starts right after the colon (colon centre ≈ x495,
+   value text baseline starts ≈ x514, one column shared by all 8
+   rows) and stops at x845 — short of the Lady Justice watermark and
+   the signature block, which both intrude as early as x≈850 on some
+   rows. */
+const VALUE_X = fx(514);
+const VALUE_W = fx(845 - 514);
+/* Ruled-line y-position for each of the 8 rows, probed pixel-by-pixel
+   off the template. The 8th ("Valid Up To") has no printed rule of
+   its own — it's extrapolated from the ~42px row pitch of the other
    seven, so its value still sits at the right height even though
    there's no physical line under it. */
-const ROW_LINE_Y = [385, 454, 523, 592, 660, 729, 798, 867].map(fy);
+const ROW_LINE_Y = [238, 280, 321, 364, 406, 449, 492, 534].map(fy);
 
 /* ---------------- BACK template geometry ----------------
-   Source image: template-back.png, native 1626×967. Since the image
+   Source image: template-back.png, native 1104×502. Since the image
    is displayed with objectFit:"fill" (see the ASPECT RATIO note
    above), it's stretched independently on each axis rather than
    scaled uniformly — so x and y each need their own scale factor,
    with no centering offset, unlike the front. */
-const B_SCALE_X = CARD_W / 1626;
-const B_SCALE_Y = CARD_H / 967;
+const B_SCALE_X = CARD_W / 1104;
+const B_SCALE_Y = CARD_H / 502;
 const bx = (x: number) => x * B_SCALE_X;
 const by = (y: number) => y * B_SCALE_Y;
 
-/* Kept as an exported constant in case a future template ever ships
-   without a working scan code baked into the artwork and the QR
-   needs to be drawn dynamically again. Not used while the template's
-   own QR is live — see the note in CardBack below. */
-export const DEFAULT_VERIFY_URL = "https://www.tnwla-madras.com/#verify-membership";
+/* Kept as an exported constant for the default value of the
+   per-member verify link before a membership number has been typed —
+   see IdCard.tsx, where this is combined with the member's serial. */
+export const DEFAULT_VERIFY_URL = "https://www.tnwla-madras.com/membership#verify-membership";
 
-/* QR corner geometry, measured directly off the checkerboard pattern
-   for reference — x[1298,1578] y[43,304], the smaller of that box's
-   two dimensions gives a square that never overlaps the surrounding
-   artwork. Not currently used: see the note in CardBack below for
-   why, and how to bring this back if the template ever needs it. */
+/* QR corner geometry, probed off the template's white rounded QR
+   panel: x[925,1095] y[10,170]. The panel in the supplied artwork is
+   decorative/placeholder — it is NOT wired to any member, so a real,
+   per-member QR (see CardBack below) is drawn directly on top of it,
+   padded a few px past the probed edges on every side so it fully
+   covers the placeholder pattern underneath with no ring showing. */
+const QR_BOX = { left: bx(921), top: by(6), width: bx(1099 - 921), height: by(174 - 6) };
 
-/* Emergency-contact ruled line: y≈784, x[543,1110] */
-const EMERGENCY_LINE_Y = by(784);
-const EMERGENCY_X = bx(543);
-const EMERGENCY_W = bx(1110) - bx(543);
+/* Emergency-contact ruled line: y≈410, x[417,754] */
+const EMERGENCY_LINE_Y = by(410);
+const EMERGENCY_X = bx(417);
+const EMERGENCY_W = bx(754) - bx(417);
 
 /* ======================= FRONT ======================= */
 export function CardFront({
@@ -224,12 +241,22 @@ export function CardBack({ data, cardRef }: { data: CardData; cardRef?: RefObjec
         style={{ ...noDrag.style, position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "fill" }}
       />
 
-      {/* No QR overlay here on purpose — the template image itself now
-          has a working scan code baked directly into the artwork, so
-          drawing another one on top would just be a second, redundant
-          QR sitting over the first. If the template ever goes back to
-          a blank/placeholder QR graphic, the measurements to restore
-          this are in the "QR corner geometry" comment above. */}
+      {/* Per-member QR, drawn on top of the template's QR panel.
+          The panel printed in the template artwork is a placeholder —
+          it does not point at this member, or any member — so a real
+          code encoding data.verifyUrl (a link back to this specific
+          membership number's entry on the public "Verify Your
+          Membership" page) is rendered opaque and sized to fully
+          cover it. See the QR corner geometry note above for how
+          QR_BOX was measured and padded. */}
+      {data.verifyUrl ? (
+        <div style={{
+          position: "absolute", left: QR_BOX.left, top: QR_BOX.top, width: QR_BOX.width, height: QR_BOX.height,
+          display: "flex", alignItems: "center", justifyContent: "center", background: "#FFFFFF", borderRadius: 6,
+        }}>
+          <QrCode value={data.verifyUrl} size={Math.round(QR_BOX.width)} margin={1} />
+        </div>
+      ) : null}
 
       {/* emergency contact value — SVG text, see the TEXT POSITIONING
           note at the top of this file */}

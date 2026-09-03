@@ -20,6 +20,16 @@
 export const MEMBERSHIP_YEAR = "2026";
 export const MEMBERSHIP_PREFIX = `TNWLA/${MEMBERSHIP_YEAR}/`;
 
+/**
+ * ID CARD ISSUANCE FEE — charged once, at the point of downloading a
+ * printed-quality copy of the card from /id-card. Read server-side by
+ * /api/id-card-payment/order the same way membershipCategories'
+ * joiningFee is read by /api/membership-payment/order — the browser
+ * only ever displays this number, it never sends it. Change it here
+ * and the workbench, the Razorpay order and the receipt all follow.
+ */
+export const ID_CARD_FEE = 49;
+
 /** "57" -> "TNWLA/2026/57". A serial that already carries the prefix is left alone. */
 export function toMembershipNo(serial: string): string {
   const s = serial.trim().replace(/\s+/g, "");

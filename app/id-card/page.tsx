@@ -1,7 +1,9 @@
 /**
  * MEMBER ID CARD — build, preview and download.
- * Placeholder artwork until the association's approved card
- * structure is supplied.
+ * Renders the association's approved card artwork
+ * (public/media/id-card/template-front.png / template-back.png).
+ * Download is held behind a one-time Razorpay payment — see the
+ * PAYMENT GATE note in components/sections/IdCard.tsx.
  */
 import type { Metadata } from "next";
 import dynamic from "next/dynamic";

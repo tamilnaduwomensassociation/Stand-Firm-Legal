@@ -59,8 +59,12 @@ function InfoFront({ m, lang }: { m: MemberRecord; lang: string }) {
       className="flex h-full w-full flex-col rounded-2xl glass gold-border p-5"
       style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}
     >
-      <div className="mb-2 flex items-center gap-1.5 font-sans text-[10px] uppercase tracking-widest text-gold">
-        <ShieldCheck size={13} /> {lang === "ta" ? "சரிபார்க்கப்பட்ட உறுப்பினர்" : "Verified Member"}
+      {/* The explicit status a QR scan is supposed to land on — not
+          just implied by the record being found at all, but stated
+          in as many words, since that's what a security guard or a
+          court clerk glancing at a phone actually needs to read. */}
+      <div className="mb-2 flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-1 font-sans text-[10px] font-bold uppercase tracking-widest text-emerald-400 w-fit">
+        <ShieldCheck size={13} /> {lang === "ta" ? "சரிபார்க்கப்பட்டது · செயலில்" : "Verified · Active"}
       </div>
       <p className="mb-2 truncate font-serif text-lg text-ivory">{m.memberName}</p>
       <div className="flex-1 overflow-hidden">
@@ -156,8 +160,8 @@ export default function VerifyMembership() {
    * it needed a source edit and a redeploy first. The lookup is live
    * now: issuing a card and finding it are the same act.
    */
-  const runSearch = async () => {
-    const q = serial.trim();
+  const runSearch = async (override?: string) => {
+    const q = (override ?? serial).trim();
     if (!q || busy) return;
     setBusy(true);
     setNotFound(false);
@@ -177,6 +181,29 @@ export default function VerifyMembership() {
     }
     setBusy(false);
   };
+
+  /**
+   * SCAN-TO-VERIFY — a card's QR encodes
+   * "/membership?verify=<serial>#verify-membership" (see
+   * components/ui/IdCardFaces.tsx and IdCard.tsx). Landing here from
+   * that link should show the "Verified · Active" result immediately,
+   * not a blank search box the visitor has to type the number into
+   * again by hand — the whole point of a QR is that nobody re-types
+   * anything.
+   *
+   * Reads the query string directly off `window.location` rather than
+   * `useSearchParams()`, which would force this client component into
+   * a `<Suspense>` boundary just for a one-time read on mount.
+   */
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const q = new URLSearchParams(window.location.search).get("verify");
+    if (!q) return;
+    const s = toSerial(q);
+    setSerial(s);
+    void runSearch(s);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div id="verify-membership" className="reg-panel mx-auto mt-10 max-w-2xl rounded-2xl glass gold-border p-6 sm:p-8">
@@ -238,7 +265,7 @@ export default function VerifyMembership() {
               />
             </div>
             <button
-              onClick={runSearch}
+              onClick={() => runSearch()}
               disabled={busy || !serial.trim()}
               className="flex items-center justify-center gap-2 rounded-xl bg-gold px-6 py-3 font-sans text-xs uppercase tracking-widest text-black transition-all hover:bg-gold-bright disabled:opacity-40"
             >

@@ -25,11 +25,13 @@
  * cannot rasterise a node that isn't laid out.
  */
 import { useEffect, useRef, useState } from "react";
-import { Download, IdCard as IdCardIcon, Move, RotateCcw, Save, Upload, X } from "lucide-react";
+import { CreditCard, Download, IdCard as IdCardIcon, Lock, Move, RotateCcw, Save, ShieldCheck, Upload, X } from "lucide-react";
 import { site } from "@/config/site.config";
 import { useLang } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
-import { CardBack, CardFront, CARD_H, CARD_W, type CardData } from "@/components/ui/IdCardFaces";
+import { CardBack, CardFront, CARD_H, CARD_W, DEFAULT_VERIFY_URL, type CardData } from "@/components/ui/IdCardFaces";
+import { ID_CARD_FEE, toSerial } from "@/config/membership.config";
+import { loadRazorpay } from "@/lib/loadRazorpay";
 
 const inputCls =
   "w-full rounded-xl bg-obsidian-soft/60 border border-[var(--hairline)] px-4 py-3 font-sans text-sm text-ivory placeholder:text-ivory-faint focus:border-gold/60 focus:outline-none focus:ring-1 focus:ring-gold/30 transition-all";
@@ -75,11 +77,132 @@ export default function IdCardSection() {
   const [photo, setPhoto] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  /* The QR printed on the back must point at THIS member, not a
+     generic landing page — so it's derived from the membership
+     number rather than left for someone to type by hand. Still a
+     visible, editable field below (a future print run might need a
+     different link shape), but every edit to the membership number
+     overwrites it, the same pattern enrollmentNo already uses just
+     above. */
+  useEffect(() => {
+    const serial = toSerial(data.membershipNo);
+    setData((d) => ({
+      ...d,
+      verifyUrl: serial
+        ? `${site.url}/membership?verify=${encodeURIComponent(serial)}#verify-membership`
+        : DEFAULT_VERIFY_URL,
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.membershipNo]);
+
   /* Saving the card into the member directory. Separate from `busy`,
      which belongs to the PNG export — the two can run independently
      and sharing one flag makes both buttons disable together. */
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  /**
+   * PAYMENT GATE — the same Razorpay flow MembershipRegistration.tsx
+   * already uses (/api/id-card-payment/order creates the order the
+   * same way /api/membership-payment/order does, loadRazorpay() opens
+   * the identical checkout, /api/payments/verify is the identical
+   * verification endpoint — nothing new is trusted here). Downloading
+   * the PNGs is disabled until `paid` is true.
+   *
+   * Re-armed on membershipNo: a payment covers issuing THIS card, not
+   * a standing licence to mint unlimited unrelated ones from the same
+   * browser tab.
+   */
+  const [paid, setPaid] = useState(false);
+  const [payBusy, setPayBusy] = useState(false);
+  const [payMsg, setPayMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const paidForRef = useRef<string>("");
+  useEffect(() => {
+    if (paidForRef.current && paidForRef.current !== data.membershipNo) {
+      setPaid(false);
+      paidForRef.current = "";
+    }
+  }, [data.membershipNo]);
+
+  const startCardPayment = async () => {
+    if (payBusy || paid) return;
+    setPayBusy(true);
+    setPayMsg(null);
+    try {
+      const res = await fetch("/api/id-card-payment/order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: data.memberName || "", phone: data.mobile || "", membershipNo: data.membershipNo || "" }),
+      });
+      const orderData = await res.json();
+      if (!res.ok) throw new Error(orderData.error ?? "Could not start the payment");
+
+      const { id: orderId, live, razorpayOrder } = orderData as {
+        id: string; live: boolean; razorpayOrder: { id: string; amount: number } | null;
+      };
+
+      if (!live || !razorpayOrder) {
+        /* Gateway not configured — same honest fallback the
+           membership form uses: nothing is unlocked on a promise. */
+        setPayMsg({ ok: false, text: lang === "ta"
+          ? "இணைய கட்டண நுழைவாயில் தற்போது இயக்கப்படவில்லை. அலுவலகத்தை தொடர்பு கொள்ளவும்."
+          : "The online payment gateway is not active right now — please contact the office to complete this." });
+        return;
+      }
+
+      const scriptOk = await loadRazorpay();
+      if (!scriptOk || !window.Razorpay) {
+        setPayMsg({ ok: false, text: lang === "ta" ? "கட்டண சாளரத்தை ஏற்ற முடியவில்லை." : "The payment window could not load. Please try again." });
+        return;
+      }
+
+      const keyRes = await fetch("/api/payments/order");
+      const { keyId } = (await keyRes.json()) as { keyId: string | null };
+
+      const rzp = new window.Razorpay({
+        key: keyId,
+        order_id: razorpayOrder.id,
+        amount: razorpayOrder.amount,
+        currency: "INR",
+        name: "Tamilnadu Women Law Association — Madras",
+        image: "/media/marks/start-mark.png",
+        description: `Membership ID Card — issuance fee${data.membershipNo ? ` (${data.membershipNo})` : ""}`,
+        prefill: { name: data.memberName || "", contact: data.mobile || "" },
+        notes: { membershipNo: data.membershipNo || "" },
+        theme: { color: "#c9a24b", backdrop_color: "rgba(10,10,11,0.72)" },
+        handler: async (r: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) => {
+          try {
+            const v = await fetch("/api/payments/verify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ id: orderId, ...r }),
+            });
+            const vd = await v.json();
+            if (!v.ok) throw new Error(vd.error ?? "Payment could not be verified");
+            paidForRef.current = data.membershipNo;
+            setPaid(true);
+            setPayMsg({ ok: true, text: lang === "ta"
+              ? "கட்டணம் சரிபார்க்கப்பட்டது — இப்போது பதிவிறக்கலாம்."
+              : "Payment verified — the download is unlocked." });
+          } catch (e) {
+            setPayMsg({ ok: false, text: e instanceof Error ? e.message : "Payment verification failed — please contact the office with your payment ID." });
+          }
+        },
+        modal: { ondismiss: () => setPayBusy(false) },
+      });
+
+      rzp.on("payment.failed", () => {
+        setPayMsg({ ok: false, text: lang === "ta"
+          ? "கட்டணம் நிராகரிக்கப்பட்டது. எதுவும் கழிக்கப்படவில்லை."
+          : "The payment was declined. Nothing has been charged — please try again." });
+      });
+      rzp.open();
+    } catch (e) {
+      setPayMsg({ ok: false, text: e instanceof Error ? e.message : "Something went wrong starting the payment." });
+    } finally {
+      setPayBusy(false);
+    }
+  };
 
   /* Free 3D rotation, driven by dragging the card.
      rotY runs unbounded so the card can be spun through as many full
@@ -208,6 +331,11 @@ export default function IdCardSection() {
   };
 
   const download = async () => {
+    /* The gate itself. Everything above this — the form, the live
+       preview, the flip/rotate — works freely without paying a
+       thing; only the actual print-quality export is held back, and
+       only until /api/payments/verify has confirmed money moved. */
+    if (!paid) return;
     setBusy(true);
     try {
       const html2canvas = (await import("html2canvas")).default;
@@ -333,13 +461,23 @@ export default function IdCardSection() {
             </div>
 
             <div className="mt-7 flex flex-wrap gap-3">
-              <button onClick={download} disabled={busy}
-                className="flex items-center gap-2 rounded-full bg-gold px-6 py-3 font-sans text-xs uppercase tracking-widest text-black transition-all hover:bg-gold-bright disabled:opacity-50">
-                <Download size={14} />{" "}
-                {busy
-                  ? lang === "ta" ? "தயாராகிறது…" : "Preparing…"
-                  : lang === "ta" ? "PNG பதிவிறக்கு" : "Download PNG"}
-              </button>
+              {paid ? (
+                <button onClick={download} disabled={busy}
+                  className="flex items-center gap-2 rounded-full bg-gold px-6 py-3 font-sans text-xs uppercase tracking-widest text-black transition-all hover:bg-gold-bright disabled:opacity-50">
+                  <Download size={14} />{" "}
+                  {busy
+                    ? lang === "ta" ? "தயாராகிறது…" : "Preparing…"
+                    : lang === "ta" ? "PNG பதிவிறக்கு" : "Download PNG"}
+                </button>
+              ) : (
+                <button onClick={startCardPayment} disabled={payBusy}
+                  className="flex items-center gap-2 rounded-full bg-gold px-6 py-3 font-sans text-xs uppercase tracking-widest text-black transition-all hover:bg-gold-bright disabled:opacity-50">
+                  <CreditCard size={14} />{" "}
+                  {payBusy
+                    ? lang === "ta" ? "கட்டணம் தொடங்குகிறது…" : "Starting payment…"
+                    : lang === "ta" ? `₹${ID_CARD_FEE} செலுத்தி பதிவிறக்கு` : `Pay ₹${ID_CARD_FEE} to Download`}
+                </button>
+              )}
               <button onClick={saveToDirectory} disabled={saving}
                 className="flex items-center gap-2 rounded-full gold-border px-6 py-3 font-sans text-xs uppercase tracking-widest text-gold transition-all hover:bg-gold hover:text-black disabled:opacity-50">
                 <Save size={14} />{" "}
@@ -356,6 +494,28 @@ export default function IdCardSection() {
                 {lang === "ta" ? "நேராக்கு" : "Reset view"}
               </button>
 
+              {!paid && (
+                <p className="flex w-full items-center gap-1.5 font-sans text-[11px] text-ivory-faint">
+                  <Lock size={12} />
+                  {lang === "ta"
+                    ? `PNG பதிவிறக்கம் கட்டணத்திற்குப் பிறகே திறக்கப்படும் — ₹${ID_CARD_FEE} (ஒரு முறை, அட்டைக்கு).`
+                    : `Download unlocks after payment — ₹${ID_CARD_FEE}, one time, per card.`}
+                </p>
+              )}
+              {paid && (
+                <p className="flex w-full items-center gap-1.5 font-sans text-[11px] text-gold">
+                  <ShieldCheck size={12} />
+                  {lang === "ta" ? "கட்டணம் சரிபார்க்கப்பட்டது — பதிவிறக்கம் திறக்கப்பட்டது." : "Payment verified — download unlocked."}
+                </p>
+              )}
+              {payMsg && (
+                <p className={cn(
+                  "w-full font-sans text-[12px] leading-relaxed",
+                  payMsg.ok ? "text-gold" : "text-amber-300/90"
+                )}>
+                  {payMsg.text}
+                </p>
+              )}
               {saveMsg && (
                 <p className={cn(
                   "w-full font-sans text-[12px] leading-relaxed",
