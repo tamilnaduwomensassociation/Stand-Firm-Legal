@@ -106,6 +106,13 @@ export type LetterForm = {
 const SHEET_W = 794;
 const SHEET_H = 1123;
 const DATE_ROW_Y = 317;     // baseline of the printed "Date :" rule
+/* The typed Ref/Date value has to sit ON the artwork's own blank
+   underline, but ABOVE the dashes — not straddling them. Measured
+   directly off the artwork, the dashed rule itself sits ~5px BELOW
+   DATE_ROW_Y, so an 8px lift left the text's descenders and the 4×
+   export's anti-aliasing overlapping the dashes. 17px clears it with
+   real breathing room while still reading as "on the line". */
+const DATE_VALUE_LIFT = 17;
 const CONTENT_TOP = 348;    // top of the blank column, just under that rule
 const CONTENT_BOTTOM = 735; // just above the office-bearers card
 const BODY_PAD_X = 44;
@@ -736,13 +743,13 @@ function LetterSheet({
       {/* ---------- Ref (left) / Date or page number (right) — sat on
           the printed "Date :" rule so the typed value lands on the
           blank line the artwork already leaves for it. ---------- */}
-      <div style={{ position: "absolute", top: DATE_ROW_Y - 8, left: BODY_PAD_X, fontFamily: "Georgia, serif", fontSize: 11, color: "#3a3a48" }}>
+      <div style={{ position: "absolute", top: DATE_ROW_Y - DATE_VALUE_LIFT, left: BODY_PAD_X, fontFamily: "Georgia, serif", fontSize: 11, color: "#3a3a48" }}>
         {f.ref ? `Ref: ${f.ref}` : ""}
       </div>
-      {/* Sits on the artwork's own blank underline, which runs from
+      {/* Sits above the artwork's own blank underline, which runs from
           roughly x=610 to x=750 after the printed "Date :" label. */}
       <div style={{
-        position: "absolute", top: DATE_ROW_Y - 8, left: 610, width: 140,
+        position: "absolute", top: DATE_ROW_Y - DATE_VALUE_LIFT, left: 610, width: 140,
         textAlign: "right", fontFamily: "Georgia, serif", fontSize: 11, color: "#3a3a48",
       }}>
         {first

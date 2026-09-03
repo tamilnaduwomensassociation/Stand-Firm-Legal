@@ -33,6 +33,7 @@
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import {
   CalendarDays, ClipboardList, FileText, IndianRupee, LayoutGrid, Loader2, LogOut,
   Moon, Package, Newspaper, Palette, PenLine, RefreshCw, Search, Settings2, Sun,
@@ -49,6 +50,18 @@ import ThemePanel from "@/components/admin/ThemePanel";
 import Letterhead from "@/components/admin/Letterhead";
 import BlogPanel from "@/components/admin/BlogPanel";
 import { cn } from "@/lib/utils";
+
+/**
+ * The renewal/birthday bell — previously mounted only on the public
+ * pages (home, membership, events, books). That left it invisible to
+ * anyone who signs in and works exclusively inside the dashboard: the
+ * admin-scope feed it fetches from /api/wishes already carries expiring
+ * memberships 60 days out, but the office never saw it unless someone
+ * happened to also be on the public site, logged in, at the same time.
+ * Mounting it here closes that gap — it's a fixed-position widget, so
+ * it floats over every panel without needing layout changes.
+ */
+const WishesPanel = dynamic(() => import("@/components/features/WishesPanel"));
 
 export type Row = Record<string, unknown> & { id: string; createdAt: string };
 
@@ -164,6 +177,10 @@ export default function Portal({
 
   return (
     <div className="min-h-[100svh] bg-obsidian-deep pb-16">
+      {/* Renewal/birthday alerts — floats over everything, doesn't
+          shift the layout below. */}
+      <WishesPanel />
+
       {/* ================= TOP BAR ================= */}
       <header className="sticky top-0 z-40 border-b border-[var(--hairline)] bg-obsidian-deep/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 md:px-6">

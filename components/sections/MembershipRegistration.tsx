@@ -57,8 +57,25 @@ type Upl = { name: string; dataUrl?: string; isPdf: boolean };
 const TODAY_ISO = new Date().toISOString().slice(0, 10);
 const EARLIEST_ISO = "1920-01-01";
 
-function FieldInput({ f, value, onChange, lang, invalid }: {
-  f: Field; value: string; onChange: (v: string) => void; lang: "en" | "ta"; invalid?: boolean;
+/* Indian mobile numbers: exactly 10 digits, first digit 6-9 (landline
+   STD-code numbers and +91 aren't valid mobile contacts here — this is
+   the field members are actually called and WhatsApped on). */
+const INDIAN_MOBILE_RE = /^[6-9]\d{9}$/;
+const onlyDigits = (v: string) => v.replace(/\D/g, "").slice(0, 10);
+
+/* A field is invalid either because it's empty and mandatory, or —
+   for a phone field specifically — because it's non-empty but not a
+   real 10-digit Indian mobile number. An optional-but-malformed phone
+   is still wrong; "optional" only means it may be left blank. */
+function fieldError(f: Field, value: string): "required" | "phone" | null {
+  const v = value.trim();
+  if (!v) return f.optional ? null : "required";
+  if (f.type === "tel" && !INDIAN_MOBILE_RE.test(v)) return "phone";
+  return null;
+}
+
+function FieldInput({ f, value, onChange, lang, invalid, error }: {
+  f: Field; value: string; onChange: (v: string) => void; lang: "en" | "ta"; invalid?: boolean; error?: "required" | "phone" | null;
 }) {
   const label = lang === "ta" ? f.ta : f.en;
   const ring = invalid ? "border-red-400/70 ring-1 ring-red-400/40" : "";
@@ -78,6 +95,26 @@ function FieldInput({ f, value, onChange, lang, invalid }: {
           min={EARLIEST_ISO}
           max={f.future ? undefined : TODAY_ISO}
         />
+      ) : f.type === "select" ? (
+        <select
+          className={cn(inputCls, "[color-scheme:light]", ring)}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        >
+          <option value="">{lang === "ta" ? "— தேர்ந்தெடுக்கவும் —" : "— Select —"}</option>
+          {(f.options ?? []).map((o) => <option key={o} value={o}>{o}</option>)}
+        </select>
+      ) : f.type === "tel" ? (
+        <input
+          type="tel"
+          inputMode="numeric"
+          autoComplete="tel"
+          maxLength={10}
+          placeholder={lang === "ta" ? "10 இலக்க கைபேசி எண்" : "10-digit mobile number"}
+          className={cn(inputCls, "[color-scheme:light]", ring)}
+          value={value}
+          onChange={(e) => onChange(onlyDigits(e.target.value))}
+        />
       ) : (
         <input
           type={f.type ?? "text"}
@@ -88,7 +125,9 @@ function FieldInput({ f, value, onChange, lang, invalid }: {
       )}
       {invalid && (
         <span className="mt-1 block font-sans text-[11px] text-red-400">
-          {lang === "ta" ? "இந்தப் புலம் கட்டாயம்" : "This field is required"}
+          {error === "phone"
+            ? (lang === "ta" ? "செல்லுபடியாகும் 10 இலக்க இந்திய கைபேசி எண்ணை உள்ளிடவும் (6-9 இல் தொடங்க வேண்டும்)" : "Enter a valid 10-digit Indian mobile number (must start with 6-9)")
+            : (lang === "ta" ? "இந்தப் புலம் கட்டாயம்" : "This field is required")}
         </span>
       )}
     </label>
@@ -211,13 +250,17 @@ export default function MembershipRegistration({ embedded = false }: { embedded?
 
   const missingUploads = uploads.filter((u) => u.required && !files[u.id]);
 
-  /* Mandatory-field gate — Next only advances once this step is complete */
+  /* Mandatory-field gate — Next only advances once this step is complete.
+     "Invalid" now covers two different problems: a required field left
+     blank, and a field (like phone) that has something in it but isn't
+     a real value — a malformed mobile number is not a valid answer just
+     because the box isn't empty. */
   const [showErrors, setShowErrors] = useState(false);
-  const missingFields = (stepData?.fields ?? []).filter(
-    (f) => !f.optional && !(vals[f.id] ?? "").trim()
+  const invalidFields = (stepData?.fields ?? []).filter(
+    (f) => fieldError(f, vals[f.id] ?? "") !== null
   );
   const stepBlocked =
-    (!isUploads && !isPayment && missingFields.length > 0) ||
+    (!isUploads && !isPayment && invalidFields.length > 0) ||
     (isDeclaration && !agree) ||
     (isUploads && missingUploads.length > 0);
 
@@ -614,17 +657,21 @@ export default function MembershipRegistration({ embedded = false }: { embedded?
           {/* Field steps */}
           {!isUploads && !isPayment && (
             <div className="grid gap-5 sm:grid-cols-2">
-              {stepData.fields.map((f) => (
-                <div key={f.id} className={f.type === "textarea" ? "sm:col-span-2" : undefined}>
-                  <FieldInput
-                    f={f}
-                    lang={lang}
-                    value={vals[f.id] ?? ""}
-                    invalid={showErrors && !f.optional && !(vals[f.id] ?? "").trim()}
-                    onChange={(v) => setVals((p) => ({ ...p, [f.id]: v }))}
-                  />
-                </div>
-              ))}
+              {stepData.fields.map((f) => {
+                const err = fieldError(f, vals[f.id] ?? "");
+                return (
+                  <div key={f.id} className={f.type === "textarea" ? "sm:col-span-2" : undefined}>
+                    <FieldInput
+                      f={f}
+                      lang={lang}
+                      value={vals[f.id] ?? ""}
+                      invalid={showErrors && err !== null}
+                      error={err}
+                      onChange={(v) => setVals((p) => ({ ...p, [f.id]: v }))}
+                    />
+                  </div>
+                );
+              })}
             </div>
           )}
 

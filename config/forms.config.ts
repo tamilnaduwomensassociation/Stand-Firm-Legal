@@ -11,7 +11,7 @@ export type Field = {
   id: string;
   en: string;          // label (EN)
   ta: string;          // label (தமிழ்)
-  type?: "text" | "date" | "textarea" | "select";
+  type?: "text" | "date" | "textarea" | "select" | "tel";
   /* Date fields are capped at today by default (a birth date or a notice
      date cannot be in the future). Flag the ones that legitimately look
      forward, or the field is unusable for what it is asking. */
@@ -19,6 +19,10 @@ export type Field = {
   options?: string[];  // for select
   optional?: boolean;  // fields are mandatory unless flagged optional
 };
+
+/* Same eight groups IdCard.tsx already offers — kept in one place so a
+   future ninth group only has to be added here. */
+export const BLOOD_GROUP_OPTIONS = ["A+ve", "A-ve", "B+ve", "B-ve", "AB+ve", "AB-ve", "O+ve", "O-ve"];
 
 /* ---------------- TNWLA MEMBERSHIP WIZARD (from SLF.pdf) -------------- */
 
@@ -30,7 +34,7 @@ export const membershipSteps: { en: string; ta: string; fields: Field[] }[] = [
       { id: "dob", en: "Date of Birth", ta: "பிறந்த தேதி", type: "date" },
       { id: "father", en: "Father Name", ta: "தந்தை பெயர்" },
       { id: "mother", en: "Mother Name", ta: "தாய் பெயர்" },
-      { id: "blood", en: "Blood Group", ta: "இரத்த வகை", optional: true },
+      { id: "blood", en: "Blood Group", ta: "இரத்த வகை", type: "select", options: BLOOD_GROUP_OPTIONS, optional: true },
     ],
   },
   {
@@ -38,7 +42,7 @@ export const membershipSteps: { en: string; ta: string; fields: Field[] }[] = [
     fields: [
       { id: "address", en: "Address", ta: "முகவரி", type: "textarea" },
       { id: "aadhaar", en: "Aadhaar Number", ta: "ஆதார் எண்" },
-      { id: "phone", en: "Phone Number", ta: "தொலைபேசி எண்" },
+      { id: "phone", en: "Phone Number", ta: "தொலைபேசி எண்", type: "tel" },
       { id: "native", en: "Native Place", ta: "சொந்த ஊர்" },
       { id: "location", en: "Current Location", ta: "தற்போதைய இடம்" },
     ],

@@ -57,12 +57,13 @@
  */
 import type { CSSProperties, RefObject } from "react";
 import QrCode from "@/components/ui/QrCode";
+import { toSerial } from "@/config/membership.config";
 
 export const CARD_W = 480;
-/* Matches template-front.png's native aspect ratio exactly (556/1107
+/* Matches template-front.png's native aspect ratio exactly (891/1765
    × 480) so the front face fills the card edge-to-edge with zero
    cropping — see the ASPECT RATIO note above. */
-export const CARD_H = 480 * (556 / 1107);
+export const CARD_H = 480 * (891 / 1765);
 
 const INK = "#12203D";
 const VAL = "#1B4FA8";
@@ -109,31 +110,43 @@ const noDrag = {
 };
 
 /* ---------------- FRONT template geometry ----------------
-   Source image: template-front.png, native 1107×556 — CARD_W/CARD_H
+   Source image: template-front.png, native 1765×891 — CARD_W/CARD_H
    match this image's exact aspect ratio, so scale is uniform on both
    axes and there is no letterboxing to compute for the front face.
    Every coordinate below was read directly off the supplied
    template-front reference (colon column, ruled-line pixel rows, the
-   photo-box border) with a pixel probe, not eyeballed. */
-const F_SCALE = CARD_W / 1107;
+   photo-box border) with a pixel probe, not eyeballed.
+
+   This template's "Membership No." row is different from every other
+   row: the "TNWLA/2026/" prefix is baked into the artwork itself (in
+   blue, matching MEMBERSHIP_PREFIX), so only the SERIAL is ever drawn
+   dynamically — drawing the whole membershipNo string here would
+   print the prefix twice, once from the artwork and once overlapping
+   it from the app. MEMBER_NO_VALUE_X is where the baked prefix ends,
+   measured the same way as everything else below. */
+const F_SCALE = CARD_W / 1765;
 const fx = (x: number) => x * F_SCALE;
 const fy = (y: number) => y * F_SCALE;
 
-/* Photo box border, probed directly: x[21,249] y[217,525] */
-const PHOTO_BOX = { left: fx(21), top: fy(217), width: fx(249 - 21), height: fy(525 - 217) };
-/* Value column starts right after the colon (colon centre ≈ x495,
-   value text baseline starts ≈ x514, one column shared by all 8
-   rows) and stops at x845 — short of the Lady Justice watermark and
-   the signature block, which both intrude as early as x≈850 on some
-   rows. */
-const VALUE_X = fx(514);
-const VALUE_W = fx(845 - 514);
+/* Photo box border, probed directly: x[51,389] y[334,820] */
+const PHOTO_BOX = { left: fx(51), top: fy(334), width: fx(389 - 51), height: fy(820 - 334) };
+/* Value column starts right after the colon (colon centre ≈ x768,
+   value text baseline starts ≈ x800) and stops at x1185, where every
+   one of the eight ruled lines itself ends — short of the Lady
+   Justice watermark and the signature block further right. */
+const VALUE_X = fx(800);
+const VALUE_W = fx(1185 - 800);
+/* Where the artwork's own baked "TNWLA/2026/" prefix ends on the
+   Membership No. row (probed as the blue pixels' right edge) — the
+   serial is drawn starting just past it, not at VALUE_X. */
+const MEMBER_NO_VALUE_X = fx(1028);
+const MEMBER_NO_VALUE_W = fx(1185 - 1028);
 /* Ruled-line y-position for each of the 8 rows, probed pixel-by-pixel
    off the template. The 8th ("Valid Up To") has no printed rule of
-   its own — it's extrapolated from the ~42px row pitch of the other
+   its own — it's extrapolated from the ~66px row pitch of the other
    seven, so its value still sits at the right height even though
    there's no physical line under it. */
-const ROW_LINE_Y = [238, 280, 321, 364, 406, 449, 492, 534].map(fy);
+const ROW_LINE_Y = [372, 438, 503, 571, 636, 703, 770, 836].map(fy);
 
 /* ---------------- BACK template geometry ----------------
    Source image: template-back.png, native 1104×502. Since the image
@@ -170,15 +183,20 @@ export function CardFront({
 }: {
   data: CardData; photo: string | null; cardRef?: RefObject<HTMLDivElement | null>;
 }) {
-  const rows: [string, boolean][] = [
-    [data.memberName, false],
-    [data.membershipNo, true],
-    [data.enrollmentNo, false],
-    [data.designation, false],
-    [data.district, false],
-    [data.blood, false],
-    [data.mobile, false],
-    [data.validUpTo, true],
+  /* Membership No. is the one row where the value isn't the whole
+     string: the "TNWLA/2026/" part is already printed on the artwork,
+     so only the serial is drawn, and it's drawn starting past the
+     baked prefix (MEMBER_NO_VALUE_X) rather than at the shared
+     VALUE_X every other row uses. */
+  const rows: { value: string; x: number; accent: boolean }[] = [
+    { value: data.memberName, x: VALUE_X, accent: false },
+    { value: toSerial(data.membershipNo), x: MEMBER_NO_VALUE_X, accent: true },
+    { value: data.enrollmentNo, x: VALUE_X, accent: false },
+    { value: data.designation, x: VALUE_X, accent: false },
+    { value: data.district, x: VALUE_X, accent: false },
+    { value: data.blood, x: VALUE_X, accent: false },
+    { value: data.mobile, x: VALUE_X, accent: false },
+    { value: data.validUpTo, x: VALUE_X, accent: true },
   ];
 
   return (
@@ -211,17 +229,17 @@ export function CardFront({
         style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}
         viewBox={`0 0 ${CARD_W} ${CARD_H}`}
       >
-        {rows.map(([value, accent], i) => value ? (
+        {rows.map(({ value, x, accent }, i) => value ? (
           <text
             key={i}
-            x={VALUE_X}
+            x={x}
             y={ROW_LINE_Y[i] - 3}
             fontFamily="var(--font-sans), Manrope, sans-serif"
             fontSize={9.5}
             fontWeight={accent ? 800 : 700}
             fill={accent ? VAL : INK}
           >
-            {truncate(value, 20)}
+            {truncate(value, i === 1 ? 14 : 20)}
           </text>
         ) : null)}
       </svg>

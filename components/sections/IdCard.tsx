@@ -30,7 +30,7 @@ import { site } from "@/config/site.config";
 import { useLang } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { CardBack, CardFront, CARD_H, CARD_W, DEFAULT_VERIFY_URL, type CardData } from "@/components/ui/IdCardFaces";
-import { ID_CARD_FEE, toSerial } from "@/config/membership.config";
+import { ID_CARD_FEE, MEMBERSHIP_PREFIX, toSerial } from "@/config/membership.config";
 import { loadRazorpay } from "@/lib/loadRazorpay";
 
 const inputCls =
@@ -57,7 +57,7 @@ export default function IdCardSection() {
   const [data, setData] = useState<CardData>({
     cardNo: "",
     memberName: "",
-    membershipNo: "TNWLA/2026/",
+    membershipNo: MEMBERSHIP_PREFIX,
     enrollmentNo: "",
     designation: "Member",
     district: "Chennai",
@@ -224,6 +224,17 @@ export default function IdCardSection() {
   };
   useEffect(() => cancelSettle, []);
 
+  /* Membership No. is "TNWLA/2026/<serial>" and the prefix is not
+     typed by anyone — see config/membership.config.ts for why a
+     pre-filled, editable prefix is a bug waiting to happen (it can be
+     backspaced or half-deleted, and the card, the directory save and
+     the QR link all silently disagree with each other from then on).
+     Only the serial is state; the full membershipNo is derived. */
+  const [memberSerial, setMemberSerial] = useState("");
+  useEffect(() => {
+    setData((d) => ({ ...d, membershipNo: `${MEMBERSHIP_PREFIX}${memberSerial}` }));
+  }, [memberSerial]);
+
   /* Enrollment is "<number>/<year>" — the year is picked, not typed */
   const [enrolNo, setEnrolNo] = useState("");
   const [enrolYear, setEnrolYear] = useState(String(new Date().getFullYear()));
@@ -298,7 +309,7 @@ export default function IdCardSection() {
    */
   const saveToDirectory = async () => {
     if (saving) return;
-    if (!data.memberName.trim() || !data.membershipNo.trim()) {
+    if (!data.memberName.trim() || !memberSerial.trim()) {
       setSaveMsg({ ok: false, text: lang === "ta"
         ? "பெயர் மற்றும் உறுப்பினர் எண் தேவை."
         : "Enter the member's name and membership number first." });
@@ -404,8 +415,33 @@ export default function IdCardSection() {
             <p className="kicker !tracking-[0.25em] mb-6">{lang === "ta" ? "அட்டை விவரங்கள்" : "Card Details"}</p>
 
             <div className="grid gap-5 sm:grid-cols-2">
-              <Field data={data} set={set} k="memberName" label={lang === "ta" ? "உறுப்பினர் பெயர்" : "Member Name"} placeholder="M Jenifer Arokia Mary" />
-              <Field data={data} set={set} k="membershipNo" label={lang === "ta" ? "உறுப்பினர் எண்" : "Membership No."} placeholder="TNWLA/2026/01" />
+              <Field data={data} set={set} k="memberName" label={lang === "ta" ? "உறுப்பினர் பெயர்" : "Member Name"} />
+              {/* The prefix is PART OF THE FIELD, not part of the value —
+                  same pattern as the public "Verify Your Membership" box.
+                  It sits inside the bordered input but cannot be selected,
+                  edited or backspaced away; only the serial after it is
+                  ever typed or stored as state. */}
+              <label className="block">
+                <span className="mb-1.5 block font-sans text-[11px] uppercase tracking-widest text-ivory-dim">
+                  {lang === "ta" ? "உறுப்பினர் எண்" : "Membership No."}
+                </span>
+                <div className="flex items-stretch overflow-hidden rounded-xl bg-obsidian-soft/60 border border-[var(--hairline)] transition-all focus-within:border-gold/60 focus-within:ring-1 focus-within:ring-gold/30">
+                  <span
+                    className="flex select-none items-center whitespace-nowrap border-r border-[var(--hairline)] bg-obsidian/50 px-4 font-sans text-sm text-gold"
+                    aria-hidden
+                  >
+                    {MEMBERSHIP_PREFIX}
+                  </span>
+                  <input
+                    value={memberSerial}
+                    onChange={(e) => setMemberSerial(toSerial(e.target.value).replace(/[^0-9A-Za-z-]/g, ""))}
+                    inputMode="numeric"
+                    aria-label={`Membership number, after ${MEMBERSHIP_PREFIX}`}
+                    placeholder="57"
+                    className="w-full bg-transparent px-4 py-3 font-sans text-sm text-ivory placeholder:text-ivory-faint focus:outline-none"
+                  />
+                </div>
+              </label>
               <label className="block">
                 <span className="mb-1.5 block font-sans text-[11px] uppercase tracking-widest text-ivory-dim">
                   {lang === "ta" ? "பதிவு எண்" : "Enrollment No."}
@@ -430,10 +466,10 @@ export default function IdCardSection() {
                   {BLOOD_GROUPS.map((b) => <option key={b} value={b}>{b}</option>)}
                 </select>
               </label>
-              <Field data={data} set={set} k="mobile" label={lang === "ta" ? "கைபேசி எண்" : "Mobile No."} placeholder="99625 02244" />
+              <Field data={data} set={set} k="mobile" label={lang === "ta" ? "கைபேசி எண்" : "Mobile No."} />
               <Field data={data} set={set} k="validUpTo" label={lang === "ta" ? "செல்லுபடி வரை" : "Valid Up To"} placeholder="June 2027" />
               <Field data={data} set={set} k="cardNo" label={lang === "ta" ? "அட்டை வரிசை எண்" : "Card Serial"} placeholder="08" />
-              <Field data={data} set={set} k="emergency" label={lang === "ta" ? "அவசர தொடர்பு" : "Emergency Contact"} placeholder="98404 11223" />
+              <Field data={data} set={set} k="emergency" label={lang === "ta" ? "அவசர தொடர்பு" : "Emergency Contact"} />
             </div>
 
             <p className="kicker !tracking-[0.25em] mb-4 mt-8">{lang === "ta" ? "பின் பக்கம்" : "Reverse"}</p>
