@@ -108,6 +108,13 @@ export default function Portal({
   const [events, setEvents] = useState<Row[]>(initialEvents);
   const [query, setQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  /* Visible proof the button did something — a spinner alone reads the
+     same whether the fetch succeeded, failed, or was never wired up.
+     Seeded at page load (this page is `force-dynamic`, so what the
+     server just sent really was fetched at that moment) rather than
+     left blank until the first manual press. */
+  const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
+  useEffect(() => { setLastRefreshed(new Date()); }, []);
 
   const { lang, setLang } = useLang();
   const ta = lang === "ta";
@@ -143,11 +150,20 @@ export default function Portal({
       if (o.rows) setOrders(o.rows);
       if (e.rows) setEnquiries(e.rows);
       if (ev.events) setEvents(ev.events);
+      setLastRefreshed(new Date());
+      /* Orders/enquiries/events are re-fetched above and swapped into
+         local state directly, which is what the tables and the brand-
+         tab badge counts actually read from. `router.refresh()` on top
+         of that re-runs the server component too, so anything read
+         only at first paint (session, saved content) is caught as
+         well — the button re-syncs everything the page can show, not
+         just the three lists it fetches itself. */
+      router.refresh();
     } catch {
       /* Leave what is on screen rather than blanking the table. */
     }
     setRefreshing(false);
-  }, []);
+  }, [router]);
 
   const signOut = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -216,7 +232,11 @@ export default function Portal({
               disabled={refreshing}
               className="flex h-11 w-11 items-center justify-center rounded-lg border border-[var(--hairline)] text-ivory-dim transition-all hover:border-gold/50 hover:text-gold disabled:opacity-50"
               aria-label={tr("refresh")}
-              title={tr("refresh")}
+              title={
+                lastRefreshed
+                  ? `${tr("refresh")} — ${ta ? "கடைசியாக புதுப்பிக்கப்பட்டது" : "last updated"} ${lastRefreshed.toLocaleTimeString(ta ? "ta-IN" : "en-IN", { hour: "2-digit", minute: "2-digit" })}`
+                  : tr("refresh")
+              }
             >
               {refreshing ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
             </button>

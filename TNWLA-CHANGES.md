@@ -129,3 +129,38 @@ The cron schedules are in `vercel.json` and start working the moment
   verified by executing the logic in isolation (**79 assertions across
   sessions, storage, payments, contrast and dates — all passing**) and
   by static checks on imports, exports, directives, routes and assets.
+
+---
+
+# Pass 3 — membership form fields, a signature, and Superadmin's calendar
+
+| # | Change | Where |
+|---|---|---|
+| 1 | **Educational Qualification** and **Professional** are now dropdowns, not free text — closed lists so "B.L.", "BL", "B.L" stop being three different answers to the same question. | `config/forms.config.ts` (`EDUCATION_OPTIONS`, `PROFESSION_OPTIONS`) |
+| 2 | **Jurisdiction of Court**, **Practicing Court** and **Law Degree & University** are now dropdowns too, drawn from courts and degrees actually used across Tamil Nadu, Pondicherry and Andhra Pradesh. Every list ends in "Other" so a genuine edge case is never blocked. | `config/forms.config.ts` (`JURISDICTION_OPTIONS`, `PRACTICING_COURT_OPTIONS`, `LAW_DEGREE_OPTIONS`) |
+| 3 | **Enrollment Number** (and Bar Council Enrolment Number) now only accept digits, and bring up the **numeric keypad on a phone** rather than the full keyboard — a new `"numeric"` field type, separate from the 10-digit mobile `"tel"` type since an enrollment number isn't a mobile number. | `config/forms.config.ts`, `components/sections/MembershipRegistration.tsx` |
+| 4 | **Signature.** The name typed on step 1 now reappears as a handwritten-style signature — live, on the Declaration step, and on the printed/downloadable application in place of the old blank "Signature of the Applicant" line. New `Great Vibes` cursive font, new `components/ui/Signature.tsx`. | `app/layout.tsx`, `tailwind.config.ts`, `components/ui/Signature.tsx`, `components/sections/MembershipRegistration.tsx` |
+| 5 | **Superadmin's refresh button** now also re-syncs the server-rendered page (`router.refresh()`) alongside the three lists it already re-fetched, and its tooltip shows the last-updated time — visible proof a press did something. | `components/admin/Portal.tsx` |
+| 6 | **Superadmin's session-date fields** (new session, reschedule, and schedule-a-proposal) now use the site's own gold-styled `DatePicker` — the same calendar used everywhere else — instead of the browser's plain native date box. | `components/admin/EventsPanel.tsx` |
+
+### A note on the dropdown option lists (items 1–2)
+
+These five fields used to be free text, so there was no existing "correct"
+list to digitise from — I've built each list from what the association's
+own material already says about itself (membership blurb: advocates "in
+active practice before any court in Tamil Nadu, Pondicherry or Andhra
+Pradesh") plus the courts, degrees and universities actually in use
+across that footprint. Worth a skim before this goes live — swap or add
+entries in `config/forms.config.ts` and every screen that uses them
+(the wizard, the printed application, the PDF) picks it up with no
+further code change.
+
+### Verified, not built
+
+`npx tsc --noEmit` passes clean — zero errors. `npm run build` could
+not be completed in this environment: `fonts.googleapis.com` is not
+reachable here, and **all four** `next/font` fonts fail to fetch for
+that reason (the three that already shipped, plus the new signature
+font) — not something introduced by this pass. Run `npm run build` once
+where the sandbox has normal internet access; nothing else in the
+build should be affected.

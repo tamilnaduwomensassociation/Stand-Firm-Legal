@@ -43,6 +43,7 @@ const config: Config = {
         serif: ["var(--font-serif)", "Georgia", "serif"],
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],
         tamil: ["var(--font-tamil)", "sans-serif"],
+        signature: ["var(--font-signature)", "cursive"],
       },
       letterSpacing: { luxe: "0.35em" },
       /* Every rounded-* utility scales with Superadmin's "Corner

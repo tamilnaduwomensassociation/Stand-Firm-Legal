@@ -11,7 +11,7 @@ export type Field = {
   id: string;
   en: string;          // label (EN)
   ta: string;          // label (தமிழ்)
-  type?: "text" | "date" | "textarea" | "select" | "tel";
+  type?: "text" | "date" | "textarea" | "select" | "tel" | "numeric";
   /* Date fields are capped at today by default (a birth date or a notice
      date cannot be in the future). Flag the ones that legitimately look
      forward, or the field is unusable for what it is asking. */
@@ -23,6 +23,80 @@ export type Field = {
 /* Same eight groups IdCard.tsx already offers — kept in one place so a
    future ninth group only has to be added here. */
 export const BLOOD_GROUP_OPTIONS = ["A+ve", "A-ve", "B+ve", "B-ve", "AB+ve", "AB-ve", "O+ve", "O-ve"];
+
+/* ---------------- MEMBERSHIP WIZARD — DROPDOWN OPTION LISTS ----------------
+ * Every one of these used to be a free-text box. Free text on a
+ * qualification or a court name means "B.L.", "BL", "B.L", "B L" are
+ * four different answers to the same question — unusable for a printed
+ * roll or a mailing list sort. Closed lists fix that; "Other" is kept
+ * at the end of each so a genuine edge case is never blocked. */
+export const EDUCATION_OPTIONS = [
+  "SSLC / 10th Std.",
+  "HSC / 12th Std.",
+  "Diploma",
+  "B.A.", "B.Com.", "B.Sc.", "B.B.A.", "B.C.A.",
+  "B.L. / LL.B.", "B.A., B.L.", "B.Com., B.L.", "B.Sc., B.L.", "B.B.A., B.L.",
+  "LL.M.", "Ph.D.",
+  "Other",
+];
+
+export const PROFESSION_OPTIONS = [
+  "Practising Advocate",
+  "Legal Advisor / Consultant",
+  "Law Student",
+  "Judicial Officer",
+  "Government Employee",
+  "Public Sector Employee",
+  "Private Sector Employee",
+  "Corporate Legal / In-house Counsel",
+  "Notary / Documentation Practice",
+  "Business / Self-Employed",
+  "Homemaker",
+  "Retired",
+  "Other",
+];
+
+export const JURISDICTION_OPTIONS = [
+  "Madras High Court",
+  "Madras High Court — Madurai Bench",
+  "Chennai", "Coimbatore", "Madurai", "Tiruchirappalli", "Salem",
+  "Tirunelveli", "Vellore", "Erode", "Thanjavur", "Tiruppur", "Dindigul",
+  "Cuddalore", "Puducherry", "Karaikal",
+  "Visakhapatnam", "Vijayawada", "Guntur", "Amaravati",
+  "Other",
+];
+
+export const PRACTICING_COURT_OPTIONS = [
+  "Madras High Court",
+  "Madras High Court — Madurai Bench",
+  "City Civil Court, Chennai",
+  "Sessions Court",
+  "District Court",
+  "Family Court",
+  "Consumer Disputes Redressal Commission",
+  "Labour Court / Industrial Tribunal",
+  "MSME Facilitation Council",
+  "Debt Recovery Tribunal",
+  "National Company Law Tribunal (NCLT)",
+  "Income Tax / GST Appellate Tribunal",
+  "Motor Accidents Claims Tribunal",
+  "Munsif / Magistrate Court",
+  "Other",
+];
+
+export const LAW_DEGREE_OPTIONS = [
+  "B.L. (3-Year) — University of Madras",
+  "B.A., B.L. (Hons.) — Tamil Nadu Dr. Ambedkar Law University",
+  "B.A., LL.B. (Hons.) — The Tamil Nadu National Law University",
+  "B.Com., B.L. — University of Madras",
+  "B.Sc., B.L. — University of Madras",
+  "B.B.A., B.L. (Hons.) — School of Excellence in Law",
+  "B.A., B.L. — Government Law College, Chennai",
+  "B.A., B.L. — Dr. Ambedkar Govt. Law College, Chennai",
+  "B.A., LL.B. (Hons.) — Pondicherry University",
+  "LL.M. — University of Madras",
+  "Other",
+];
 
 /* ---------------- TNWLA MEMBERSHIP WIZARD (from SLF.pdf) -------------- */
 
@@ -50,16 +124,16 @@ export const membershipSteps: { en: string; ta: string; fields: Field[] }[] = [
   {
     en: "Education & Profession", ta: "கல்வி & தொழில்",
     fields: [
-      { id: "education", en: "Educational Qualification", ta: "கல்வித் தகுதி" },
-      { id: "profession", en: "Professional", ta: "தொழில்" },
+      { id: "education", en: "Educational Qualification", ta: "கல்வித் தகுதி", type: "select", options: EDUCATION_OPTIONS },
+      { id: "profession", en: "Professional", ta: "தொழில்", type: "select", options: PROFESSION_OPTIONS },
     ],
   },
   {
     en: "Practice Details", ta: "வழக்குரைஞர் விவரங்கள்",
     fields: [
-      { id: "jurisdiction", en: "Jurisdiction of Court", ta: "நீதிமன்ற அதிகார வரம்பு" },
-      { id: "practicingCourt", en: "Practicing Court", ta: "வழக்காடும் நீதிமன்றம்" },
-      { id: "enrollment", en: "Enrollment Number", ta: "பதிவு எண்" },
+      { id: "jurisdiction", en: "Jurisdiction of Court", ta: "நீதிமன்ற அதிகார வரம்பு", type: "select", options: JURISDICTION_OPTIONS },
+      { id: "practicingCourt", en: "Practicing Court", ta: "வழக்காடும் நீதிமன்றம்", type: "select", options: PRACTICING_COURT_OPTIONS },
+      { id: "enrollment", en: "Enrollment Number", ta: "பதிவு எண்", type: "numeric" },
       { id: "joinDate", en: "Joining Date", ta: "சேரும் தேதி", type: "date" },
       { id: "purpose", en: "Purpose of Joining", ta: "சேரும் நோக்கம்", type: "textarea", optional: true },
     ],
@@ -139,7 +213,7 @@ export const membershipCategories: MemberCategory[] = [
     formHeading: "TNWLA-M New Membership Registration — Practising Advocates",
     formHeadingTa: "TNWLA-M புதிய உறுப்பினர் பதிவு — வழக்காடும் வழக்கறிஞர்கள்",
     extraFields: [
-      { id: "barCouncilNo", en: "Bar Council Enrolment Number", ta: "பார் கவுன்சில் பதிவு எண்" },
+      { id: "barCouncilNo", en: "Bar Council Enrolment Number", ta: "பார் கவுன்சில் பதிவு எண்", type: "numeric" },
       { id: "yearsPractice", en: "Years in Practice", ta: "வழக்காடிய ஆண்டுகள்" },
       { id: "specialisation", en: "Area of Specialisation", ta: "சிறப்புத் துறை" },
     ],
@@ -167,7 +241,7 @@ export const membershipCategories: MemberCategory[] = [
     formHeading: "TNWLA-M New Membership Registration — Lawyers",
     formHeadingTa: "TNWLA-M புதிய உறுப்பினர் பதிவு — சட்ட வல்லுநர்கள்",
     extraFields: [
-      { id: "lawDegree", en: "Law Degree & University", ta: "சட்டப் பட்டம் & பல்கலைக்கழகம்" },
+      { id: "lawDegree", en: "Law Degree & University", ta: "சட்டப் பட்டம் & பல்கலைக்கழகம்", type: "select", options: LAW_DEGREE_OPTIONS },
       { id: "yearPassed", en: "Year of Passing", ta: "தேர்ச்சி ஆண்டு" },
       { id: "currentRole", en: "Current Role / Organisation", ta: "தற்போதைய பணி / நிறுவனம்" },
     ],

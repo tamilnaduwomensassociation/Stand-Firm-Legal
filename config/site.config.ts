@@ -201,8 +201,8 @@ export const mottoAndDreams = {
  * photograph, her quote and the President's Corner beside it. Adding
  * her here would print her twice.
  *
- * Order: Vice President (C. Sanjuna Devi), Secretary (S. Chithra),
- * Joint Secretary (G. Maheswari), Treasurer (N. Shanmuga Priya), then
+ * Order: Vice President (C. Sanjuna Devi), Treasurer (N. Shanmuga Priya),
+ * Secretary (S. Chithra), Joint Secretary (G. Maheswari), then
  * the Executive Committee Members.
  */
 export const leadersPanel = [
@@ -213,6 +213,14 @@ export const leadersPanel = [
     position: "Vice President",
     positionTa: "துணைத் தலைவர்",
     photo: "/media/team/leaders/sanjuna.jpeg",
+  },
+  {
+    name: "N. Shanmuga Priya",
+    nameTa: "ந. சண்முகப் பிரியா",
+    qualification: "B.B.A., L.L.B(Hons)., M.Sc(Psy)",
+    position: "Treasurer",
+    positionTa: "பொருளாளர்",
+    photo: "/media/team/leaders/n-shanmugapriya.jpeg",
   },
   {
     name: "S. Chithra",
@@ -229,14 +237,6 @@ export const leadersPanel = [
     position: "Joint Secretary",
     positionTa: "இணைச் செயலாளர்",
     photo: "/media/team/leaders/maheswari.jpeg",
-  },
-  {
-    name: "N. Shanmuga Priya",
-    nameTa: "ந. சண்முகப் பிரியா",
-    qualification: "B.B.A., L.L.B(Hons)., M.Sc(Psy)",
-    position: "Treasurer",
-    positionTa: "பொருளாளர்",
-    photo: "/media/team/leaders/n-shanmugapriya.jpeg",
   },
   {
     name: "M. Preethi",

@@ -32,6 +32,12 @@ export async function PATCH(req: NextRequest) {
     for (const k of ["title", "summary", "body"] as const) {
       if (typeof b[k] === "string") fields[k] = clean(b[k], k === "body" ? 20000 : 400);
     }
+    /* The cover image is a Vercel Blob URL produced by /api/media — not
+       arbitrary user text, but still passed through clean() so a
+       malformed value can never wedge itself into storage. An empty
+       string is a deliberate "remove the image" signal, so it is kept
+       rather than dropped. */
+    if (typeof b.image === "string") fields.image = clean(b.image, 500);
     const status = clean(b.status, 20);
     if (status) {
       if (!["draft", "published", "archived"].includes(status)) {

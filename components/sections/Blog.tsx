@@ -23,7 +23,7 @@ import { useLang } from "@/lib/i18n";
 import SectionHeading from "@/components/ui/SectionHeading";
 import TiltCard from "@/components/ui/TiltCard";
 
-type LivePost = { id: string; title: string; summary?: string; publishedAt?: string; createdAt: string };
+type LivePost = { id: string; title: string; summary?: string; image?: string; publishedAt?: string; createdAt: string };
 
 export default function Blog() {
   const root = useRef<HTMLElement>(null);
@@ -60,10 +60,20 @@ export default function Blog() {
         {livePosts.map((p) => (
           <Link key={p.id} href={`/blog/${p.id}`} className="blog-card group block">
             <TiltCard className="cursor-pointer">
-              {/* No supplied image on a drafted post — a gradient card
-                  keeps the same rhythm as the photographed ones rather
-                  than an empty grey box. */}
+              {/* A superadmin-uploaded cover image takes over here; a
+                  drafted post with none yet falls back to a gradient
+                  card that keeps the same rhythm as the photographed
+                  ones rather than an empty grey box. */}
               <div className="relative flex h-52 items-center justify-center overflow-hidden bg-gradient-to-br from-gold/25 via-obsidian to-obsidian-deep">
+                {p.image ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={p.image}
+                    alt=""
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1.2s] ease-out group-hover:scale-110"
+                    loading="lazy"
+                  />
+                ) : null}
                 <span className="absolute left-4 top-4 rounded-full bg-black/70 px-3 py-1 text-[10px] uppercase tracking-luxe text-gold backdrop-blur">
                   {lang === "ta" ? "இந்த வாரம்" : "This week"}
                 </span>

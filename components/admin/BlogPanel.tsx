@@ -11,8 +11,8 @@
  * So the primary action is Read, the destructive one is Archive, and
  * Publish is deliberately not the biggest button on the card.
  */
-import { useEffect, useState } from "react";
-import { Archive, Check, Eye, Loader2, PenLine, RefreshCw, Send } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Archive, Check, Eye, ImageIcon, Loader2, PenLine, RefreshCw, Send, Upload, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Post = Record<string, unknown> & { id: string };
@@ -22,8 +22,14 @@ export default function BlogPanel() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [editing, setEditing] = useState<Post | null>(null);
-  const [draft, setDraft] = useState({ title: "", summary: "", body: "" });
+  const [draft, setDraft] = useState({ title: "", summary: "", body: "", image: "" });
   const [note, setNote] = useState("");
+
+  /* Upload availability, and the reason when it is off — same pattern
+     as ThemePanel, since it is the same /api/media endpoint. */
+  const [uploads, setUploads] = useState<{ live: boolean; reason: string | null }>({ live: false, reason: null });
+  const [uploading, setUploading] = useState(false);
+  const fileInput = useRef<HTMLInputElement | null>(null);
 
   const load = async () => {
     try {
@@ -36,7 +42,30 @@ export default function BlogPanel() {
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    fetch("/api/media", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((m) => setUploads({ live: Boolean(m.live), reason: m.reason ?? null }))
+      .catch(() => { /* upload button just stays disabled */ });
+  }, []);
+
+  const pickFile = async (file: File) => {
+    setUploading(true); setNote("");
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("brand", "tnwla");
+      fd.append("slot", "blog");
+      const res = await fetch("/api/media", { method: "POST", body: fd });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error ?? "Upload failed");
+      setDraft((p) => ({ ...p, image: d.url }));
+    } catch (e) {
+      setNote(e instanceof Error ? e.message : "Upload failed");
+    }
+    setUploading(false);
+  };
 
   const generate = async () => {
     setBusy("gen"); setNote("");
@@ -71,7 +100,12 @@ export default function BlogPanel() {
 
   const openEditor = (p: Post) => {
     setEditing(p);
-    setDraft({ title: String(p.title ?? ""), summary: String(p.summary ?? ""), body: String(p.body ?? "") });
+    setDraft({
+      title: String(p.title ?? ""),
+      summary: String(p.summary ?? ""),
+      body: String(p.body ?? ""),
+      image: String(p.image ?? ""),
+    });
   };
 
   if (loading) {
@@ -116,11 +150,21 @@ export default function BlogPanel() {
             return (
               <article key={p.id} className="rounded-2xl border border-[var(--hairline)] bg-obsidian/60 p-5 md:p-6">
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="font-serif text-lg leading-snug text-ivory">{String(p.title)}</p>
-                    <p className="mt-1 font-sans text-[12px] text-ivory-faint">
-                      {new Date(String(p.createdAt)).toLocaleDateString("en-IN", { dateStyle: "medium" })} · {p.id}
-                    </p>
+                  <div className="flex min-w-0 gap-3">
+                    {p.image ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={String(p.image)}
+                        alt=""
+                        className="h-14 w-20 shrink-0 rounded-lg object-cover"
+                      />
+                    ) : null}
+                    <div className="min-w-0">
+                      <p className="font-serif text-lg leading-snug text-ivory">{String(p.title)}</p>
+                      <p className="mt-1 font-sans text-[12px] text-ivory-faint">
+                        {new Date(String(p.createdAt)).toLocaleDateString("en-IN", { dateStyle: "medium" })} · {p.id}
+                      </p>
+                    </div>
                   </div>
                   <span className={cn(
                     "shrink-0 rounded-full px-3 py-1 font-sans text-[10px] uppercase tracking-widest",
@@ -154,6 +198,50 @@ export default function BlogPanel() {
                       onChange={(e) => setDraft((d) => ({ ...d, body: e.target.value }))}
                       className="w-full resize-y rounded-xl border border-[var(--hairline)] bg-obsidian/70 px-4 py-3 font-sans text-[13px] leading-relaxed text-ivory focus:border-gold/60 focus:outline-none"
                     />
+
+                    {/* Cover image — once uploaded, this is the picture the
+                        blog card uses in place of the gradient placeholder. */}
+                    <div>
+                      <label className="mb-1.5 block font-sans text-[11px] uppercase tracking-widest text-ivory-faint">
+                        Cover image
+                      </label>
+                      {draft.image ? (
+                        <div className="mb-2 flex items-center gap-3 rounded-xl border border-[var(--hairline)] p-3">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={draft.image} alt="" className="h-14 w-20 rounded object-cover" />
+                          <p className="min-w-0 flex-1 truncate font-sans text-[11px] text-ivory-faint">{draft.image}</p>
+                          <button
+                            onClick={() => setDraft((d) => ({ ...d, image: "" }))}
+                            className="shrink-0 px-2 text-ivory-faint hover:text-red-400"
+                            aria-label="Remove image"
+                          >
+                            <X size={15} />
+                          </button>
+                        </div>
+                      ) : null}
+                      <input
+                        ref={fileInput}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif"
+                        className="hidden"
+                        onChange={(e) => { const file = e.target.files?.[0]; if (file) pickFile(file); }}
+                      />
+                      <button
+                        onClick={() => fileInput.current?.click()}
+                        disabled={!uploads.live || uploading}
+                        className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[var(--hairline)] font-sans text-[11px] uppercase tracking-widest text-ivory-dim transition-all hover:border-gold/60 hover:text-gold disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        {uploading
+                          ? <><Loader2 size={14} className="animate-spin" /> Uploading…</>
+                          : <><Upload size={14} /> {draft.image ? "Replace image" : "Upload an image"}</>}
+                      </button>
+                      {!uploads.live && uploads.reason && (
+                        <p className="mt-1.5 flex gap-2 font-sans text-[11px] leading-relaxed text-amber-300/90">
+                          <ImageIcon size={13} className="mt-0.5 shrink-0" /> {uploads.reason}
+                        </p>
+                      )}
+                    </div>
+
                     <div className="flex flex-wrap gap-2">
                       <button
                         onClick={() => save(p.id, draft)}

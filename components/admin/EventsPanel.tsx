@@ -16,10 +16,11 @@
  * the summary, the speaker's name and the agenda lines. Everything
  * else is picked.
  *
- * The date picker is the browser's own. A custom one would be prettier
- * and would also have to reimplement keyboard entry, locale ordering
- * and the mobile wheel — all of which the native control already does
- * correctly.
+ * The date picker is the same house DatePicker used everywhere else on
+ * the site (see components/ui/DatePicker.tsx) rather than the browser's
+ * own grey control — one calendar look across the public forms and
+ * Superadmin, instead of Superadmin alone falling back to whatever the
+ * visitor's OS happens to render.
  */
 import { useMemo, useState } from "react";
 import {
@@ -30,7 +31,13 @@ import {
   prettyDate, prettyTime, seatOptions, suggestedTopics, timeSlots, venues,
 } from "@/config/events.config";
 import type { Row } from "@/components/admin/Portal";
+import DatePicker from "@/components/ui/DatePicker";
 import { cn } from "@/lib/utils";
+
+/* Sessions are scheduled forward, so — unlike the birth-date/joining-
+   date pickers elsewhere — this one is not capped at today. It is
+   still bounded at the low end, mostly so the year list has a floor. */
+const SESSIONS_EARLIEST_ISO = "2020-01-01";
 
 const field =
   "w-full rounded-xl border border-[var(--hairline)] bg-obsidian/70 px-4 py-3 font-sans text-sm text-ivory transition-all focus:border-gold/60 focus:outline-none focus:ring-1 focus:ring-gold/30";
@@ -220,7 +227,13 @@ export default function EventsPanel({
 
             <div>
               <label className="mb-1.5 block font-sans text-[11px] uppercase tracking-widest text-ivory-faint">Date</label>
-              <input type="date" value={f.date} onChange={(e) => set("date", e.target.value)} className={field} />
+              <DatePicker
+                ariaLabel="Session date"
+                className={field}
+                value={f.date}
+                onChange={(v) => set("date", v)}
+                min={SESSIONS_EARLIEST_ISO}
+              />
               <p className="mt-1.5 font-sans text-[11px] text-ivory-faint">
                 Leave empty to publish as a proposal — it gathers interest until {INTEREST_THRESHOLD} people sign up.
               </p>
@@ -382,18 +395,21 @@ export default function EventsPanel({
                     </span>
                   )}
                   {!proposal && (
-                    <input
-                      type="date"
-                      defaultValue={String(ev.date ?? "")}
-                      onChange={(e) => patchEvent(ev.id, { date: e.target.value })}
+                    <DatePicker
+                      ariaLabel="Reschedule session"
                       className="h-11 rounded-lg border border-[var(--hairline)] bg-obsidian/70 px-3 font-sans text-[12px] text-ivory"
+                      value={String(ev.date ?? "")}
+                      onChange={(v) => patchEvent(ev.id, { date: v })}
+                      min={SESSIONS_EARLIEST_ISO}
                     />
                   )}
                   {proposal && (
-                    <input
-                      type="date"
-                      onChange={(e) => patchEvent(ev.id, { date: e.target.value, status: "scheduled" })}
+                    <DatePicker
+                      ariaLabel="Schedule proposed session"
                       className="h-11 rounded-lg border border-[var(--hairline)] bg-obsidian/70 px-3 font-sans text-[12px] text-ivory"
+                      value={String(ev.date ?? "")}
+                      onChange={(v) => patchEvent(ev.id, { date: v, status: "scheduled" })}
+                      min={SESSIONS_EARLIEST_ISO}
                     />
                   )}
 

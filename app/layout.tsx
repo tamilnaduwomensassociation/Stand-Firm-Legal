@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Cormorant_Garamond, Manrope, Noto_Sans_Tamil } from "next/font/google";
+import { Cormorant_Garamond, Great_Vibes, Manrope, Noto_Sans_Tamil } from "next/font/google";
 import "./globals.css";
 import { site } from "@/config/site.config";
 import { LangProvider } from "@/lib/i18n";
@@ -23,6 +23,15 @@ const tamil = Noto_Sans_Tamil({
   subsets: ["tamil"],
   weight: ["400", "500"],
   variable: "--font-tamil",
+  display: "swap",
+});
+/* Signature look — the membership form turns a typed name into a
+   handwritten-style signature (see components/ui/Signature.tsx). Only
+   ships the one weight the typeface has. */
+const signature = Great_Vibes({
+  subsets: ["latin"],
+  weight: ["400"],
+  variable: "--font-signature",
   display: "swap",
 });
 
@@ -88,7 +97,7 @@ const jsonLd = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${serif.variable} ${sans.variable} ${tamil.variable} light`}>
+    <html lang="en" className={`${serif.variable} ${sans.variable} ${tamil.variable} ${signature.variable} light`}>
       <body className="font-sans">
         {/* Saved appearance, inlined so the page never flashes the
             shipped colours first. Renders nothing when unset. */}

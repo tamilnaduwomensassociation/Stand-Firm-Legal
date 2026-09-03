@@ -27,6 +27,7 @@ type Post = {
   title: string;
   summary?: string;
   body: string;
+  image?: string;
   status: string;
   publishedAt?: string;
   createdAt: string;
@@ -66,12 +67,21 @@ export default async function BlogPostPage({ params }: { params: Promise<{ id: s
         <article className="mx-auto max-w-2xl px-6 pb-24">
           <Link
             href="/#blog"
-            className="mb-8 inline-flex items-center gap-2 font-sans text-[11px] uppercase tracking-widest text-gold transition-colors hover:text-gold-bright"
+            className="mb-8 flex w-fit items-center gap-2 font-sans text-[11px] uppercase tracking-widest text-gold transition-colors hover:text-gold-bright"
           >
             <ArrowLeft size={14} /> Back
           </Link>
 
-          <time className="font-sans text-xs text-ivory-faint">
+          {post.image ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={post.image}
+              alt=""
+              className="mb-8 h-64 w-full rounded-2xl object-cover md:h-80"
+            />
+          ) : null}
+
+          <time className="block font-sans text-xs text-ivory-faint">
             {new Date(date).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
           </time>
           <h1 className="mt-3 font-serif text-3xl leading-tight text-ivory md:text-4xl">

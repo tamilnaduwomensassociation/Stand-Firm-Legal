@@ -41,6 +41,7 @@ import SectionHeading from "@/components/ui/SectionHeading";
 import VerifyMembership from "@/components/sections/VerifyMembership";
 import MagneticButton from "@/components/ui/MagneticButton";
 import DatePicker from "@/components/ui/DatePicker";
+import Signature from "@/components/ui/Signature";
 import { cn } from "@/lib/utils";
 import { useLockPageScroll } from "@/lib/useLockPageScroll";
 
@@ -62,6 +63,13 @@ const EARLIEST_ISO = "1920-01-01";
    the field members are actually called and WhatsApped on). */
 const INDIAN_MOBILE_RE = /^[6-9]\d{9}$/;
 const onlyDigits = (v: string) => v.replace(/\D/g, "").slice(0, 10);
+
+/* Enrollment / registration numbers (Bar Council no., roll no., etc.)
+   are digits only, but aren't 10-digit mobile numbers — so they get
+   their own "numeric" field type rather than reusing "tel". Capped at
+   a generous 20 digits, which is far past anything a real enrollment
+   number runs to. */
+const onlyDigitsLong = (v: string) => v.replace(/\D/g, "").slice(0, 20);
 
 /* A field is invalid either because it's empty and mandatory, or —
    for a phone field specifically — because it's non-empty but not a
@@ -114,6 +122,21 @@ function FieldInput({ f, value, onChange, lang, invalid, error }: {
           className={cn(inputCls, "[color-scheme:light]", ring)}
           value={value}
           onChange={(e) => onChange(onlyDigits(e.target.value))}
+        />
+      ) : f.type === "numeric" ? (
+        /* Digits only, and the numeric keypad on a phone rather than
+           the full alphabet — type="tel" is what actually reaches the
+           numeric-only pad on both iOS and Android; type="number"
+           on mobile still shows dashes/+/e and scroll-wheel arrows on
+           desktop, which a registration number has no use for. */
+        <input
+          type="tel"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          autoComplete="off"
+          className={cn(inputCls, "[color-scheme:light]", ring)}
+          value={value}
+          onChange={(e) => onChange(onlyDigitsLong(e.target.value))}
         />
       ) : (
         <input
@@ -210,6 +233,26 @@ export default function MembershipRegistration({ embedded = false }: { embedded?
   const [paidVia, setPaidVia] = useState<"razorpay" | "upi" | "">("");
   const [gatewayBusy, setGatewayBusy] = useState(false);
 
+  /* Desktop has no UPI app to hand the payment to, so "Pay with Google
+     Pay" / "Any other UPI app" can't launch anything there — but the
+     button must still DO something rather than sit dead. On desktop it
+     scrolls to the QR and pulses it, and offers a one-click copy of the
+     same payment link so it can be pasted into WhatsApp/email to open
+     on a phone instead. */
+  const qrCardRef = useRef<HTMLDivElement>(null);
+  const [qrPulse, setQrPulse] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+  const focusQr = () => {
+    qrCardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    setQrPulse(true);
+    window.setTimeout(() => setQrPulse(false), 1600);
+  };
+  /* The Razorpay gateway not being configured used to surface as a raw
+     window.alert() — jarring, and easy to mistake for the whole payment
+     step being broken. Routed through the same inline banner style as
+     the rest of the form instead. */
+  const [gatewayNotice, setGatewayNotice] = useState("");
+
   /* Wizard = base steps + uploads + payment */
   const steps = useMemo(() => {
     if (!cat) return [];
@@ -291,8 +334,29 @@ export default function MembershipRegistration({ embedded = false }: { embedded?
   };
   const anyUpiLink = upiLinks(upiRequest).any;
 
-  const payWithGooglePay = () => openGooglePay(upiRequest);
-  const payWithAnyUpiApp = () => { window.location.href = anyUpiLink; };
+  /* On a phone this hands off to Google Pay (falling back to whatever
+     UPI app is installed). On a desktop there is nothing to hand off
+     to — openGooglePay() already returns false there and does nothing
+     — so the desktop branch does something else useful instead of
+     leaving the tap looking ignored: it draws attention to the QR
+     that already carries the same amount and reference. */
+  const payWithGooglePay = () => {
+    if (plat === "desktop") { focusQr(); return; }
+    openGooglePay(upiRequest);
+  };
+  const payWithAnyUpiApp = () => {
+    if (plat === "desktop") { focusQr(); return; }
+    window.location.href = anyUpiLink;
+  };
+  const copyPaymentLink = async () => {
+    try {
+      await navigator.clipboard.writeText(anyUpiLink);
+      setLinkCopied(true);
+      window.setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      focusQr();
+    }
+  };
 
   const refOk = txn.trim().replace(/\s/g, "").length >= 6;
 
@@ -349,6 +413,7 @@ export default function MembershipRegistration({ embedded = false }: { embedded?
   const startGatewayPayment = async () => {
     if (!cat || gatewayBusy) return;
     setGatewayBusy(true);
+    setGatewayNotice("");
     try {
       const res = await fetch("/api/membership-payment/order", {
         method: "POST",
@@ -363,21 +428,23 @@ export default function MembershipRegistration({ embedded = false }: { embedded?
       };
 
       if (!live || !razorpayOrder) {
-        window.alert(
+        setGatewayNotice(
           lang === "ta"
             ? "இணைய கட்டண நுழைவாயில் தற்போது இயக்கப்படவில்லை. மேலே UPI மூலம் செலுத்தி, குறிப்பு எண்ணை கீழே உள்ளிடவும்."
             : "The online payment gateway is not active right now. Please pay via UPI above, then enter the reference below."
         );
+        focusQr();
         return;
       }
 
       const scriptOk = await loadRazorpay();
       if (!scriptOk || !window.Razorpay) {
-        window.alert(
+        setGatewayNotice(
           lang === "ta"
             ? "கட்டண சாளரத்தை ஏற்ற முடியவில்லை. UPI மூலம் செலுத்தவும்."
             : "The payment window could not load. Please pay via UPI instead."
         );
+        focusQr();
         return;
       }
 
@@ -704,7 +771,13 @@ export default function MembershipRegistration({ embedded = false }: { embedded?
               </div>
 
               <div className="grid gap-5 sm:grid-cols-2">
-                <div className="rounded-xl glass gold-border p-6 text-center">
+                <div
+                  ref={qrCardRef}
+                  className={cn(
+                    "rounded-xl glass gold-border p-6 text-center transition-shadow duration-300",
+                    qrPulse && "ring-2 ring-gold shadow-[0_0_0_6px_rgba(201,162,75,0.18)]"
+                  )}
+                >
                   <p className="mb-3 font-sans text-xs uppercase tracking-widest text-ivory-dim">{tr("scanToPay")}</p>
                   {/*
                     This waited on a file — /media/upi-qr.png — that was
@@ -725,23 +798,40 @@ export default function MembershipRegistration({ embedded = false }: { embedded?
                   </div>
                   <p className="mt-3 font-sans text-xs text-ivory/90">{paymentConfig.upiId}</p>
                   <p className="font-sans text-[11px] text-ivory-faint">{tr("payTo")} {paymentConfig.phone}</p>
+
+                  {/* Desktop-only: nothing here can launch a UPI app, but
+                      the same link the QR encodes can still be copied and
+                      sent to a phone — so a desktop visitor always has a
+                      real, working next step, not just an explanation. */}
+                  {plat === "desktop" && (
+                    <button
+                      onClick={copyPaymentLink}
+                      className="mt-4 inline-flex items-center gap-2 rounded-full border border-[var(--hairline)] px-4 py-2 font-sans text-[11px] uppercase tracking-widest text-ivory-dim transition-all hover:border-gold/50 hover:text-gold"
+                    >
+                      {linkCopied ? <Check size={13} className="text-gold" /> : <Smartphone size={13} />}
+                      {linkCopied
+                        ? (lang === "ta" ? "நகலெடுக்கப்பட்டது" : "Copied")
+                        : (lang === "ta" ? "பணம் செலுத்தும் இணைப்பை நகலெடு" : "Copy payment link for your phone")}
+                    </button>
+                  )}
                 </div>
 
                 <div className="flex flex-col justify-center gap-3">
                   {/* Amount and payee travel with the link, so the
-                      applicant only has to enter their UPI PIN. */}
+                      applicant only has to enter their UPI PIN. On
+                      desktop these stay clickable — see payWithGooglePay
+                      / payWithAnyUpiApp — they draw attention to the QR
+                      instead of doing nothing. */}
                   <button
                     onClick={payWithGooglePay}
-                    disabled={plat === "desktop"}
-                    className="flex items-center justify-center gap-2.5 rounded-full bg-gold px-5 py-3.5 font-sans text-xs uppercase tracking-widest text-black transition-all hover:bg-gold-bright disabled:cursor-not-allowed disabled:opacity-40"
+                    className="flex items-center justify-center gap-2.5 rounded-full bg-gold px-5 py-3.5 font-sans text-xs uppercase tracking-widest text-black transition-all hover:bg-gold-bright"
                   >
                     <Wallet size={15} />
                     {lang === "ta" ? `கூகுள் பே — ₹${cat.joiningFee}` : `Pay ₹${cat.joiningFee} with Google Pay`}
                   </button>
                   <button
                     onClick={payWithAnyUpiApp}
-                    disabled={plat === "desktop"}
-                    className="flex items-center justify-center gap-2 rounded-full gold-border px-5 py-3 font-sans text-xs uppercase tracking-widest text-gold transition-all hover:bg-gold hover:text-black disabled:cursor-not-allowed disabled:opacity-40"
+                    className="flex items-center justify-center gap-2 rounded-full gold-border px-5 py-3 font-sans text-xs uppercase tracking-widest text-gold transition-all hover:bg-gold hover:text-black"
                   >
                     <Smartphone size={14} /> {lang === "ta" ? "வேறு UPI செயலி" : "Any other UPI app"}
                   </button>
@@ -756,10 +846,15 @@ export default function MembershipRegistration({ embedded = false }: { embedded?
                   <p className="font-sans text-[11px] leading-relaxed text-ivory-faint">
                     {plat === "desktop"
                       ? lang === "ta"
-                        ? "கணினியில் UPI செயலி திறக்காது — தொலைபேசியில் QR ஐ ஸ்கேன் செய்யவும்."
-                        : "A computer has no UPI app to open — scan the QR with your phone instead."
+                        ? "கணினியில் UPI செயலி நேரடியாக திறக்காது — QR ஐ தொலைபேசியில் ஸ்கேன் செய்யவும் அல்லது இணைப்பை நகலெடுத்து தொலைபேசிக்கு அனுப்பவும்."
+                        : "A computer can't open a UPI app directly — scan the QR with your phone, or copy the link above and send it to your phone."
                       : lang === "ta" ? paymentConfig.renewalNoteTa : paymentConfig.renewalNote}
                   </p>
+                  {gatewayNotice && (
+                    <p className="rounded-lg border border-gold/35 bg-gold-faint px-4 py-3 font-sans text-[11px] leading-relaxed text-ivory/90">
+                      {gatewayNotice}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -846,6 +941,16 @@ export default function MembershipRegistration({ embedded = false }: { embedded?
               <div className="mt-5 flex items-start gap-3 rounded-xl border border-gold/35 bg-gold-faint p-5">
                 <PackageCheck size={20} className="mt-0.5 shrink-0 text-gold" />
                 <p className="font-sans text-sm leading-relaxed text-ivory/90">{tr("deliveryNote")}</p>
+              </div>
+
+              {/* Signature — the name typed on step 1, re-rendered in a
+                  handwritten face, so the applicant sees exactly what
+                  will stand in for their signature on the printed form. */}
+              <div className="mt-5 rounded-xl border border-[var(--hairline)] bg-obsidian-soft/40 p-5">
+                <p className="mb-2 font-sans text-xs uppercase tracking-widest text-ivory-dim">{tr("signature")}</p>
+                <div className="flex min-h-[52px] items-end border-b border-[var(--hairline)] pb-2">
+                  <Signature name={vals.name ?? ""} lang={lang} className="text-4xl" />
+                </div>
               </div>
             </>
           )}
@@ -1005,7 +1110,10 @@ export default function MembershipRegistration({ embedded = false }: { embedded?
 
                 <div className="mt-10 flex items-end justify-between text-[11px]">
                   <p>{new Date().toLocaleDateString("en-IN")} · standfirmlegal — Parrys, Chennai</p>
-                  <p className="border-t border-black/50 pt-1">{tr("signature")}</p>
+                  <div className="text-right">
+                    <Signature name={vals.name ?? ""} lang={lang} dark className="block text-3xl" />
+                    <p className="mt-1 border-t border-black/50 pt-1">{tr("signature")}</p>
+                  </div>
                 </div>
               </div>
             </div>
