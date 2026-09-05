@@ -240,6 +240,7 @@ export default function MembershipRegistration({ embedded = false }: { embedded?
      same payment link so it can be pasted into WhatsApp/email to open
      on a phone instead. */
   const qrCardRef = useRef<HTMLDivElement>(null);
+  const sigInputRef = useRef<HTMLInputElement>(null);
   const [qrPulse, setQrPulse] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const focusQr = () => {
@@ -332,20 +333,22 @@ export default function MembershipRegistration({ embedded = false }: { embedded?
        reports a reference, which is after this link has been used. The
        note above already identifies what the payment is for. */
   };
-  const anyUpiLink = upiLinks(upiRequest).any;
+  const upiDeepLinks = upiLinks(upiRequest);
+  const anyUpiLink = upiDeepLinks.any;
 
-  /* On a phone this hands off to Google Pay (falling back to whatever
-     UPI app is installed). On a desktop there is nothing to hand off
-     to — openGooglePay() already returns false there and does nothing
-     — so the desktop branch does something else useful instead of
-     leaving the tap looking ignored: it draws attention to the QR
-     that already carries the same amount and reference. */
+  /* Every tap is a real hand-off to the payee — grace2jeni-8@okicici —
+     on every platform. On Android/iOS this opens Google Pay itself
+     (falling back to whatever UPI app is installed, via openGooglePay's
+     own timed retry). On desktop there is no OS-level app to catch the
+     scheme, but the browser still gets the same upi://pay link carrying
+     the payee, amount and note, so the attempt is genuine rather than a
+     no-op — the QR/copy-link stay alongside as the practical fallback
+     for a desktop visitor to finish on their phone. */
   const payWithGooglePay = () => {
-    if (plat === "desktop") { focusQr(); return; }
+    if (plat === "desktop") { window.location.href = anyUpiLink; return; }
     openGooglePay(upiRequest);
   };
   const payWithAnyUpiApp = () => {
-    if (plat === "desktop") { focusQr(); return; }
     window.location.href = anyUpiLink;
   };
   const copyPaymentLink = async () => {
@@ -819,9 +822,9 @@ export default function MembershipRegistration({ embedded = false }: { embedded?
                 <div className="flex flex-col justify-center gap-3">
                   {/* Amount and payee travel with the link, so the
                       applicant only has to enter their UPI PIN. On
-                      desktop these stay clickable — see payWithGooglePay
-                      / payWithAnyUpiApp — they draw attention to the QR
-                      instead of doing nothing. */}
+                      desktop the click still fires the same upi://pay
+                      link — see payWithGooglePay / payWithAnyUpiApp —
+                      rather than merely pointing at the QR. */}
                   <button
                     onClick={payWithGooglePay}
                     className="flex items-center justify-center gap-2.5 rounded-full bg-gold px-5 py-3.5 font-sans text-xs uppercase tracking-widest text-black transition-all hover:bg-gold-bright"
@@ -943,13 +946,29 @@ export default function MembershipRegistration({ embedded = false }: { embedded?
                 <p className="font-sans text-sm leading-relaxed text-ivory/90">{tr("deliveryNote")}</p>
               </div>
 
-              {/* Signature — the name typed on step 1, re-rendered in a
-                  handwritten face, so the applicant sees exactly what
-                  will stand in for their signature on the printed form. */}
+              {/* Signature — defaults to the name typed on step 1, but the
+                  field is live: click into it and whatever is typed is
+                  what gets rendered in the handwritten face, both here
+                  and on the printed form below. */}
               <div className="mt-5 rounded-xl border border-[var(--hairline)] bg-obsidian-soft/40 p-5">
                 <p className="mb-2 font-sans text-xs uppercase tracking-widest text-ivory-dim">{tr("signature")}</p>
-                <div className="flex min-h-[52px] items-end border-b border-[var(--hairline)] pb-2">
-                  <Signature name={vals.name ?? ""} lang={lang} className="text-4xl" />
+                <div
+                  className="flex min-h-[52px] cursor-text items-end border-b border-[var(--hairline)] pb-2"
+                  onClick={() => sigInputRef.current?.focus()}
+                >
+                  <input
+                    ref={sigInputRef}
+                    type="text"
+                    value={vals.signature ?? vals.name ?? ""}
+                    onChange={(e) => setVals((p) => ({ ...p, signature: e.target.value }))}
+                    placeholder={lang === "ta" ? "இங்கே தட்டச்சு செய்து கையொப்பமிடவும்" : "Type here to sign"}
+                    className={cn(
+                      "w-full min-w-0 bg-transparent leading-none outline-none placeholder:font-sans placeholder:text-xs placeholder:italic placeholder:text-ivory-faint",
+                      (vals.signature ?? vals.name ?? "").trim()
+                        ? "font-signature text-4xl text-gold-bright"
+                        : "font-sans text-xs"
+                    )}
+                  />
                 </div>
               </div>
             </>
@@ -1111,7 +1130,7 @@ export default function MembershipRegistration({ embedded = false }: { embedded?
                 <div className="mt-10 flex items-end justify-between text-[11px]">
                   <p>{new Date().toLocaleDateString("en-IN")} · standfirmlegal — Parrys, Chennai</p>
                   <div className="text-right">
-                    <Signature name={vals.name ?? ""} lang={lang} dark className="block text-3xl" />
+                    <Signature name={vals.signature ?? vals.name ?? ""} lang={lang} dark className="block text-3xl" />
                     <p className="mt-1 border-t border-black/50 pt-1">{tr("signature")}</p>
                   </div>
                 </div>
