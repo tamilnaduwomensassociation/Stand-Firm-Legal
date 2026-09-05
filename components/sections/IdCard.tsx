@@ -34,7 +34,7 @@ import { ID_CARD_FEE, toSerial } from "@/config/membership.config";
 import { loadRazorpay } from "@/lib/loadRazorpay";
 
 const inputCls =
-  "w-full rounded-xl bg-obsidian-soft/60 border border-[var(--hairline)] px-4 py-3 font-sans text-sm text-ivory placeholder:text-ivory-faint focus:border-gold/60 focus:outline-none focus:ring-1 focus:ring-gold/30 transition-all";
+  "w-full rounded-xl bg-obsidian-soft/60 border border-[var(--hairline)] px-4 py-2.5 font-sans text-xs text-ivory placeholder:text-ivory-faint focus:border-gold/60 focus:outline-none focus:ring-1 focus:ring-gold/30 transition-all";
 
 const BLOOD_GROUPS = ["A+ve", "A-ve", "B+ve", "B-ve", "AB+ve", "AB-ve", "O+ve", "O-ve"];
 
@@ -449,28 +449,30 @@ export default function IdCardSection({
                     It sits inside the bordered input but cannot be selected,
                     edited or backspaced away; only the serial after it is
                     ever typed or stored as state. */}
-                <label className="block">
-                  <span className="mb-1.5 block font-sans text-[11px] uppercase tracking-widest text-ivory-dim">
-                    {lang === "ta" ? "உறுப்பினர் எண்" : "Membership No."}
-                  </span>
-                  <div className="flex items-stretch overflow-hidden rounded-xl bg-obsidian-soft/60 border border-[var(--hairline)] transition-all focus-within:border-gold/60 focus-within:ring-1 focus-within:ring-gold/30">
-                    <input
-                      value={memberPrefix}
-                      onChange={(e) => setMemberPrefix(e.target.value)}
-                      aria-label="Membership number prefix"
-                      placeholder="TNWLA-M"
-                      className="w-24 shrink-0 border-r border-[var(--hairline)] bg-obsidian/50 px-4 py-3 font-sans text-sm text-gold placeholder:text-gold/50 focus:outline-none"
-                    />
-                    <input
-                      value={memberSerial}
-                      onChange={(e) => setMemberSerial(e.target.value.replace(/[^0-9A-Za-z-]/g, ""))}
-                      inputMode="numeric"
-                      aria-label={`Membership number, after ${memberPrefix}`}
-                      placeholder="57"
-                      className="w-full bg-transparent px-4 py-3 font-sans text-sm text-ivory placeholder:text-ivory-faint focus:outline-none"
-                    />
-                  </div>
-                </label>
+                <div className="sm:col-span-2">
+                  <label className="block">
+                    <span className="mb-1.5 block font-sans text-[11px] uppercase tracking-widest text-ivory-dim">
+                      {lang === "ta" ? "உறுப்பினர் எண்" : "Membership No."}
+                    </span>
+                    <div className="flex items-stretch overflow-hidden rounded-xl bg-obsidian-soft/60 border border-[var(--hairline)] transition-all focus-within:border-gold/60 focus-within:ring-1 focus-within:ring-gold/30">
+                      <input
+                        value={memberPrefix}
+                        onChange={(e) => setMemberPrefix(e.target.value)}
+                        aria-label="Membership number prefix"
+                        placeholder="TNWLA-M"
+                        className="w-24 shrink-0 border-r border-[var(--hairline)] bg-obsidian/50 px-4 py-2.5 font-sans text-xs text-gold placeholder:text-gold/50 focus:outline-none"
+                      />
+                      <input
+                        value={memberSerial}
+                        onChange={(e) => setMemberSerial(e.target.value.replace(/[^0-9A-Za-z-]/g, ""))}
+                        inputMode="numeric"
+                        aria-label={`Membership number, after ${memberPrefix}`}
+                        placeholder="57"
+                        className="w-full bg-transparent px-4 py-2.5 font-sans text-xs text-ivory placeholder:text-ivory-faint focus:outline-none"
+                      />
+                    </div>
+                  </label>
+                </div>
                 <label className="block">
                   <span className="mb-1.5 block font-sans text-[11px] uppercase tracking-widest text-ivory-dim">
                     {lang === "ta" ? "பதிவு எண்" : "Enrollment No."}
@@ -485,14 +487,14 @@ export default function IdCardSection({
                       onChange={(e) => setEnrolNo(e.target.value)}
                       placeholder="1080"
                       aria-label="Enrollment number"
-                      className="w-full min-w-0 bg-transparent px-4 py-3 font-sans text-sm text-ivory placeholder:text-ivory-faint focus:outline-none"
+                      className="w-full min-w-0 bg-transparent px-4 py-2.5 font-sans text-xs text-ivory placeholder:text-ivory-faint focus:outline-none"
                     />
-                    <span className="flex items-center px-1 font-sans text-sm text-ivory-faint">/</span>
+                    <span className="flex items-center px-1 font-sans text-xs text-ivory-faint">/</span>
                     <select
                       value={enrolYear}
                       onChange={(e) => setEnrolYear(e.target.value)}
                       aria-label="Enrollment year"
-                      className="shrink-0 border-l border-[var(--hairline)] bg-obsidian/50 px-3 py-3 font-sans text-sm text-gold focus:outline-none"
+                      className="shrink-0 border-l border-[var(--hairline)] bg-obsidian/50 px-3 py-2.5 font-sans text-xs text-gold focus:outline-none"
                     >
                       {ENROL_YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
                     </select>
@@ -532,8 +534,12 @@ export default function IdCardSection({
                     <textarea className={cn(inputCls, "min-h-[74px] resize-none")} value={data.address} onChange={(e) => set("address", e.target.value)} />
                   </label>
                 </div>
-                <Field data={data} set={set} k="phone" label={lang === "ta" ? "தொலைபேசி" : "Phone"} />
-                <Field data={data} set={set} k="email" label={lang === "ta" ? "மின்னஞ்சல்" : "Email"} />
+                <div className="sm:col-span-2">
+                  <Field data={data} set={set} k="phone" label={lang === "ta" ? "தொலைபேசி" : "Phone"} />
+                </div>
+                <div className="sm:col-span-2">
+                  <Field data={data} set={set} k="email" label={lang === "ta" ? "மின்னஞ்சல்" : "Email"} />
+                </div>
                 <div className="sm:col-span-2">
                   <Field data={data} set={set} k="verifyUrl" label={lang === "ta" ? "QR சரிபார்ப்பு இணைப்பு" : "QR verification link"} />
                 </div>

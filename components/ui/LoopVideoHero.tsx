@@ -139,13 +139,13 @@ export default function LoopVideoHero({
         />
       )}
 
-      <div className="absolute inset-0 bg-black" style={{ opacity: shade }} aria-hidden />
+      <div className="absolute inset-0 bg-obsidian-deep" style={{ opacity: shade }} aria-hidden />
       <div className="vignette absolute inset-0 opacity-60" aria-hidden />
 
       {children ? (
         <>
           <div
-            className="pointer-events-none absolute inset-x-0 bottom-0 z-[9] h-2/5 bg-gradient-to-t from-black/80 via-black/40 to-transparent"
+            className="pointer-events-none absolute inset-x-0 bottom-0 z-[9] h-2/5 bg-gradient-to-t from-obsidian-deep/80 via-obsidian-deep/40 to-transparent"
             aria-hidden
           />
           <div className="relative z-10 flex h-full flex-col items-center justify-end px-6 pb-28 text-center md:pb-32">

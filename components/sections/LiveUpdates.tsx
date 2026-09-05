@@ -67,6 +67,20 @@ function UpdateCard({ u, lang }: { u: Update; lang: string }) {
 
   const go = (delta: number) => setIdx((i) => (i + media.length + delta) % media.length);
 
+  /* Auto-advance every 5 seconds, same as a typical photo carousel.
+     Paused while the current slide is a video — the video has its own
+     controls and shouldn't be yanked away mid-playback — and reset
+     whenever the visitor manually changes slide (idx in the deps) so
+     the next auto-advance is always a full 5s after the last change,
+     manual or automatic. */
+  useEffect(() => {
+    if (!multi) return;
+    if (current?.kind === "video") return;
+    const t = setInterval(() => go(1), 5000);
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [multi, idx, current?.kind, media.length]);
+
   return (
     <article className="overflow-hidden rounded-2xl glass gold-border">
       {media.length > 0 ? (

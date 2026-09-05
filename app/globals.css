@@ -14,10 +14,10 @@
      instead of gray. Stand Firm, Jeni and Harmony are pinned back to
      the original neutral values below (.stand-firm-theme, .jeni-theme,
      .harmony-theme) — this re-tint is TNWLA's alone. */
-  --c-bg: 2 9 20;
-  --c-bg-deep: 1 5 10;
-  --c-bg-soft: 3 16 34;
-  --c-card: 3 19 40;
+  --c-bg: 1 25 55;
+  --c-bg-deep: 1 19 41;
+  --c-bg-soft: 1 31 70;
+  --c-card: 1 37 82;
   --c-text: 243 238 227;
   --c-text-dim: 185 179 164;
   --c-text-faint: 138 133 122;
@@ -50,9 +50,9 @@ html.light {
 
 /* Sections that sit on photography stay cinematic-dark in BOTH themes */
 .force-dark {
-  --c-bg: 2 9 20;
-  --c-bg-deep: 1 5 10;
-  --c-card: 3 19 40;
+  --c-bg: 1 25 55;
+  --c-bg-deep: 1 19 41;
+  --c-card: 1 37 82;
   --c-text: 243 238 227;
   --c-text-dim: 185 179 164;
   --c-text-faint: 158 153 142;
@@ -180,9 +180,18 @@ body {
   position: absolute;
   inset: 0;
   pointer-events: none;
+  /* Was a hardcoded neutral rgba(5,5,6,...) — the exact reason hero-
+     style sections (About, Hero, AssociationFilm, CaseStudies, Stats,
+     the ID card preview, LoopVideoHero) still read as plain black no
+     matter what --c-bg-deep was re-tinted to: this overlay ignored the
+     variable entirely and painted flat charcoal over everything else.
+     Reading rgb(var(--c-bg-deep) / alpha) instead means it darkens
+     toward each brand's own deep tone — navy for TNWLA, and exactly
+     the same 5 6 6 neutral as before for Stand Firm/Jeni/Harmony,
+     since those brands already pin --c-bg-deep back to that value. */
   background:
-    radial-gradient(ellipse at center, transparent 45%, rgba(5, 5, 6, 0.55) 100%),
-    linear-gradient(to bottom, rgba(5, 5, 6, 0.55), transparent 30%, transparent 65%, rgba(5, 5, 6, 0.9));
+    radial-gradient(ellipse at center, transparent 45%, rgb(var(--c-bg-deep) / 0.55) 100%),
+    linear-gradient(to bottom, rgb(var(--c-bg-deep) / 0.55), transparent 30%, transparent 65%, rgb(var(--c-bg-deep) / 0.9));
 }
 
 .ripple-ink {
@@ -327,7 +336,7 @@ body {
    explicitly when it has no saved override of its own (see
    lib/theme.ts), which is exactly what already happens today. */
 :root {
-  --type-scale: 1.1;
+  --type-scale: 1.15;
   --radius-scale: 1;
 }
 
