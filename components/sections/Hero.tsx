@@ -153,7 +153,7 @@ export default function Hero() {
         style={{ backgroundImage: "url(/media/stills/hero-freeze.jpg)" }}
         aria-hidden
       />
-      <div className="hero-shade absolute inset-0 bg-black/45 transition-opacity" />
+      <div className="hero-shade absolute inset-0 bg-obsidian-deep/45 transition-opacity" />
       <div className="vignette absolute inset-0" />
       <Particles density={45} />
 

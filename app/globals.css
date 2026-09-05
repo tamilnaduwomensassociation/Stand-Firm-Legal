@@ -7,10 +7,17 @@
    ============================================================ */
 
 :root {
-  --c-bg: 10 10 11;
-  --c-bg-deep: 5 5 6;
-  --c-bg-soft: 17 17 19;
-  --c-card: 20 20 22;
+  /* Navy blue, not neutral black — sampled from the association's own
+     reference blue tone. --c-bg-deep/--c-bg/--c-bg-soft/--c-card keep
+     the exact same relative brightness steps the old neutral values
+     had (deep < bg < soft < card), just re-tinted toward that navy
+     instead of gray. Stand Firm, Jeni and Harmony are pinned back to
+     the original neutral values below (.stand-firm-theme, .jeni-theme,
+     .harmony-theme) — this re-tint is TNWLA's alone. */
+  --c-bg: 2 9 20;
+  --c-bg-deep: 1 5 10;
+  --c-bg-soft: 3 16 34;
+  --c-card: 3 19 40;
   --c-text: 243 238 227;
   --c-text-dim: 185 179 164;
   --c-text-faint: 138 133 122;
@@ -43,15 +50,47 @@ html.light {
 
 /* Sections that sit on photography stay cinematic-dark in BOTH themes */
 .force-dark {
-  --c-bg: 10 10 11;
-  --c-bg-deep: 5 5 6;
-  --c-card: 20 20 22;
+  --c-bg: 2 9 20;
+  --c-bg-deep: 1 5 10;
+  --c-card: 3 19 40;
   --c-text: 243 238 227;
   --c-text-dim: 185 179 164;
   --c-text-faint: 158 153 142;
   --glass-bg: rgba(255, 255, 255, 0.05);
   --glass-border: rgba(255, 255, 255, 0.1);
   --hairline: rgba(255, 255, 255, 0.1);
+}
+
+/* Stand Firm, Jeni and Harmony all share this stylesheet with TNWLA,
+   so the TNWLA-only re-tint above (and its .force-dark hero variant)
+   would otherwise leak into their pages too. --c-bg and --c-card are
+   already protected automatically for these three brands by their own
+   <ThemeStyle isolate /> (see components/providers/ThemeStyle.tsx —
+   it always restates its own shipped values). --c-bg-deep and
+   --c-bg-soft are NOT part of that theme system, and neither is
+   .force-dark's own copy of these variables, so both are pinned back
+   to the original neutral values here, explicitly, for each brand. */
+.stand-firm-theme {
+  --c-bg: 10 10 11;
+  --c-bg-deep: 5 5 6;
+  --c-bg-soft: 17 17 19;
+  --c-card: 20 20 22;
+}
+.stand-firm-theme .force-dark {
+  --c-bg: 10 10 11;
+  --c-bg-deep: 5 5 6;
+  --c-card: 20 20 22;
+}
+.jeni-theme {
+  --c-bg: 10 10 11;
+  --c-bg-deep: 5 5 6;
+  --c-bg-soft: 17 17 19;
+  --c-card: 20 20 22;
+}
+.jeni-theme .force-dark {
+  --c-bg: 10 10 11;
+  --c-bg-deep: 5 5 6;
+  --c-card: 20 20 22;
 }
 
 html {
@@ -247,6 +286,17 @@ body {
   --on-gold-rgb: 255 255 255;
 }
 
+/* Harmony's own hero (HarmonyHome.tsx, via LoopVideoHero/ScrubHero)
+   uses .force-dark for its cinematic film section, same as everyone
+   else's — pinned back to the original neutral near-black here so
+   TNWLA's navy re-tint of .force-dark (see above) does not leak into
+   Harmony's otherwise all-white/lavender brand. */
+.harmony-theme .force-dark {
+  --c-bg: 10 10 11;
+  --c-bg-deep: 5 5 6;
+  --c-card: 20 20 22;
+}
+
 /* `.gold-text` is a hand-tuned decorative gradient, not variable-driven
    (see the comment on it above) — so it needs its own override here
    rather than picking up --gold-rgb automatically. Violet → magenta →
@@ -267,9 +317,17 @@ body {
 
    `--type-scale` and `--radius-scale` default to 1 rather than being
    unset, because `calc(1rem * var(--type-scale))` with no value is an
-   invalid declaration and would drop the font-size entirely. */
+   invalid declaration and would drop the font-size entirely.
+
+   TNWLA's own default is nudged to 1.05 (a little bigger, not a
+   redesign) — the same lever Superadmin's own Theme panel uses, so
+   the type ramp scales together rather than some text growing and
+   some staying put. Stand Firm, Jeni and Harmony are unaffected: each
+   brand's own <ThemeStyle isolate /> always re-states --type-scale: 1
+   explicitly when it has no saved override of its own (see
+   lib/theme.ts), which is exactly what already happens today. */
 :root {
-  --type-scale: 1;
+  --type-scale: 1.05;
   --radius-scale: 1;
 }
 

@@ -45,7 +45,7 @@ export default function About() {
   return (
     <section id="about" ref={root} className="force-dark relative overflow-hidden">
       <div className="about-bg absolute inset-0 bg-cover bg-center will-change-transform" style={{ backgroundImage: "url(/media/stills/scene-2.jpg)" }} aria-hidden />
-      <div className="absolute inset-0 bg-black/80" />
+      <div className="absolute inset-0 bg-obsidian-deep/80" />
       <div className="vignette absolute inset-0" />
 
       <div className="relative section-pad mx-auto max-w-6xl">

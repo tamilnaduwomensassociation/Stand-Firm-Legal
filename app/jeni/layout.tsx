@@ -22,8 +22,15 @@ export default function JeniLayout({ children }: { children: React.ReactNode }) 
   return (
     <>
       <ThemeStyle brand="jeni" isolate />
-      {JENI_LIVE && <JeniNavbar />}
-      {children}
+      {/* Pins this brand's dark-palette CSS variables to their original
+          neutral values — see ".jeni-theme" in app/globals.css. Needed
+          because TNWLA's own re-tint of those same variables (its
+          "black to navy blue" change) would otherwise inherit straight
+          through into this brand's pages too. */}
+      <div className="jeni-theme">
+        {JENI_LIVE && <JeniNavbar />}
+        {children}
+      </div>
     </>
   );
 }

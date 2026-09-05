@@ -427,184 +427,125 @@ export default function IdCardSection({
 
       {/* ---------------- WORKBENCH ---------------- */}
       <section className={embedded ? "bg-transparent" : "bg-obsidian section-pad"}>
-        <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[1fr_520px]">
-          {/* ---- form ---- */}
-          <div className="rounded-2xl glass gold-border p-7">
-            <p className="kicker !tracking-[0.25em] mb-6">{lang === "ta" ? "அட்டை விவரங்கள்" : "Card Details"}</p>
+        <div className="mx-auto max-w-6xl">
+          <p className="kicker !tracking-[0.25em] mb-6">{lang === "ta" ? "அட்டை விவரங்கள்" : "Card Details"}</p>
 
-            <div className="grid gap-5 sm:grid-cols-2">
-              <Field data={data} set={set} k="memberName" label={lang === "ta" ? "உறுப்பினர் பெயர்" : "Member Name"} />
-              {/* The prefix is PART OF THE FIELD, not part of the value —
-                  same pattern as the public "Verify Your Membership" box.
-                  It sits inside the bordered input but cannot be selected,
-                  edited or backspaced away; only the serial after it is
-                  ever typed or stored as state. */}
-              <label className="block">
-                <span className="mb-1.5 block font-sans text-[11px] uppercase tracking-widest text-ivory-dim">
-                  {lang === "ta" ? "உறுப்பினர் எண்" : "Membership No."}
-                </span>
-                <div className="flex items-stretch overflow-hidden rounded-xl bg-obsidian-soft/60 border border-[var(--hairline)] transition-all focus-within:border-gold/60 focus-within:ring-1 focus-within:ring-gold/30">
-                  <input
-                    value={memberPrefix}
-                    onChange={(e) => setMemberPrefix(e.target.value)}
-                    aria-label="Membership number prefix"
-                    placeholder="TNWLA-M"
-                    className="w-24 shrink-0 border-r border-[var(--hairline)] bg-obsidian/50 px-4 py-3 font-sans text-sm text-gold placeholder:text-gold/50 focus:outline-none"
-                  />
-                  <input
-                    value={memberSerial}
-                    onChange={(e) => setMemberSerial(e.target.value.replace(/[^0-9A-Za-z-]/g, ""))}
-                    inputMode="numeric"
-                    aria-label={`Membership number, after ${memberPrefix}`}
-                    placeholder="57"
-                    className="w-full bg-transparent px-4 py-3 font-sans text-sm text-ivory placeholder:text-ivory-faint focus:outline-none"
-                  />
-                </div>
-              </label>
-              <label className="block">
-                <span className="mb-1.5 block font-sans text-[11px] uppercase tracking-widest text-ivory-dim">
-                  {lang === "ta" ? "பதிவு எண்" : "Enrollment No."}
-                </span>
-                {/* Same bordered-pill shape as Membership No. above — one
-                    unified box, not three separately-bordered controls —
-                    so the two rows line up visually instead of one looking
-                    like a single field and the other like three. */}
-                <div className="flex items-stretch overflow-hidden rounded-xl bg-obsidian-soft/60 border border-[var(--hairline)] transition-all focus-within:border-gold/60 focus-within:ring-1 focus-within:ring-gold/30">
-                  <input
-                    value={enrolNo}
-                    onChange={(e) => setEnrolNo(e.target.value)}
-                    placeholder="1080"
-                    aria-label="Enrollment number"
-                    className="w-full min-w-0 bg-transparent px-4 py-3 font-sans text-sm text-ivory placeholder:text-ivory-faint focus:outline-none"
-                  />
-                  <span className="flex items-center px-1 font-sans text-sm text-ivory-faint">/</span>
-                  <select
-                    value={enrolYear}
-                    onChange={(e) => setEnrolYear(e.target.value)}
-                    aria-label="Enrollment year"
-                    className="shrink-0 border-l border-[var(--hairline)] bg-obsidian/50 px-3 py-3 font-sans text-sm text-gold focus:outline-none"
-                  >
-                    {ENROL_YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
-                  </select>
-                </div>
-              </label>
-              <Field data={data} set={set} k="designation" label={lang === "ta" ? "பதவி" : "Designation"} placeholder="President" />
-              <Field data={data} set={set} k="district" label={lang === "ta" ? "மாவட்டம்" : "District"} placeholder="Chennai" />
-              <label className="block">
-                <span className="mb-1.5 block font-sans text-[11px] uppercase tracking-widest text-ivory-dim">
-                  {lang === "ta" ? "இரத்தப் பிரிவு" : "Blood Group"}
-                </span>
-                <select className={inputCls} value={data.blood} onChange={(e) => set("blood", e.target.value)}>
-                  <option value="">{lang === "ta" ? "தேர்ந்தெடுக்கவும்" : "Select…"}</option>
-                  {BLOOD_GROUPS.map((b) => <option key={b} value={b}>{b}</option>)}
-                </select>
-              </label>
-              <Field data={data} set={set} k="mobile" label={lang === "ta" ? "கைபேசி எண்" : "Mobile No."} />
-              <Field data={data} set={set} k="validUpTo" label={lang === "ta" ? "செல்லுபடி வரை" : "Valid Up To"} placeholder="June 2027" />
-              <Field data={data} set={set} k="cardNo" label={lang === "ta" ? "அட்டை வரிசை எண்" : "Card Serial"} placeholder="08" />
-              <Field data={data} set={set} k="emergency" label={lang === "ta" ? "அவசர தொடர்பு" : "Emergency Contact"} />
-            </div>
-
-            <p className="kicker !tracking-[0.25em] mb-4 mt-8">{lang === "ta" ? "பின் பக்கம்" : "Reverse"}</p>
-            <div className="grid gap-5 sm:grid-cols-2">
-              <div className="sm:col-span-2">
+          {/* Two panels side by side — Membership Information and Reverse
+              Information — each its own bordered box with its own
+              two-column field grid, instead of every field stacked in one
+              long column under a single heading. */}
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* ---- membership information ---- */}
+            <div className="rounded-2xl glass gold-border p-6 md:p-7">
+              <p className="kicker !tracking-[0.2em] mb-5">
+                {lang === "ta" ? "உறுப்பினர் தகவல்" : "Membership Information"}
+              </p>
+              <div className="grid gap-5 sm:grid-cols-2">
+                <Field data={data} set={set} k="memberName" label={lang === "ta" ? "உறுப்பினர் பெயர்" : "Member Name"} />
+                {/* The prefix is PART OF THE FIELD, not part of the value —
+                    same pattern as the public "Verify Your Membership" box.
+                    It sits inside the bordered input but cannot be selected,
+                    edited or backspaced away; only the serial after it is
+                    ever typed or stored as state. */}
                 <label className="block">
                   <span className="mb-1.5 block font-sans text-[11px] uppercase tracking-widest text-ivory-dim">
-                    {lang === "ta" ? "முகவரி" : "Address"}
+                    {lang === "ta" ? "உறுப்பினர் எண்" : "Membership No."}
                   </span>
-                  <textarea className={cn(inputCls, "min-h-[74px] resize-none")} value={data.address} onChange={(e) => set("address", e.target.value)} />
+                  <div className="flex items-stretch overflow-hidden rounded-xl bg-obsidian-soft/60 border border-[var(--hairline)] transition-all focus-within:border-gold/60 focus-within:ring-1 focus-within:ring-gold/30">
+                    <input
+                      value={memberPrefix}
+                      onChange={(e) => setMemberPrefix(e.target.value)}
+                      aria-label="Membership number prefix"
+                      placeholder="TNWLA-M"
+                      className="w-24 shrink-0 border-r border-[var(--hairline)] bg-obsidian/50 px-4 py-3 font-sans text-sm text-gold placeholder:text-gold/50 focus:outline-none"
+                    />
+                    <input
+                      value={memberSerial}
+                      onChange={(e) => setMemberSerial(e.target.value.replace(/[^0-9A-Za-z-]/g, ""))}
+                      inputMode="numeric"
+                      aria-label={`Membership number, after ${memberPrefix}`}
+                      placeholder="57"
+                      className="w-full bg-transparent px-4 py-3 font-sans text-sm text-ivory placeholder:text-ivory-faint focus:outline-none"
+                    />
+                  </div>
                 </label>
-              </div>
-              <Field data={data} set={set} k="phone" label={lang === "ta" ? "தொலைபேசி" : "Phone"} />
-              <Field data={data} set={set} k="email" label={lang === "ta" ? "மின்னஞ்சல்" : "Email"} />
-              <div className="sm:col-span-2">
-                <Field data={data} set={set} k="verifyUrl" label={lang === "ta" ? "QR சரிபார்ப்பு இணைப்பு" : "QR verification link"} />
+                <label className="block">
+                  <span className="mb-1.5 block font-sans text-[11px] uppercase tracking-widest text-ivory-dim">
+                    {lang === "ta" ? "பதிவு எண்" : "Enrollment No."}
+                  </span>
+                  {/* Same bordered-pill shape as Membership No. above — one
+                      unified box, not three separately-bordered controls —
+                      so the two rows line up visually instead of one looking
+                      like a single field and the other like three. */}
+                  <div className="flex items-stretch overflow-hidden rounded-xl bg-obsidian-soft/60 border border-[var(--hairline)] transition-all focus-within:border-gold/60 focus-within:ring-1 focus-within:ring-gold/30">
+                    <input
+                      value={enrolNo}
+                      onChange={(e) => setEnrolNo(e.target.value)}
+                      placeholder="1080"
+                      aria-label="Enrollment number"
+                      className="w-full min-w-0 bg-transparent px-4 py-3 font-sans text-sm text-ivory placeholder:text-ivory-faint focus:outline-none"
+                    />
+                    <span className="flex items-center px-1 font-sans text-sm text-ivory-faint">/</span>
+                    <select
+                      value={enrolYear}
+                      onChange={(e) => setEnrolYear(e.target.value)}
+                      aria-label="Enrollment year"
+                      className="shrink-0 border-l border-[var(--hairline)] bg-obsidian/50 px-3 py-3 font-sans text-sm text-gold focus:outline-none"
+                    >
+                      {ENROL_YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
+                    </select>
+                  </div>
+                </label>
+                <Field data={data} set={set} k="designation" label={lang === "ta" ? "பதவி" : "Designation"} placeholder="President" />
+                <Field data={data} set={set} k="district" label={lang === "ta" ? "மாவட்டம்" : "District"} placeholder="Chennai" />
+                <label className="block">
+                  <span className="mb-1.5 block font-sans text-[11px] uppercase tracking-widest text-ivory-dim">
+                    {lang === "ta" ? "இரத்தப் பிரிவு" : "Blood Group"}
+                  </span>
+                  <select className={inputCls} value={data.blood} onChange={(e) => set("blood", e.target.value)}>
+                    <option value="">{lang === "ta" ? "தேர்ந்தெடுக்கவும்" : "Select…"}</option>
+                    {BLOOD_GROUPS.map((b) => <option key={b} value={b}>{b}</option>)}
+                  </select>
+                </label>
+                <Field data={data} set={set} k="mobile" label={lang === "ta" ? "கைபேசி எண்" : "Mobile No."} />
+                <Field data={data} set={set} k="validUpTo" label={lang === "ta" ? "செல்லுபடி வரை" : "Valid Up To"} placeholder="June 2027" />
+                <Field data={data} set={set} k="cardNo" label={lang === "ta" ? "அட்டை வரிசை எண்" : "Card Serial"} placeholder="08" />
+                <Field data={data} set={set} k="emergency" label={lang === "ta" ? "அவசர தொடர்பு" : "Emergency Contact"} />
               </div>
             </div>
 
-            <div className="mt-7">
-              <Drop
-                label={lang === "ta" ? "புகைப்படம் (பாஸ்போர்ட் அளவு)" : "Photograph — passport size, portrait"}
-                value={photo} onPick={(f) => readImage(f, setPhoto)} onClear={() => setPhoto(null)}
-              />
-            </div>
-
-            <div className="mt-7 flex flex-wrap gap-3">
-              {embedded ? (
-                /* No separate ₹49 toll here — the applicant pays once,
-                   for the membership itself, on the very next step. */
-                <button onClick={onContinue}
-                  className="flex items-center gap-2 rounded-full bg-gold px-6 py-3 font-sans text-xs uppercase tracking-widest text-black transition-all hover:bg-gold-bright">
-                  <CreditCard size={14} /> {lang === "ta" ? "கட்டணத்திற்குச் செல்லவும்" : "Continue to Payment"}
-                </button>
-              ) : paid ? (
-                <button onClick={download} disabled={busy}
-                  className="flex items-center gap-2 rounded-full bg-gold px-6 py-3 font-sans text-xs uppercase tracking-widest text-black transition-all hover:bg-gold-bright disabled:opacity-50">
-                  <Download size={14} />{" "}
-                  {busy
-                    ? lang === "ta" ? "தயாராகிறது…" : "Preparing…"
-                    : lang === "ta" ? "PNG பதிவிறக்கு" : "Download PNG"}
-                </button>
-              ) : (
-                <button onClick={startCardPayment} disabled={payBusy}
-                  className="flex items-center gap-2 rounded-full bg-gold px-6 py-3 font-sans text-xs uppercase tracking-widest text-black transition-all hover:bg-gold-bright disabled:opacity-50">
-                  <CreditCard size={14} />{" "}
-                  {payBusy
-                    ? lang === "ta" ? "கட்டணம் தொடங்குகிறது…" : "Starting payment…"
-                    : lang === "ta" ? `₹${ID_CARD_FEE} செலுத்தி பதிவிறக்கு` : `Pay ₹${ID_CARD_FEE} to Download`}
-                </button>
-              )}
-              <button onClick={saveToDirectory} disabled={saving}
-                className="flex items-center gap-2 rounded-full gold-border px-6 py-3 font-sans text-xs uppercase tracking-widest text-gold transition-all hover:bg-gold hover:text-black disabled:opacity-50">
-                <Save size={14} />{" "}
-                {saving
-                  ? lang === "ta" ? "சேமிக்கிறது…" : "Saving…"
-                  : lang === "ta" ? "பதிவேட்டில் சேமி" : "Save to directory"}
-              </button>
-              <button onClick={flip}
-                className="flex items-center gap-2 rounded-full gold-border px-6 py-3 font-sans text-xs uppercase tracking-widest text-gold transition-all hover:bg-gold hover:text-black">
-                <RotateCcw size={14} /> {lang === "ta" ? "திருப்பு" : "Flip"}
-              </button>
-              <button onClick={reset}
-                className="flex items-center gap-2 rounded-full border border-[var(--hairline)] px-6 py-3 font-sans text-xs uppercase tracking-widest text-ivory-dim transition-all hover:bg-white/10 hover:text-ivory">
-                {lang === "ta" ? "நேராக்கு" : "Reset view"}
-              </button>
-
-              {!embedded && !paid && (
-                <p className="flex w-full items-center gap-1.5 font-sans text-[11px] text-ivory-faint">
-                  <Lock size={12} />
-                  {lang === "ta"
-                    ? `PNG பதிவிறக்கம் கட்டணத்திற்குப் பிறகே திறக்கப்படும் — ₹${ID_CARD_FEE} (ஒரு முறை, அட்டைக்கு).`
-                    : `Download unlocks after payment — ₹${ID_CARD_FEE}, one time, per card.`}
-                </p>
-              )}
-              {!embedded && paid && (
-                <p className="flex w-full items-center gap-1.5 font-sans text-[11px] text-gold">
-                  <ShieldCheck size={12} />
-                  {lang === "ta" ? "கட்டணம் சரிபார்க்கப்பட்டது — பதிவிறக்கம் திறக்கப்பட்டது." : "Payment verified — download unlocked."}
-                </p>
-              )}
-              {payMsg && (
-                <p className={cn(
-                  "w-full font-sans text-[12px] leading-relaxed",
-                  payMsg.ok ? "text-gold" : "text-amber-300/90"
-                )}>
-                  {payMsg.text}
-                </p>
-              )}
-              {saveMsg && (
-                <p className={cn(
-                  "w-full font-sans text-[12px] leading-relaxed",
-                  saveMsg.ok ? "text-gold" : "text-amber-300/90"
-                )}>
-                  {saveMsg.text}
-                </p>
-              )}
+            {/* ---- reverse information ---- */}
+            <div className="rounded-2xl glass gold-border p-6 md:p-7">
+              <p className="kicker !tracking-[0.2em] mb-5">
+                {lang === "ta" ? "பின் பக்க தகவல்" : "Reverse Information"}
+              </p>
+              <div className="grid gap-5 sm:grid-cols-2">
+                <div className="sm:col-span-2">
+                  <label className="block">
+                    <span className="mb-1.5 block font-sans text-[11px] uppercase tracking-widest text-ivory-dim">
+                      {lang === "ta" ? "முகவரி" : "Address"}
+                    </span>
+                    <textarea className={cn(inputCls, "min-h-[74px] resize-none")} value={data.address} onChange={(e) => set("address", e.target.value)} />
+                  </label>
+                </div>
+                <Field data={data} set={set} k="phone" label={lang === "ta" ? "தொலைபேசி" : "Phone"} />
+                <Field data={data} set={set} k="email" label={lang === "ta" ? "மின்னஞ்சல்" : "Email"} />
+                <div className="sm:col-span-2">
+                  <Field data={data} set={set} k="verifyUrl" label={lang === "ta" ? "QR சரிபார்ப்பு இணைப்பு" : "QR verification link"} />
+                </div>
+                <div className="sm:col-span-2">
+                  <Drop
+                    label={lang === "ta" ? "புகைப்படம் (பாஸ்போர்ட் அளவு)" : "Photograph — passport size, portrait"}
+                    value={photo} onPick={(f) => readImage(f, setPhoto)} onClear={() => setPhoto(null)}
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* ---- live preview ---- */}
-          <div className="lg:sticky lg:top-32 lg:self-start">
+          {/* ---- live preview — full width, centered below both panels,
+              not a sticky sidebar ---- */}
+          <div className="mx-auto mt-12 max-w-xl">
             <p className="kicker !tracking-[0.25em] mb-5 text-center">
               {lang === "ta" ? "நேரடி முன்னோட்டம்" : "Live Preview"}
             </p>
@@ -666,6 +607,82 @@ export default function IdCardSection({
                 ? "முன் மற்றும் பின் பக்கம் தனித்தனி PNG கோப்புகளாக, அச்சுத் தரத்தில் பதிவிறக்கப்படும். அட்டை எப்போதும் நேவி/வெள்ளை நிறத்திலேயே இருக்கும் — தளத்தின் இருள் பயன்முறை இதை பாதிக்காது."
                 : `Downloads as two PNG files — front and back — at ${CARD_W * 4} × ${CARD_H * 4} px, print quality. Artwork matches the association's official card design and ignores the site's light/dark theme, because a card has to print the same way every time.`}
             </p>
+          </div>
+
+          {/* ---- actions — full width, below the live preview, matching
+              the reference layout's single Continue-to-Payment button at
+              the very bottom ---- */}
+          <div className="mx-auto mt-10 flex max-w-xl flex-wrap justify-center gap-3">
+            {embedded ? (
+              /* No separate ₹49 toll here — the applicant pays once,
+                 for the membership itself, on the very next step. */
+              <button onClick={onContinue}
+                className="flex w-full items-center justify-center gap-2 rounded-full bg-gold px-6 py-3.5 font-sans text-xs uppercase tracking-widest text-black transition-all hover:bg-gold-bright">
+                <CreditCard size={14} /> {lang === "ta" ? "கட்டணத்திற்குச் செல்லவும்" : "Continue to Payment"}
+              </button>
+            ) : paid ? (
+              <button onClick={download} disabled={busy}
+                className="flex w-full items-center justify-center gap-2 rounded-full bg-gold px-6 py-3.5 font-sans text-xs uppercase tracking-widest text-black transition-all hover:bg-gold-bright disabled:opacity-50">
+                <Download size={14} />{" "}
+                {busy
+                  ? lang === "ta" ? "தயாராகிறது…" : "Preparing…"
+                  : lang === "ta" ? "PNG பதிவிறக்கு" : "Download PNG"}
+              </button>
+            ) : (
+              <button onClick={startCardPayment} disabled={payBusy}
+                className="flex w-full items-center justify-center gap-2 rounded-full bg-gold px-6 py-3.5 font-sans text-xs uppercase tracking-widest text-black transition-all hover:bg-gold-bright disabled:opacity-50">
+                <CreditCard size={14} />{" "}
+                {payBusy
+                  ? lang === "ta" ? "கட்டணம் தொடங்குகிறது…" : "Starting payment…"
+                  : lang === "ta" ? `₹${ID_CARD_FEE} செலுத்தி பதிவிறக்கு` : `Pay ₹${ID_CARD_FEE} to Download`}
+              </button>
+            )}
+            <button onClick={saveToDirectory} disabled={saving}
+              className="flex items-center gap-2 rounded-full gold-border px-6 py-3 font-sans text-xs uppercase tracking-widest text-gold transition-all hover:bg-gold hover:text-black disabled:opacity-50">
+              <Save size={14} />{" "}
+              {saving
+                ? lang === "ta" ? "சேமிக்கிறது…" : "Saving…"
+                : lang === "ta" ? "பதிவேட்டில் சேமி" : "Save to directory"}
+            </button>
+            <button onClick={flip}
+              className="flex items-center gap-2 rounded-full gold-border px-6 py-3 font-sans text-xs uppercase tracking-widest text-gold transition-all hover:bg-gold hover:text-black">
+              <RotateCcw size={14} /> {lang === "ta" ? "திருப்பு" : "Flip"}
+            </button>
+            <button onClick={reset}
+              className="flex items-center gap-2 rounded-full border border-[var(--hairline)] px-6 py-3 font-sans text-xs uppercase tracking-widest text-ivory-dim transition-all hover:bg-white/10 hover:text-ivory">
+              {lang === "ta" ? "நேராக்கு" : "Reset view"}
+            </button>
+
+            {!embedded && !paid && (
+              <p className="flex w-full items-center justify-center gap-1.5 font-sans text-[11px] text-ivory-faint">
+                <Lock size={12} />
+                {lang === "ta"
+                  ? `PNG பதிவிறக்கம் கட்டணத்திற்குப் பிறகே திறக்கப்படும் — ₹${ID_CARD_FEE} (ஒரு முறை, அட்டைக்கு).`
+                  : `Download unlocks after payment — ₹${ID_CARD_FEE}, one time, per card.`}
+              </p>
+            )}
+            {!embedded && paid && (
+              <p className="flex w-full items-center justify-center gap-1.5 font-sans text-[11px] text-gold">
+                <ShieldCheck size={12} />
+                {lang === "ta" ? "கட்டணம் சரிபார்க்கப்பட்டது — பதிவிறக்கம் திறக்கப்பட்டது." : "Payment verified — download unlocked."}
+              </p>
+            )}
+            {payMsg && (
+              <p className={cn(
+                "w-full text-center font-sans text-[12px] leading-relaxed",
+                payMsg.ok ? "text-gold" : "text-amber-300/90"
+              )}>
+                {payMsg.text}
+              </p>
+            )}
+            {saveMsg && (
+              <p className={cn(
+                "w-full text-center font-sans text-[12px] leading-relaxed",
+                saveMsg.ok ? "text-gold" : "text-amber-300/90"
+              )}>
+                {saveMsg.text}
+              </p>
+            )}
           </div>
         </div>
       </section>

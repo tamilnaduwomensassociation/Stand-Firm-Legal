@@ -91,7 +91,7 @@ export default function AssociationFilm() {
           />
         )}
 
-        <div className="absolute inset-0 bg-gradient-to-t from-obsidian-deep via-black/45 to-obsidian-deep/70" aria-hidden />
+        <div className="absolute inset-0 bg-gradient-to-t from-obsidian-deep via-obsidian-deep/45 to-obsidian-deep/70" aria-hidden />
         <div className="vignette absolute inset-0 opacity-70" aria-hidden />
 
         {/* One line, and it is a statement of purpose rather than a

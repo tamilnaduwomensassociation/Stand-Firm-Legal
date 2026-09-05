@@ -22,9 +22,16 @@ export default function StandFirmLayout({ children }: { children: React.ReactNod
   return (
     <>
       <ThemeStyle brand="stand-firm" isolate />
-      <SFNavbar />
-      {children}
-      <SFFooter />
+      {/* Pins this brand's dark-palette CSS variables to their original
+          neutral values — see ".stand-firm-theme" in app/globals.css.
+          Needed because TNWLA's own re-tint of those same variables
+          (its "black to navy blue" change) would otherwise inherit
+          straight through into this brand's pages too. */}
+      <div className="stand-firm-theme">
+        <SFNavbar />
+        {children}
+        <SFFooter />
+      </div>
     </>
   );
 }
