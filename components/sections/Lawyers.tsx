@@ -11,14 +11,15 @@
  * The Stand Firm partnerships block that used to close this page
  * has moved to /stand-firm/team — it is the firm's, not ours.
  */
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useGSAP } from "@gsap/react";
-import { Facebook, Instagram, Linkedin, Quote, Sparkles } from "lucide-react";
+import { ChevronDown, Facebook, Instagram, Linkedin, Quote, Sparkles } from "lucide-react";
 import { gsap } from "@/lib/gsap";
 import {
   lawyers, leadersPanel, mottoAndDreams, presidentCorner, site,
 } from "@/config/site.config";
 import { useLang } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 import SectionHeading from "@/components/ui/SectionHeading";
 import TiltCard from "@/components/ui/TiltCard";
 
@@ -26,6 +27,11 @@ export default function Lawyers() {
   const root = useRef<HTMLElement>(null);
   const { lang, t } = useLang();
   const president = lawyers[0];
+  /* The President's full message is long — see config/site.config.ts.
+     Collapsed to a short preview by default with a Read More button,
+     rather than printing every paragraph unconditionally, so the box
+     doesn't dwarf everything else on the page. */
+  const [messageOpen, setMessageOpen] = useState(false);
 
   useGSAP(
     () => {
@@ -101,60 +107,92 @@ export default function Lawyers() {
           <div className="mt-8 border-t border-gold/15 pt-8">
             <p className="kicker !tracking-[0.2em] text-gold/80">{presidentCorner.messageHeading}</p>
 
-            <div className="mt-5 space-y-4">
-              {presidentCorner.paragraphs.map((para, i) => (
-                <p key={i} className="prose-justify font-sans text-sm leading-[1.9] text-ivory-dim">
-                  {para}
-                </p>
-              ))}
-            </div>
-
-            <div className="mt-6 rounded-xl border border-gold/20 bg-gold-faint p-6">
-              <p className="font-sans text-sm leading-relaxed text-ivory-dim">{presidentCorner.purposeLead}</p>
-              <ul className="mt-3 grid gap-2 sm:grid-cols-2">
-                {presidentCorner.purposeList.map((item) => (
-                  <li key={item} className="flex items-center gap-2.5 font-serif text-base text-gold-bright">
-                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-gold" /> {item}
-                  </li>
+            {/* Collapsed preview: a fixed height with a fade-out at the
+                bottom and a Read More button. Expanded: the full
+                message, exactly as before, with a Show Less button to
+                collapse it back. */}
+            <div
+              className={cn(
+                "relative mt-5 overflow-hidden transition-[max-height] duration-500 ease-in-out",
+                messageOpen ? "max-h-[8000px]" : "max-h-[170px]"
+              )}
+            >
+              <div className="space-y-4">
+                {presidentCorner.paragraphs.map((para, i) => (
+                  <p key={i} className="prose-justify font-sans text-sm leading-[1.9] text-ivory-dim">
+                    {para}
+                  </p>
                 ))}
-              </ul>
-            </div>
+              </div>
 
-            <div className="mt-6 space-y-4">
-              {presidentCorner.closingParagraphs.map((para, i) => (
-                <p key={i} className="prose-justify font-sans text-sm leading-[1.9] text-ivory-dim">
-                  {para}
+              <div className="mt-6 rounded-xl border border-gold/20 bg-gold-faint p-6">
+                <p className="font-sans text-sm leading-relaxed text-ivory-dim">{presidentCorner.purposeLead}</p>
+                <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+                  {presidentCorner.purposeList.map((item) => (
+                    <li key={item} className="flex items-center gap-2.5 font-serif text-base text-gold-bright">
+                      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-gold" /> {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="mt-6 space-y-4">
+                {presidentCorner.closingParagraphs.map((para, i) => (
+                  <p key={i} className="prose-justify font-sans text-sm leading-[1.9] text-ivory-dim">
+                    {para}
+                  </p>
+                ))}
+              </div>
+
+              <div className="mt-7 border-l-2 border-gold/40 pl-5">
+                <p className="kicker !tracking-[0.2em] text-gold/80">{presidentCorner.visionHeading}</p>
+                <p className="mt-3 font-serif text-lg italic leading-relaxed text-ivory md:text-xl">
+                  {presidentCorner.visionQuote}
                 </p>
-              ))}
-            </div>
+                {presidentCorner.visionClose.map((line, i) => (
+                  <p key={i} className="mt-2 font-sans text-sm text-ivory-dim">{line}</p>
+                ))}
+              </div>
 
-            <div className="mt-7 border-l-2 border-gold/40 pl-5">
-              <p className="kicker !tracking-[0.2em] text-gold/80">{presidentCorner.visionHeading}</p>
-              <p className="mt-3 font-serif text-lg italic leading-relaxed text-ivory md:text-xl">
-                {presidentCorner.visionQuote}
+              <p className="prose-justify mt-7 font-sans text-sm leading-[1.9] text-ivory-dim">
+                {presidentCorner.gratitude}
               </p>
-              {presidentCorner.visionClose.map((line, i) => (
-                <p key={i} className="mt-2 font-sans text-sm text-ivory-dim">{line}</p>
-              ))}
+
+              <div className="mt-4 text-right">
+                {presidentCorner.signatureLines.map((line, i) => (
+                  <p
+                    key={i}
+                    className={
+                      i === 0
+                        ? "font-serif text-xl italic text-gold-bright"
+                        : "mt-1 font-sans text-xs uppercase tracking-widest text-ivory-faint"
+                    }
+                  >
+                    {line}
+                  </p>
+                ))}
+              </div>
+
+              {!messageOpen && (
+                <div
+                  className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-obsidian to-transparent"
+                  aria-hidden
+                />
+              )}
             </div>
 
-            <p className="prose-justify mt-7 font-sans text-sm leading-[1.9] text-ivory-dim">
-              {presidentCorner.gratitude}
-            </p>
-
-            <div className="mt-4 text-right">
-              {presidentCorner.signatureLines.map((line, i) => (
-                <p
-                  key={i}
-                  className={
-                    i === 0
-                      ? "font-serif text-xl italic text-gold-bright"
-                      : "mt-1 font-sans text-xs uppercase tracking-widest text-ivory-faint"
-                  }
-                >
-                  {line}
-                </p>
-              ))}
+            <div className="mt-6 text-center">
+              <button
+                type="button"
+                onClick={() => setMessageOpen((o) => !o)}
+                aria-expanded={messageOpen}
+                className="inline-flex items-center gap-1.5 rounded-full gold-border px-6 py-2.5 font-sans text-xs uppercase tracking-widest text-gold transition-all hover:bg-gold hover:text-black"
+              >
+                {messageOpen
+                  ? (lang === "ta" ? "குறைவாகக் காட்டு" : "Show Less")
+                  : (lang === "ta" ? "மேலும் படிக்க" : "Read More")}
+                <ChevronDown size={14} className={cn("transition-transform duration-300", messageOpen && "rotate-180")} />
+              </button>
             </div>
           </div>
         </div>

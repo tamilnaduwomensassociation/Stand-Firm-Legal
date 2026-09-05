@@ -26,15 +26,18 @@
  * renders exactly as it did before this existed.
  */
 import { useEffect, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useLang } from "@/lib/i18n";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { cn } from "@/lib/utils";
 
-type Update = { id: string; text?: string; image?: string; images?: string[]; createdAt: string };
+type Update = { id: string; text?: string; image?: string; images?: string[]; video?: string; createdAt: string };
+type MediaItem = { kind: "image" | "video"; src: string };
 
 /* Real, published now — see the file header. Dated to when it was
    added to the site rather than guessed at, since the exact hour of
-   the visit itself isn't on record here. */
+   the visit itself isn't on record here. The video is the same visit,
+   filmed on site — it always plays last, after the three photos. */
 const seedUpdates: Update[] = [
   {
     id: "seed-cm-visit-m3-puzhal",
@@ -44,53 +47,97 @@ const seedUpdates: Update[] = [
       "/media/live-activity/inspection-2.jpg",
       "/media/live-activity/inspection-3.jpg",
     ],
+    video: "/media/live-activity/cm-visit-video.mp4",
     text:
       "During the inspection conducted by Hon’ble Chief Minister C. Joseph Vijay at M3 Puzhal Police Station, Chennai, he met M. Jenifer Arokia Mary, President of Tamilnadu Women Law Association – Madras and High Court Advocate, along with Commitee Member Advocate M Preethi.\nThe meeting provided an opportunity to discuss matters concerning the legal profession, women’s rights, and the welfare of the public.",
   },
 ];
 
 function UpdateCard({ u, lang }: { u: Update; lang: string }) {
-  const gallery = u.images && u.images.length > 0 ? u.images : u.image ? [u.image] : [];
+  const photos = u.images && u.images.length > 0 ? u.images : u.image ? [u.image] : [];
+  /* The video, when there is one, is always the last item in the
+     sequence — after every photo, never mixed in between. */
+  const media: MediaItem[] = [
+    ...photos.map((src): MediaItem => ({ kind: "image", src })),
+    ...(u.video ? [{ kind: "video", src: u.video } as MediaItem] : []),
+  ];
   const [idx, setIdx] = useState(0);
-  const multi = gallery.length > 1;
+  const multi = media.length > 1;
+  const current = media[idx];
+
+  const go = (delta: number) => setIdx((i) => (i + media.length + delta) % media.length);
 
   return (
-    <article
-      onClick={multi ? () => setIdx((i) => (i + 1) % gallery.length) : undefined}
-      className={cn(
-        "overflow-hidden rounded-2xl glass gold-border",
-        multi && "cursor-pointer select-none"
-      )}
-      role={multi ? "button" : undefined}
-      aria-label={multi ? (lang === "ta" ? "அடுத்த புகைப்படத்தைக் காட்ட தட்டவும்" : "Tap to see the next photo") : undefined}
-    >
-      {gallery.length > 0 ? (
-        <div className="relative h-56 w-full overflow-hidden bg-obsidian">
-          {gallery.map((src, i) => (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
-              key={src}
-              src={src}
-              alt=""
-              loading="lazy"
-              className={cn(
-                "absolute inset-0 h-full w-full object-cover transition-all duration-700 ease-out",
-                i === idx ? "z-10 scale-100 opacity-100" : "z-0 scale-105 opacity-0"
-              )}
-            />
-          ))}
+    <article className="overflow-hidden rounded-2xl glass gold-border">
+      {media.length > 0 ? (
+        <div className="group relative h-64 w-full overflow-hidden bg-obsidian">
+          {media.map((m, i) =>
+            m.kind === "video" ? (
+              <video
+                key={m.src}
+                src={m.src}
+                controls
+                playsInline
+                preload="metadata"
+                className={cn(
+                  "absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ease-out",
+                  i === idx ? "z-10 opacity-100" : "z-0 opacity-0"
+                )}
+              />
+            ) : (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                key={m.src}
+                src={m.src}
+                alt=""
+                loading="lazy"
+                className={cn(
+                  "absolute inset-0 h-full w-full object-cover transition-all duration-700 ease-out",
+                  i === idx ? "z-10 scale-100 opacity-100" : "z-0 scale-105 opacity-0"
+                )}
+              />
+            )
+          )}
+
           {multi && (
-            <div className="absolute bottom-3 left-1/2 z-20 flex -translate-x-1/2 gap-1.5">
-              {gallery.map((src, i) => (
-                <span
-                  key={src}
-                  className={cn(
-                    "h-1.5 rounded-full transition-all duration-300",
-                    i === idx ? "w-5 bg-gold" : "w-1.5 bg-white/50"
-                  )}
-                />
-              ))}
-            </div>
+            <>
+              {/* Explicit prev/next controls — click-anywhere-to-advance
+                  would fight with the video's own play/pause controls
+                  once the last slide is a <video>, so navigation is
+                  always through these arrows and the dots below, never
+                  a click on the media itself. */}
+              <button
+                type="button"
+                onClick={() => go(-1)}
+                aria-label={lang === "ta" ? "முந்தையது" : "Previous"}
+                className="absolute left-2 top-1/2 z-20 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-ivory opacity-0 backdrop-blur-sm transition-opacity duration-300 hover:bg-black/70 group-hover:opacity-100 focus-visible:opacity-100"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={() => go(1)}
+                aria-label={lang === "ta" ? "அடுத்தது" : "Next"}
+                className="absolute right-2 top-1/2 z-20 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-ivory opacity-0 backdrop-blur-sm transition-opacity duration-300 hover:bg-black/70 group-hover:opacity-100 focus-visible:opacity-100"
+              >
+                <ChevronRight size={16} />
+              </button>
+
+              <div className="pointer-events-none absolute bottom-3 left-1/2 z-20 flex -translate-x-1/2 gap-1.5">
+                {media.map((m, i) => (
+                  <button
+                    key={m.src}
+                    type="button"
+                    onClick={() => setIdx(i)}
+                    aria-label={`${i + 1}/${media.length}`}
+                    className={cn(
+                      "pointer-events-auto h-1.5 rounded-full transition-all duration-300",
+                      i === idx ? "w-5 bg-gold" : "w-1.5 bg-white/50"
+                    )}
+                  />
+                ))}
+              </div>
+            </>
           )}
         </div>
       ) : null}
@@ -101,7 +148,7 @@ function UpdateCard({ u, lang }: { u: Update; lang: string }) {
           </time>
           {multi && (
             <span className="font-sans text-[10px] uppercase tracking-widest text-ivory-faint">
-              {idx + 1}/{gallery.length}
+              {idx + 1}/{media.length} {current?.kind === "video" ? (lang === "ta" ? "· வீடியோ" : "· Video") : ""}
             </span>
           )}
         </div>
@@ -135,9 +182,15 @@ export default function LiveUpdates() {
     <section id="live-updates" className="bg-obsidian-deep section-pad">
       <SectionHeading kicker={t("liveUpdatesKicker")} title={t("liveUpdatesTitle")} />
 
-      <div className="mx-auto mt-10 grid max-w-6xl gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {/* flex + justify-center rather than a strict grid: a single
+          update (today's reality) sits centered on the page instead of
+          pinned to the left edge of an otherwise-empty grid row, and
+          it still wraps into a tidy centered row if more are added. */}
+      <div className="mx-auto mt-10 flex max-w-4xl flex-wrap justify-center gap-6">
         {updates.map((u) => (
-          <UpdateCard key={u.id} u={u} lang={lang} />
+          <div key={u.id} className="w-full sm:w-[420px]">
+            <UpdateCard u={u} lang={lang} />
+          </div>
         ))}
       </div>
     </section>

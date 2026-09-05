@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { requireSuperadmin } from "@/lib/server/auth";
-import { insert, list, newId, patch } from "@/lib/server/db";
+import { insert, list, newId, patch, remove } from "@/lib/server/db";
 import { clean, fail, ok } from "@/lib/server/http";
 
 export const runtime = "nodejs";
@@ -85,6 +85,20 @@ export async function PATCH(req: NextRequest) {
     const row = await patch("posts", id, fields);
     if (!row) return fail(Object.assign(new Error("No such post"), { status: 404 }));
     return ok({ post: row });
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+/** Delete a post outright — Superadmin only, same gate as everything else here. */
+export async function DELETE(req: NextRequest) {
+  try {
+    await requireSuperadmin();
+    const id = clean(req.nextUrl.searchParams.get("id"), 60);
+    if (!id) return fail(Object.assign(new Error("id is required"), { status: 400 }));
+    const removed = await remove("posts", id);
+    if (!removed) return fail(Object.assign(new Error("No such post"), { status: 404 }));
+    return ok({ ok: true });
   } catch (e) {
     return fail(e);
   }

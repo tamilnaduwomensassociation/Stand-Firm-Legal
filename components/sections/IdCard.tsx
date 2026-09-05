@@ -465,11 +465,25 @@ export default function IdCardSection({
                 <span className="mb-1.5 block font-sans text-[11px] uppercase tracking-widest text-ivory-dim">
                   {lang === "ta" ? "பதிவு எண்" : "Enrollment No."}
                 </span>
-                <div className="flex items-center gap-2">
-                  <input className={cn(inputCls, "flex-1")} value={enrolNo} placeholder="1080"
-                    onChange={(e) => setEnrolNo(e.target.value)} />
-                  <span className="font-serif text-lg text-ivory-faint">/</span>
-                  <select className={cn(inputCls, "w-[110px]")} value={enrolYear} onChange={(e) => setEnrolYear(e.target.value)}>
+                {/* Same bordered-pill shape as Membership No. above — one
+                    unified box, not three separately-bordered controls —
+                    so the two rows line up visually instead of one looking
+                    like a single field and the other like three. */}
+                <div className="flex items-stretch overflow-hidden rounded-xl bg-obsidian-soft/60 border border-[var(--hairline)] transition-all focus-within:border-gold/60 focus-within:ring-1 focus-within:ring-gold/30">
+                  <input
+                    value={enrolNo}
+                    onChange={(e) => setEnrolNo(e.target.value)}
+                    placeholder="1080"
+                    aria-label="Enrollment number"
+                    className="w-full min-w-0 bg-transparent px-4 py-3 font-sans text-sm text-ivory placeholder:text-ivory-faint focus:outline-none"
+                  />
+                  <span className="flex items-center px-1 font-sans text-sm text-ivory-faint">/</span>
+                  <select
+                    value={enrolYear}
+                    onChange={(e) => setEnrolYear(e.target.value)}
+                    aria-label="Enrollment year"
+                    className="shrink-0 border-l border-[var(--hairline)] bg-obsidian/50 px-3 py-3 font-sans text-sm text-gold focus:outline-none"
+                  >
                     {ENROL_YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
                   </select>
                 </div>

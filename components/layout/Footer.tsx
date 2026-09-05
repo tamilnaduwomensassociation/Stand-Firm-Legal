@@ -73,7 +73,11 @@ export default function Footer() {
               ))}
               <li><a href="/stand-firm" className="text-gold/90 hover:text-gold transition-colors">Stand Firm Legal Associates →</a></li>
               <li><a href="/legal-news" className="text-gold/90 hover:text-gold transition-colors">{lang === "ta" ? "சட்ட செய்திகள்" : "Legal News"} →</a></li>
-              <li><a href="/id-card" className="text-gold/90 hover:text-gold transition-colors">{lang === "ta" ? "அடையாள அட்டை" : "Member ID Card"} →</a></li>
+              {/* The standalone /id-card page is gone — the ID card is
+                  now issued only as part of joining, inside the
+                  membership registration flow, so this points there
+                  instead of to a page that no longer exists. */}
+              <li><a href="/membership" className="text-gold/90 hover:text-gold transition-colors">{lang === "ta" ? "அடையாள அட்டை" : "Member ID Card"} →</a></li>
               <li><a href="/jeni" className="text-gold/90 hover:text-gold transition-colors">Jeni Enterprises →</a></li>
             </ul>
           </div>

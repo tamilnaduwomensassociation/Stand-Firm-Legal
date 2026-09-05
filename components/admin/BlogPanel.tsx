@@ -12,7 +12,7 @@
  * Publish is deliberately not the biggest button on the card.
  */
 import { useEffect, useRef, useState } from "react";
-import { Archive, Check, Eye, ImageIcon, Loader2, PenLine, Plus, RefreshCw, Send, Upload, X } from "lucide-react";
+import { Archive, Check, Eye, ImageIcon, Loader2, PenLine, Plus, RefreshCw, Send, Trash2, Upload, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Post = Record<string, unknown> & { id: string };
@@ -24,6 +24,11 @@ export default function BlogPanel() {
   const [editing, setEditing] = useState<Post | null>(null);
   const [draft, setDraft] = useState({ title: "", summary: "", body: "", image: "" });
   const [note, setNote] = useState("");
+  /* Delete is permanent — a post removed here is gone from the
+     directory, not just archived — so it takes two clicks: the first
+     arms a "Confirm delete?" state on that one card, the second
+     actually deletes. Clicking anything else clears the arm. */
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   /* Upload availability, and the reason when it is off — same pattern
      as ThemePanel, since it is the same /api/media endpoint. */
@@ -117,6 +122,7 @@ export default function BlogPanel() {
   };
 
   const openEditor = (p: Post) => {
+    setConfirmDelete(null);
     setEditing(p);
     setDraft({
       title: String(p.title ?? ""),
@@ -124,6 +130,23 @@ export default function BlogPanel() {
       body: String(p.body ?? ""),
       image: String(p.image ?? ""),
     });
+  };
+
+  const deletePost = async (id: string) => {
+    setBusy(id);
+    try {
+      const res = await fetch(`/api/blog?id=${encodeURIComponent(id)}`, { method: "DELETE" });
+      if (res.ok) {
+        setConfirmDelete(null);
+        if (editing?.id === id) setEditing(null);
+        await load();
+      } else {
+        setNote((await res.json()).error ?? "Could not delete");
+      }
+    } catch {
+      setNote("Could not delete");
+    }
+    setBusy(null);
   };
 
   if (loading) {
@@ -310,6 +333,32 @@ export default function BlogPanel() {
                         className="flex h-11 items-center gap-2 rounded-lg border border-[var(--hairline)] px-4 font-sans text-[11px] uppercase tracking-widest text-ivory-faint transition-all hover:border-red-400/50 hover:text-red-300 disabled:opacity-50"
                       >
                         <Archive size={13} /> Archive
+                      </button>
+                    )}
+                    {confirmDelete === p.id ? (
+                      <>
+                        <button
+                          onClick={() => deletePost(p.id)}
+                          disabled={busy === p.id}
+                          className="flex h-11 items-center gap-2 rounded-lg bg-red-500/90 px-4 font-sans text-[11px] uppercase tracking-widest text-white transition-all hover:bg-red-500 disabled:opacity-50"
+                        >
+                          {busy === p.id ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />} Confirm delete
+                        </button>
+                        <button
+                          onClick={() => setConfirmDelete(null)}
+                          disabled={busy === p.id}
+                          className="flex h-11 items-center rounded-lg border border-[var(--hairline)] px-4 font-sans text-[11px] uppercase tracking-widest text-ivory-dim"
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => setConfirmDelete(p.id)}
+                        disabled={busy === p.id}
+                        className="flex h-11 items-center gap-2 rounded-lg border border-[var(--hairline)] px-4 font-sans text-[11px] uppercase tracking-widest text-ivory-faint transition-all hover:border-red-400/50 hover:text-red-300 disabled:opacity-50"
+                      >
+                        <Trash2 size={13} /> Delete
                       </button>
                     )}
                   </div>

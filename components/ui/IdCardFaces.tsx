@@ -57,7 +57,6 @@
  */
 import type { CSSProperties, RefObject } from "react";
 import QrCode from "@/components/ui/QrCode";
-import { toSerial } from "@/config/membership.config";
 
 export const CARD_W = 480;
 /* Matches template-front.png's native aspect ratio exactly (891/1765
@@ -117,13 +116,11 @@ const noDrag = {
    template-front reference (colon column, ruled-line pixel rows, the
    photo-box border) with a pixel probe, not eyeballed.
 
-   This template's "Membership No." row is different from every other
-   row: the "TNWLA/2026/" prefix is baked into the artwork itself (in
-   blue, matching MEMBERSHIP_PREFIX), so only the SERIAL is ever drawn
-   dynamically — drawing the whole membershipNo string here would
-   print the prefix twice, once from the artwork and once overlapping
-   it from the app. MEMBER_NO_VALUE_X is where the baked prefix ends,
-   measured the same way as everything else below. */
+   The template's "Membership No." row used to have a "TNWLA/2026/"
+   prefix baked into the artwork itself. That prefix has been painted
+   out of the artwork, so this row now behaves exactly like every
+   other row: the full membershipNo string (whatever is typed in the
+   Card Details form) is drawn dynamically at the shared VALUE_X. */
 const F_SCALE = CARD_W / 1765;
 const fx = (x: number) => x * F_SCALE;
 const fy = (y: number) => y * F_SCALE;
@@ -136,11 +133,6 @@ const PHOTO_BOX = { left: fx(51), top: fy(334), width: fx(389 - 51), height: fy(
    Justice watermark and the signature block further right. */
 const VALUE_X = fx(800);
 const VALUE_W = fx(1185 - 800);
-/* Where the artwork's own baked "TNWLA/2026/" prefix ends on the
-   Membership No. row (probed as the blue pixels' right edge) — the
-   serial is drawn starting just past it, not at VALUE_X. */
-const MEMBER_NO_VALUE_X = fx(1028);
-const MEMBER_NO_VALUE_W = fx(1185 - 1028);
 /* Ruled-line y-position for each of the 8 rows, probed pixel-by-pixel
    off the template. The 8th ("Valid Up To") has no printed rule of
    its own — it's extrapolated from the ~66px row pitch of the other
@@ -183,14 +175,13 @@ export function CardFront({
 }: {
   data: CardData; photo: string | null; cardRef?: RefObject<HTMLDivElement | null>;
 }) {
-  /* Membership No. is the one row where the value isn't the whole
-     string: the "TNWLA/2026/" part is already printed on the artwork,
-     so only the serial is drawn, and it's drawn starting past the
-     baked prefix (MEMBER_NO_VALUE_X) rather than at the shared
-     VALUE_X every other row uses. */
+  /* Membership No. now renders exactly what was typed in the Card
+     Details form — no baked artwork prefix to align past, no
+     stripping — so it uses the same VALUE_X column as every other
+     row. */
   const rows: { value: string; x: number; accent: boolean }[] = [
     { value: data.memberName, x: VALUE_X, accent: false },
-    { value: toSerial(data.membershipNo), x: MEMBER_NO_VALUE_X, accent: true },
+    { value: data.membershipNo, x: VALUE_X, accent: true },
     { value: data.enrollmentNo, x: VALUE_X, accent: false },
     { value: data.designation, x: VALUE_X, accent: false },
     { value: data.district, x: VALUE_X, accent: false },
@@ -239,7 +230,7 @@ export function CardFront({
             fontWeight={accent ? 800 : 700}
             fill={accent ? VAL : INK}
           >
-            {truncate(value, i === 1 ? 14 : 20)}
+            {truncate(value, 20)}
           </text>
         ) : null)}
       </svg>

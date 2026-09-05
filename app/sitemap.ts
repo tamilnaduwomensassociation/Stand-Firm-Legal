@@ -22,7 +22,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     at("/legal-news", "hourly", 0.8),
     at("/books", "weekly", 0.7),
     at("/gallery", "monthly", 0.6),
-    at("/id-card", "monthly", 0.5),
 
     /* ---- Stand Firm ---- */
     at("/stand-firm", "weekly", 0.9),

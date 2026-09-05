@@ -332,9 +332,13 @@ export default function Navbar() {
           <span className="mx-0.5 hidden h-7 w-px shrink-0 bg-[var(--hairline)] sm:block" aria-hidden />
 
           {/* ID CARD — sits exactly where the Services menu used to.
-              Label collapses to the icon until there is room for words. */}
+              Label collapses to the icon until there is room for words.
+              The standalone /id-card page is gone; the card is now
+              issued only inside the membership registration flow, so
+              this points there instead of to a page that no longer
+              exists. */}
           <a
-            href="/id-card"
+            href="/membership"
             title={ta ? "அடையாள அட்டை" : "Member ID Card"}
             className="hidden items-center gap-2 rounded-full gold-border bg-gold-faint px-3 py-2 font-sans text-[10px] uppercase tracking-[0.16em] text-gold transition-all duration-300 hover:bg-gold hover:text-black lg:flex min-[1600px]:px-4"
           >
@@ -436,7 +440,7 @@ export default function Navbar() {
           </a>
 
           <a
-            href="/id-card"
+            href="/membership"
             onClick={() => setOpen(false)}
             className="mt-3 flex items-center justify-center gap-2 rounded-full gold-border bg-gold-faint px-5 py-3 text-xs text-gold"
           >

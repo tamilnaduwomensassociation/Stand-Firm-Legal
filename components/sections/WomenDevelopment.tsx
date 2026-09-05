@@ -38,7 +38,7 @@ function PillarFlipCard({ pillar }: { pillar: DevPillar }) {
       type="button"
       onClick={() => setFlipped((f) => !f)}
       aria-pressed={flipped}
-      aria-label={`${ta ? pillar.ta : pillar.en} — ${flipped ? (ta ? "மூடு" : "tap to close") : (ta ? "விவரங்களுக்குத் தட்டவும்" : "tap for details")}`}
+      aria-label={`${ta ? pillar.ta : pillar.en} — ${flipped ? (ta ? "படத்தை மூடு" : "tap to close the photo") : (ta ? "படத்தைப் பார்க்கத் தட்டவும்" : "tap to see the photo")}`}
       className="group relative h-[380px] w-full text-left [perspective:1600px]"
     >
       <div
@@ -47,42 +47,36 @@ function PillarFlipCard({ pillar }: { pillar: DevPillar }) {
           flipped && "[transform:rotateY(180deg)]"
         )}
       >
-        {/* ---------- front ---------- */}
-        <div className="absolute inset-0 flex flex-col rounded-2xl glass gold-border p-7 [backface-visibility:hidden] md:p-8">
+        {/* ---------- front — icon, title and the pillar's points ---------- */}
+        <div className="absolute inset-0 flex h-full flex-col rounded-2xl glass gold-border p-7 [backface-visibility:hidden] md:p-8">
           <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gold-faint ring-1 ring-gold/30">
             <Icon size={26} className="text-gold" />
           </span>
-          <h3 className="mt-5 font-serif text-xl leading-snug text-ivory md:text-2xl">
+          <h3 className="mt-5 shrink-0 font-serif text-xl leading-snug text-ivory md:text-2xl">
             {ta ? pillar.ta : pillar.en}
           </h3>
-          <p className="mt-3 flex-1 font-sans text-[13.5px] leading-relaxed text-gold/85">
+          <p className="mt-2 shrink-0 font-sans text-[12.5px] leading-relaxed text-gold/85">
             {ta ? pillar.leadTa : pillar.lead}
           </p>
-          <span className="mt-4 inline-flex items-center gap-1.5 self-start font-sans text-[10px] uppercase tracking-widest text-ivory-faint transition-colors group-hover:text-gold">
-            <RotateCw size={12} /> {ta ? "விவரங்களுக்குத் தட்டவும்" : "Tap to flip"}
+          <ul className="mt-3 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
+            {pillar.points.map((pt) => (
+              <li key={pt.en} className="flex gap-2.5">
+                <Check size={14} className="mt-0.5 shrink-0 text-gold" />
+                <p className="font-sans text-[12.5px] leading-relaxed text-ivory/90">
+                  {ta ? pt.ta : pt.en}
+                </p>
+              </li>
+            ))}
+          </ul>
+          <span className="mt-4 inline-flex shrink-0 items-center gap-1.5 self-start font-sans text-[10px] uppercase tracking-widest text-ivory-faint transition-colors group-hover:text-gold">
+            <RotateCw size={12} /> {ta ? "படத்தைப் பார்க்கத் தட்டவும்" : "Tap to flip"}
           </span>
         </div>
 
-        {/* ---------- back ---------- */}
+        {/* ---------- back — the photograph, and only the photograph ---------- */}
         <div className="absolute inset-0 overflow-hidden rounded-2xl [backface-visibility:hidden] [transform:rotateY(180deg)]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={pillar.bg} alt="" className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/70 to-black/40" />
-          <div className="relative flex h-full flex-col p-6 md:p-7">
-            <h4 className="font-serif text-lg leading-snug text-gold-bright md:text-xl">
-              {ta ? pillar.ta : pillar.en}
-            </h4>
-            <ul className="mt-4 space-y-2.5 overflow-y-auto pr-1">
-              {pillar.points.map((pt) => (
-                <li key={pt.en} className="flex gap-2.5">
-                  <Check size={14} className="mt-0.5 shrink-0 text-gold" />
-                  <p className="font-sans text-[12.5px] leading-relaxed text-ivory/95">
-                    {ta ? pt.ta : pt.en}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          </div>
+          <img src={pillar.bg} alt={ta ? pillar.ta : pillar.en} className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
         </div>
       </div>
     </button>
@@ -108,10 +102,12 @@ export default function WomenDevelopment() {
 
   return (
     <section id="women-development" ref={root} className="bg-obsidian-deep section-pad">
-      {/* ---------- heading ---------- */}
+      {/* ---------- heading — bold and sized to match every other
+          section's kicker + headline, not just a kicker over a plain
+          paragraph ---------- */}
       <div className="wd-rise mx-auto max-w-3xl text-center">
         <p className="kicker mb-3">{ta ? womenDevIntro.kickerTa : womenDevIntro.kicker}</p>
-        <p className="prose-justify mt-5 text-center font-sans text-[15px] leading-relaxed text-ivory-dim">
+        <p className="mt-5 text-center font-serif text-2xl font-semibold leading-snug text-ivory md:text-4xl">
           {ta ? womenDevIntro.leadTa : womenDevIntro.lead}
         </p>
       </div>

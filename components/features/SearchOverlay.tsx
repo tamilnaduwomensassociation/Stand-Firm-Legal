@@ -56,13 +56,17 @@ export default function SearchOverlay() {
       ...caseStudies.map((c) => ({ label: c.en, sub: `Women & Law · ${c.area}`, href: `/case-studies/${c.slug}`, keywords: `${c.ta} ${c.result} ${c.framework} ${c.background}` })),
       /* Editorial */
       ...blogPosts.map((b) => ({ label: b.title, sub: `Legal Update · ${b.tag}`, href: "/#blog", keywords: `${b.titleTa} ${b.excerpt}` })),
-      ...activeNumbers.map((n) => ({ label: `${n.label}: ${n.number}`, sub: "Active Number", href: "/#active-numbers", keywords: `${n.labelTa} ${n.note} ${n.noteTa}` })),
+      /* The Active Numbers section now shows the team roster, not phone
+         numbers (see components/sections/ActiveNumbers.tsx) — these
+         still search by number, but land on Contact, where the same
+         numbers are actually displayed. */
+      ...activeNumbers.map((n) => ({ label: `${n.label}: ${n.number}`, sub: "Contact", href: "/#contact", keywords: `${n.labelTa} ${n.note} ${n.noteTa}` })),
       ...testimonials.map((t) => ({ label: t.name, sub: "Client Voice · Google review", href: "/#testimonials", keywords: `${t.text} ${t.meta} review testimonial` })),
       /* Standalone pages */
       { label: "Gallery", sub: "Photographs from our chambers", href: "/gallery", keywords: "படத்தொகுப்பு photos moments" },
       { label: "Stand Firm Legal Associates", sub: "Services, deeds, registrations & banking", href: "/stand-firm", keywords: "SFLA store order property deed registration cart price" },
       { label: "Legal News & Judgments", sub: "Live feed — courts, rules, notifications", href: "/legal-news", keywords: "சட்ட செய்திகள் live law bar and bench judgment update" },
-      { label: "Member ID Card", sub: "Generate & download your card", href: "/id-card", keywords: "அடையாள அட்டை identity card member" },
+      { label: "Member ID Card", sub: "Issued as part of joining", href: "/membership", keywords: "அடையாள அட்டை identity card member" },
       { label: "Jeni Enterprises", sub: "Foods · Books · IT · Auction Property · E-Sevai", href: "/jeni", keywords: "jeni enterprises foods books it services bank auction esevai" },
     ],
     []
