@@ -1168,7 +1168,7 @@ export default function MembershipRegistration({ embedded = false }: { embedded?
 
       {/* ================= PREVIEW ================= */}
       {preview && (
-        <div data-lenis-prevent className="fixed inset-0 z-[97] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" role="dialog">
+        <div data-lenis-prevent className="fixed inset-0 z-[97] flex items-center justify-center bg-obsidian-deep/70 p-4 backdrop-blur-sm" role="dialog">
           <div className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-obsidian-soft shadow-2xl gold-border">
             <div className="flex items-center justify-between border-b border-[var(--hairline)] px-6 py-4">
               <p className="kicker !tracking-[0.25em]">{tr("docPreview")}</p>

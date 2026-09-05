@@ -123,7 +123,7 @@ export default function Gallery() {
       {/* Lightbox — full size, full clarity */}
       {lightbox && (
         <div
-          data-lenis-prevent className="fixed inset-0 z-[97] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm"
+          data-lenis-prevent className="fixed inset-0 z-[97] flex items-center justify-center bg-obsidian-deep/90 p-4 backdrop-blur-sm"
           role="dialog"
           aria-label={lang === "ta" ? lightbox.ta : lightbox.en}
           onClick={() => setLightbox(null)}

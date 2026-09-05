@@ -92,7 +92,7 @@ export default function Blog() {
                     loading="lazy"
                   />
                 ) : null}
-                <span className="absolute left-4 top-4 rounded-full bg-black/70 px-3 py-1 text-[10px] uppercase tracking-luxe text-gold backdrop-blur">
+                <span className="absolute left-4 top-4 rounded-full bg-obsidian-deep/70 px-3 py-1 text-[10px] uppercase tracking-luxe text-gold backdrop-blur">
                   {lang === "ta" ? "இந்த வாரம்" : "This week"}
                 </span>
               </div>
@@ -119,7 +119,7 @@ export default function Blog() {
             <div className="relative h-52 overflow-hidden">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={p.image} alt="" className="h-full w-full object-cover transition-transform duration-[1.2s] ease-out group-hover:scale-110" loading="lazy" />
-              <span className="absolute left-4 top-4 rounded-full bg-black/70 px-3 py-1 text-[10px] uppercase tracking-luxe text-gold backdrop-blur">
+              <span className="absolute left-4 top-4 rounded-full bg-obsidian-deep/70 px-3 py-1 text-[10px] uppercase tracking-luxe text-gold backdrop-blur">
                 {lang === "ta" ? p.tagTa : p.tag}
               </span>
             </div>

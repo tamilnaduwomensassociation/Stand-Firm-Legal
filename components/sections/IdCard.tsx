@@ -441,7 +441,9 @@ export default function IdCardSection({
                 {lang === "ta" ? "உறுப்பினர் தகவல்" : "Membership Information"}
               </p>
               <div className="grid gap-5 sm:grid-cols-2">
-                <Field data={data} set={set} k="memberName" label={lang === "ta" ? "உறுப்பினர் பெயர்" : "Member Name"} />
+                <div className="sm:col-span-2">
+                  <Field data={data} set={set} k="memberName" label={lang === "ta" ? "உறுப்பினர் பெயர்" : "Member Name"} />
+                </div>
                 {/* The prefix is PART OF THE FIELD, not part of the value —
                     same pattern as the public "Verify Your Membership" box.
                     It sits inside the bordered input but cannot be selected,
@@ -510,7 +512,9 @@ export default function IdCardSection({
                 <Field data={data} set={set} k="mobile" label={lang === "ta" ? "கைபேசி எண்" : "Mobile No."} />
                 <Field data={data} set={set} k="validUpTo" label={lang === "ta" ? "செல்லுபடி வரை" : "Valid Up To"} placeholder="June 2027" />
                 <Field data={data} set={set} k="cardNo" label={lang === "ta" ? "அட்டை வரிசை எண்" : "Card Serial"} placeholder="08" />
-                <Field data={data} set={set} k="emergency" label={lang === "ta" ? "அவசர தொடர்பு" : "Emergency Contact"} />
+                <div className="sm:col-span-2">
+                  <Field data={data} set={set} k="emergency" label={lang === "ta" ? "அவசர தொடர்பு" : "Emergency Contact"} />
+                </div>
               </div>
             </div>
 
@@ -743,7 +747,7 @@ function Drop({
         <button
           onClick={onClear}
           aria-label="Remove"
-          className="absolute right-2 top-2 rounded-full bg-black/60 p-1 text-ivory-dim hover:text-gold"
+          className="absolute right-2 top-2 rounded-full bg-obsidian-deep/60 p-1 text-ivory-dim hover:text-gold"
         >
           <X size={12} />
         </button>

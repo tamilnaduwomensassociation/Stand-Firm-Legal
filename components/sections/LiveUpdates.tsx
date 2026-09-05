@@ -110,7 +110,7 @@ function UpdateCard({ u, lang }: { u: Update; lang: string }) {
                 type="button"
                 onClick={() => go(-1)}
                 aria-label={lang === "ta" ? "முந்தையது" : "Previous"}
-                className="absolute left-2 top-1/2 z-20 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-ivory opacity-0 backdrop-blur-sm transition-opacity duration-300 hover:bg-black/70 group-hover:opacity-100 focus-visible:opacity-100"
+                className="absolute left-2 top-1/2 z-20 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-obsidian-deep/50 text-ivory opacity-0 backdrop-blur-sm transition-opacity duration-300 hover:bg-obsidian-deep/70 group-hover:opacity-100 focus-visible:opacity-100"
               >
                 <ChevronLeft size={16} />
               </button>
@@ -118,7 +118,7 @@ function UpdateCard({ u, lang }: { u: Update; lang: string }) {
                 type="button"
                 onClick={() => go(1)}
                 aria-label={lang === "ta" ? "அடுத்தது" : "Next"}
-                className="absolute right-2 top-1/2 z-20 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-ivory opacity-0 backdrop-blur-sm transition-opacity duration-300 hover:bg-black/70 group-hover:opacity-100 focus-visible:opacity-100"
+                className="absolute right-2 top-1/2 z-20 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-obsidian-deep/50 text-ivory opacity-0 backdrop-blur-sm transition-opacity duration-300 hover:bg-obsidian-deep/70 group-hover:opacity-100 focus-visible:opacity-100"
               >
                 <ChevronRight size={16} />
               </button>

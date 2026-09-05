@@ -440,7 +440,7 @@ export default function BookShop() {
             className="flex items-center gap-2.5 rounded-full bg-gold px-6 py-3.5 font-sans text-xs uppercase tracking-widest text-black shadow-[0_16px_40px_-10px_rgba(201,162,75,0.65)] transition-all hover:bg-gold-bright"
           >
             <ShoppingBag size={16} />
-            <span className="flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-black/85 px-1.5 text-[10px] font-bold text-gold">
+            <span className="flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-obsidian-deep/85 px-1.5 text-[10px] font-bold text-gold">
               {picked.length}
             </span>
             {ta ? "கோரிக்கை அனுப்பு" : "Request these books"}
@@ -459,7 +459,7 @@ export default function BookShop() {
       {open && (
         <div
           data-lenis-prevent
-          className="fixed inset-0 z-[97] flex items-center justify-center overscroll-contain bg-black/75 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-[97] flex items-center justify-center overscroll-contain bg-obsidian-deep/75 p-4 backdrop-blur-sm"
           role="dialog"
           aria-modal="true"
           onMouseDown={(e) => { if (e.target === e.currentTarget) setOpen(false); }}
@@ -583,7 +583,7 @@ export default function BookShop() {
       {buyOpen && (
         <div
           data-lenis-prevent
-          className="fixed inset-0 z-[97] flex items-center justify-center overscroll-contain bg-black/75 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-[97] flex items-center justify-center overscroll-contain bg-obsidian-deep/75 p-4 backdrop-blur-sm"
           role="dialog"
           aria-modal="true"
           onMouseDown={(e) => { if (e.target === e.currentTarget) setBuyOpen(false); }}
