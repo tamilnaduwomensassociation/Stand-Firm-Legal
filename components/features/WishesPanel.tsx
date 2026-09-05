@@ -158,7 +158,13 @@ export default function WishesPanel() {
           scroll-to-top   24 →  72
           WhatsApp        84 → 132
           assistant      144 → 192
-          bell           204 → 252   ← this button
+          bell           216 → 264   ← this button (12px gap + a further
+                                        12px of breathing room, since the
+                                        assistant button's own image icon
+                                        reads visually "taller" than the
+                                        plain Bell/ArrowUp glyphs and made
+                                        a strict 12px gap look tighter here
+                                        than the other two gaps)
 
         Same right edge, same size, same surface as the rest of the
         column, so the four read as one control rather than three plus a
@@ -167,7 +173,7 @@ export default function WishesPanel() {
       <button
         onClick={() => { setOpen(true); markSeen(); }}
         aria-label={ta ? "வாழ்த்துகள் & அறிவிப்புகள்" : "Wishes and notices"}
-        className="fixed bottom-[204px] right-6 z-[88] flex h-12 w-12 items-center justify-center rounded-full glass gold-border bg-[rgb(var(--c-bg-soft))]/92 text-gold shadow-xl transition-all duration-500 hover:scale-110 hover:bg-gold hover:text-black"
+        className="fixed bottom-[216px] right-6 z-[88] flex h-12 w-12 items-center justify-center rounded-full glass gold-border bg-[rgb(var(--c-bg-soft))]/92 text-gold shadow-xl transition-all duration-500 hover:scale-110 hover:bg-gold hover:text-black"
       >
         <Bell size={19} />
         {today.length > 0 && !seen && (
