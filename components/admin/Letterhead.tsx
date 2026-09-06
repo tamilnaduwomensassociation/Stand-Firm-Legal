@@ -115,9 +115,9 @@ const SHEET_W = 794;
 const SHEET_H = 1123;
 const DATE_ROW_Y = 300;     // baseline of the printed "Date :" rule
 /* The typed Ref/Date value has to sit ON the artwork's own blank
-   dotted rule, but ABOVE the dots — not straddling them. 17px clears
+   dotted rule, but ABOVE the dots — not straddling them. 20px clears
    it with real breathing room while still reading as "on the line". */
-const DATE_VALUE_LIFT = 17;
+const DATE_VALUE_LIFT = 20;
 const CONTENT_TOP = 330;    // top of the blank column, just under that rule
 const CONTENT_BOTTOM = 805; // just above the office-bearers card
 const BODY_PAD_X = 44;
@@ -752,10 +752,13 @@ function LetterSheet({
         {f.ref ? `Ref: ${f.ref}` : ""}
       </div>
       {/* Sits above the artwork's own dotted rule, which runs from
-          roughly x=638 to x=764 after the printed "Date :" label. */}
+          roughly x=638 to x=764 after the printed "Date :" label. A
+          smaller size than the Ref line, right-aligned to the same
+          126px span, leaves real blank space before the value starts
+          instead of the text crowding straight up against the dots. */}
       <div style={{
         position: "absolute", top: DATE_ROW_Y - DATE_VALUE_LIFT, left: 638, width: 126,
-        textAlign: "right", fontFamily: "Georgia, serif", fontSize: 11, color: "#3a3a48",
+        textAlign: "right", fontFamily: "Georgia, serif", fontSize: 9.5, letterSpacing: 0.2, color: "#3a3a48",
       }}>
         {first
           ? (f.date ? new Date(`${f.date}T00:00:00`).toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" }) : "")
@@ -774,7 +777,7 @@ function LetterSheet({
         ) : null}
 
         {first && f.subject ? (
-          <div style={{ marginTop: 14, fontSize: 12.5, fontWeight: 700, textDecoration: "underline", textUnderlineOffset: 3 }}>
+          <div style={{ marginTop: 14, fontSize: 12.5, fontWeight: 700, textDecoration: "underline", textUnderlineOffset: 6 }}>
             Sub: {f.subject}
           </div>
         ) : null}
