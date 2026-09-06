@@ -88,7 +88,7 @@ export type LetterForm = {
  * a signature orphaned onto a page of its own is the classic way an
  * auto-paginated letter looks machine-made.
  *
- * The sheet is now the association's own artwork
+ * The sheet is the association's own artwork
  * (/media/tnwla-letterhead-sheet.png) laid down as the page background,
  * full bleed, with the letter's real text overlaid on top of it — not
  * rebuilt band-by-band in the DOM. That is what makes the on-screen
@@ -96,25 +96,30 @@ export type LetterForm = {
  * watermark, office-bearers card and bottom flourish included, since
  * they are all pixels of the one image rather than a redrawing of it.
  *
+ * The artwork's own native canvas is 1024×1536, but the sheet is still
+ * rendered at 794×1123 (SHEET_W/SHEET_H, unchanged) — the <img> below
+ * stretches it to fit via objectFit:"fill", so every pixel position
+ * measured on the native artwork is carried over here scaled by
+ * 794/1024 horizontally and 1123/1536 vertically. Keeping SHEET_W/
+ * SHEET_H fixed means the stage/zoom math in SheetStage (which sizes
+ * itself off these same two numbers) never has to change.
+ *
  * The image still leaves a blank column for the letter itself — from
  * just under the "Date :" rule down to just above the office-bearers
  * card — and CONTENT_TOP/CONTENT_BOTTOM below are that column's pixel
- * bounds, measured directly off the artwork at its native 794×1123
- * canvas size. BODY_W and PAGE_BODY_H are what is left for the letter
- * once the column's own padding is taken out.
+ * bounds, measured directly off the artwork and scaled down as above.
+ * BODY_W and PAGE_BODY_H are what is left for the letter once the
+ * column's own padding is taken out.
  */
 const SHEET_W = 794;
 const SHEET_H = 1123;
-const DATE_ROW_Y = 317;     // baseline of the printed "Date :" rule
+const DATE_ROW_Y = 300;     // baseline of the printed "Date :" rule
 /* The typed Ref/Date value has to sit ON the artwork's own blank
-   underline, but ABOVE the dashes — not straddling them. Measured
-   directly off the artwork, the dashed rule itself sits ~5px BELOW
-   DATE_ROW_Y, so an 8px lift left the text's descenders and the 4×
-   export's anti-aliasing overlapping the dashes. 17px clears it with
-   real breathing room while still reading as "on the line". */
+   dotted rule, but ABOVE the dots — not straddling them. 17px clears
+   it with real breathing room while still reading as "on the line". */
 const DATE_VALUE_LIFT = 17;
-const CONTENT_TOP = 348;    // top of the blank column, just under that rule
-const CONTENT_BOTTOM = 735; // just above the office-bearers card
+const CONTENT_TOP = 330;    // top of the blank column, just under that rule
+const CONTENT_BOTTOM = 805; // just above the office-bearers card
 const BODY_PAD_X = 44;
 const BODY_PAD_Y = 10;
 const BODY_H = CONTENT_BOTTOM - CONTENT_TOP;
@@ -746,10 +751,10 @@ function LetterSheet({
       <div style={{ position: "absolute", top: DATE_ROW_Y - DATE_VALUE_LIFT, left: BODY_PAD_X, fontFamily: "Georgia, serif", fontSize: 11, color: "#3a3a48" }}>
         {f.ref ? `Ref: ${f.ref}` : ""}
       </div>
-      {/* Sits above the artwork's own blank underline, which runs from
-          roughly x=610 to x=750 after the printed "Date :" label. */}
+      {/* Sits above the artwork's own dotted rule, which runs from
+          roughly x=638 to x=764 after the printed "Date :" label. */}
       <div style={{
-        position: "absolute", top: DATE_ROW_Y - DATE_VALUE_LIFT, left: 610, width: 140,
+        position: "absolute", top: DATE_ROW_Y - DATE_VALUE_LIFT, left: 638, width: 126,
         textAlign: "right", fontFamily: "Georgia, serif", fontSize: 11, color: "#3a3a48",
       }}>
         {first

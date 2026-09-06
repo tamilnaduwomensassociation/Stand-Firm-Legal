@@ -183,6 +183,13 @@ export type HarmonyCourse = {
 
 export const courses: HarmonyCourse[] = [
   {
+    id: "class-meditation", en: "Meditation on Twin Hearts", ta: "இரட்டை இதய தியானம்",
+    level: "Open session", duration: "Weekly · 90 minutes", fee: 0,
+    includes: ["Open to all", "No registration fee"],
+    desc: "A free weekly guided meditation, open to anyone whether or not they have taken a course. Come a little early the first time.",
+    descTa: "வாராந்திர இலவச வழிகாட்டப்பட்ட தியானம் — பாடநெறி எடுத்தவர்கள், எடுக்காதவர்கள் அனைவருக்கும் திறந்திருக்கிறது.",
+  },
+  {
     id: "class-basic", en: "Basic Pranic Healing", ta: "அடிப்படை பிராணிக் ஹீலிங்",
     level: "Level I", duration: "2 days · weekend", fee: 6000,
     includes: ["Course manual", "Practice materials", "Certificate of attendance", "Refreshments"],
@@ -202,13 +209,6 @@ export const courses: HarmonyCourse[] = [
     includes: ["Course manual", "Practice materials", "Certificate of attendance"],
     desc: "Working with emotional and mental energy. Levels I and II are prerequisites.",
     descTa: "உணர்வு மற்றும் மனநிலை ஆற்றலுடன் பணியாற்றுதல். நிலை I மற்றும் II முன்நிபந்தனை.",
-  },
-  {
-    id: "class-meditation", en: "Meditation on Twin Hearts", ta: "இரட்டை இதய தியானம்",
-    level: "Open session", duration: "Weekly · 90 minutes", fee: 0,
-    includes: ["Open to all", "No registration fee"],
-    desc: "A free weekly guided meditation, open to anyone whether or not they have taken a course. Come a little early the first time.",
-    descTa: "வாராந்திர இலவச வழிகாட்டப்பட்ட தியானம் — பாடநெறி எடுத்தவர்கள், எடுக்காதவர்கள் அனைவருக்கும் திறந்திருக்கிறது.",
   },
 ];
 

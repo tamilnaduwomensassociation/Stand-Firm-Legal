@@ -336,7 +336,7 @@ body {
    explicitly when it has no saved override of its own (see
    lib/theme.ts), which is exactly what already happens today. */
 :root {
-  --type-scale: 1.15;
+  --type-scale: 1.1;
   --radius-scale: 1;
 }
 
