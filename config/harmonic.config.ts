@@ -115,6 +115,10 @@ export const dhoobamGroups = [
   { id: "resin", en: "Resin & Sambrani", ta: "சாம்பிராணி" },
   { id: "kits", en: "Kits & Combos", ta: "தொகுப்புகள்" },
   { id: "candles", en: "Glass Candles", ta: "கண்ணாடி மெழுகுவர்த்திகள்" },
+  { id: "doop", en: "Doop Sticks", ta: "தூப் குச்சிகள்" },
+  { id: "dhoobam", en: "Dhoobam", ta: "தூபம்" },
+  { id: "spliquid", en: "S. P. Liquid Bottle", ta: "S. P. திரவ பாட்டில்" },
+  { id: "salts", en: "Bathing Salts", ta: "குளியல் உப்பு" },
 ];
 
 export const dhoobamCatalogue: HarmonyItem[] = [
@@ -168,6 +172,36 @@ export const dhoobamCatalogue: HarmonyItem[] = [
     pack: "Small", packTa: "சிறியது",
     desc: "A small candle in a glass holder, for the altar or the practice space.",
     descTa: "பூஜை இடம் அல்லது பயிற்சி இடத்திற்கான கண்ணாடிக் குவளையில் சிறிய மெழுகுவர்த்தி.",
+  },
+  /* price: 0 = "Price on request" on the shop card (Ask button -> WhatsApp).
+     Set the real price here, or in Superadmin > Pricing, to open it for sale. */
+  {
+    id: "dhoobam-doop-sticks", en: "Doop Sticks", ta: "தூப் குச்சிகள்",
+    group: "doop", price: 0, /* TODO price */
+    pack: "Pack", packTa: "பாக்கெட்",
+    desc: "Doop sticks for the altar or the practice space.",
+    descTa: "பூஜை இடம் அல்லது பயிற்சி இடத்திற்கான தூப் குச்சிகள்.",
+  },
+  {
+    id: "dhoobam-dhoobam", en: "Dhoobam", ta: "தூபம்",
+    group: "dhoobam", price: 0, /* TODO price */
+    pack: "Pack", packTa: "பாக்கெட்",
+    desc: "Dhoobam for the altar or the practice space.",
+    descTa: "பூஜை இடம் அல்லது பயிற்சி இடத்திற்கான தூபம்.",
+  },
+  {
+    id: "dhoobam-sp-liquid-bottle", en: "S. P. Liquid Bottle", ta: "S. P. திரவ பாட்டில்",
+    group: "spliquid", price: 0, /* TODO price */
+    pack: "Bottle", packTa: "பாட்டில்",
+    desc: "S. P. liquid, supplied in a bottle.",
+    descTa: "பாட்டிலில் வழங்கப்படும் S. P. திரவம்.",
+  },
+  {
+    id: "dhoobam-bathing-salts", en: "Bathing Salts", ta: "குளியல் உப்பு",
+    group: "salts", price: 0, /* TODO price */
+    pack: "Pack", packTa: "பாக்கெட்",
+    desc: "Salts for the bath.",
+    descTa: "குளியலுக்கான உப்பு.",
   },
 ];
 
