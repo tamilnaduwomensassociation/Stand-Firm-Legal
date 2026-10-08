@@ -104,6 +104,7 @@ export const editable: Record<string, EditableGroup[]> = {
       fields: [
         { key: "phone1", label: "Primary phone" },
         { key: "whatsapp", label: "WhatsApp number", hint: "Digits only with country code" },
+        { key: "gpay", label: "GPay number", hint: "10-digit number shown in the footer" },
         { key: "email", label: "Email" },
         { key: "address", label: "Address", type: "textarea" },
       ],
