@@ -169,6 +169,9 @@ export default function DhoobamShop() {
   const sendOrderToOffice = () =>
     window.open(`https://wa.me/${c("whatsapp", harmony.whatsapp)}?text=${encodeURIComponent(orderText())}`, "_blank", "noopener");
 
+  const askPrice = (name: string) =>
+    window.open(`https://wa.me/${c("whatsapp", harmony.whatsapp)}?text=${encodeURIComponent(`Hello, I would like to know the price of ${name}.`)}`, "_blank", "noopener");
+
   return (
     <section className="bg-obsidian section-pad">
       {/* group chips */}
@@ -217,12 +220,18 @@ export default function DhoobamShop() {
 
               <div className="mt-5 flex items-end justify-between border-t border-[var(--hairline)] pt-4">
                 <div className="flex items-baseline gap-2">
-                  <p className="font-serif text-2xl gold-text">₹{inr(i.price)}</p>
+                  {i.price > 0
+                    ? <p className="font-serif text-2xl gold-text">₹{inr(i.price)}</p>
+                    : <p className="font-sans text-[11px] uppercase tracking-widest text-ivory-dim">{ta ? "விலை கேட்டு" : "Price on request"}</p>}
                   {i.mrp && i.mrp > i.price && (
                     <p className="font-sans text-[12px] text-ivory-faint line-through">₹{inr(i.mrp)}</p>
                   )}
                 </div>
-                {q === 0 ? (
+                {i.price <= 0 ? (
+                  <button onClick={() => askPrice(i.en)} className="flex items-center gap-1.5 rounded-full gold-border px-4 py-2 font-sans text-[10px] uppercase tracking-widest text-gold transition-all hover:bg-gold hover:text-black">
+                    <MessageCircle size={12} /> {ta ? "விலை கேள்" : "Ask price"}
+                  </button>
+                ) : q === 0 ? (
                   <button onClick={() => add(i)} className="flex items-center gap-1.5 rounded-full bg-gold px-4 py-2 font-sans text-[10px] uppercase tracking-widest text-black transition-all hover:bg-gold-bright">
                     <Plus size={12} /> {ta ? "சேர்" : "Add"}
                   </button>
