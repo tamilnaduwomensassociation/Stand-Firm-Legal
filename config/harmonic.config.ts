@@ -63,20 +63,20 @@ export type HarmonyTab = {
 
 export const harmonyTabs: HarmonyTab[] = [
   {
-    slug: "dhoobam",
-    en: "Dhoobam & Ritual Supplies",
-    ta: "தூபம் & பூஜைப் பொருட்கள்",
-    icon: "Flame",
-    kicker: "Made in small batches",
+    slug: "masters",
+    en: "About Pranic Healing and Masters",
+    ta: "பிராணிக் ஹீலிங் & குருமார்கள் பற்றி",
+    icon: "ScrollText",
+    kicker: "The lineage",
     blurb:
-      "Hand-rolled dhoobam sticks, cups and resin blends, made in small batches from herbs and gum benzoin. Sold by the pack and by the box.",
+      "The teachers this practice descends from, and how the tradition reached Chennai. Written from the centre's own records.",
     blurbTa:
-      "மூலிகைகள் மற்றும் சாம்பிராணியில் இருந்து சிறிய அளவில் தயாரிக்கப்படும் கையால் சுற்றப்பட்ட தூப குச்சிகள், கப்புகள் மற்றும் பிசின் கலவைகள்.",
+      "இந்தப் பயிற்சி வந்த வழி — ஆசான்கள் மற்றும் இந்த மரபு சென்னையை அடைந்த விதம்.",
   },
   {
     slug: "classes",
-    en: "Classes & Registration",
-    ta: "வகுப்புகள் & பதிவு",
+    en: "Workshop and Registration",
+    ta: "பயிலரங்கு & பதிவு",
     icon: "GraduationCap",
     kicker: "",
     blurb:
@@ -85,15 +85,15 @@ export const harmonyTabs: HarmonyTab[] = [
       "அடிப்படை நிலை முதல் வார இறுதி வகுப்புகள் — தமிழ் மற்றும் ஆங்கிலத்தில். கட்டணத்தில் கையேடு மற்றும் பயிற்சிப் பொருட்கள் அடங்கும்.",
   },
   {
-    slug: "masters",
-    en: "History of the Masters",
-    ta: "குருபரம்பரை",
-    icon: "ScrollText",
-    kicker: "The lineage",
+    slug: "dhoobam",
+    en: "Blessed Products & Ritual Supplies",
+    ta: "ஆசீர்வதிக்கப்பட்ட பொருட்கள் & பூஜைப் பொருட்கள்",
+    icon: "Flame",
+    kicker: "Made in small batches",
     blurb:
-      "The teachers this practice descends from, and how the tradition reached Chennai. Written from the centre's own records.",
+      "Hand-rolled dhoobam sticks, cups and resin blends, made in small batches from herbs and gum benzoin. Sold by the pack and by the box.",
     blurbTa:
-      "இந்தப் பயிற்சி வந்த வழி — ஆசான்கள் மற்றும் இந்த மரபு சென்னையை அடைந்த விதம்.",
+      "மூலிகைகள் மற்றும் சாம்பிராணியில் இருந்து சிறிய அளவில் தயாரிக்கப்படும் கையால் சுற்றப்பட்ட தூப குச்சிகள், கப்புகள் மற்றும் பிசின் கலவைகள்.",
   },
 ];
 
@@ -211,6 +211,58 @@ export const courses: HarmonyCourse[] = [
     descTa: "உணர்வு மற்றும் மனநிலை ஆற்றலுடன் பணியாற்றுதல். நிலை I மற்றும் II முன்நிபந்தனை.",
   },
 ];
+
+/* ---------------- ABOUT THE FOUNDER ---------------- */
+/* Supplied by the centre for the "About Pranic Healing and Masters" tab. */
+
+export const founder = {
+  heading: "About Founder of Pranic Healing",
+  photo: "/media/harmony-founder.jpg",
+  photoAlt: "Grand Master Choa Kok Sui",
+  intro:
+    "Grand Master Choa Kok Sui (1952–2007) was the Founder and Originator of Modern Pranic Healing® and Arhatic Yoga®. He was born in Cebu City, Philippines, on 15 August 1952.",
+  sections: [
+    {
+      title: "🙏 Who was Grand Master Choa Kok Sui?",
+      paragraphs: [
+        "He was a chemical engineer, businessman, author, spiritual teacher and philanthropist. His scientific training and lifelong interest in spirituality and energy healing led him to develop a systematic approach to working with Prana — the vital life force.",
+        "After years of research, experimentation and synthesis of different healing traditions, he developed the modern Pranic Healing system. His first major book, The Ancient Science and Art of Pranic Healing, was published in 1987 and later became known as Miracles Through Pranic Healing.",
+      ],
+    },
+    {
+      title: "🌈 His Teachings",
+      paragraphs: [
+        "Grand Master Choa Kok Sui taught techniques based on the concept of cleansing and energising the energy body. His system also developed specialised teachings including:",
+      ],
+      list: [
+        "Basic Pranic Healing",
+        "Advanced Pranic Healing",
+        "Pranic Psychotherapy",
+        "Pranic Crystal Healing",
+        "Psychic Self-Defense",
+        "Arhatic Yoga",
+        "Meditations for Soul Realization",
+      ],
+      after:
+        "His teachings combine practical energy-healing techniques with meditation, spiritual development and personal transformation.",
+    },
+    {
+      title: "🌍 His Global Mission",
+      paragraphs: [
+        "For around 20 years, Grand Master Choa travelled internationally, teaching students in more than 60 countries across six continents. Before his passing on 19 March 2007, his teachings had expanded to Pranic Healing centres in many countries, and his books had been translated into numerous languages.",
+        "He also established organisations including the World Pranic Healing Foundation and the Institute for Inner Studies, supporting the worldwide dissemination of his teachings. His charitable legacy includes food distribution, medical assistance and disaster-relief initiatives.",
+      ],
+    },
+    {
+      title: "✨ His Vision",
+      paragraphs: [
+        "One of the central ideas associated with his mission was to empower ordinary people to learn self-healing, help others, develop spiritually and serve humanity.",
+        "His teachings continue through Pranic Healing centres, instructors, meditation groups and charitable organisations around the world.",
+      ],
+    },
+  ] as { title: string; paragraphs: string[]; list?: string[]; after?: string }[],
+};
+
 
 /* ---------------- LINEAGE ---------------- */
 
