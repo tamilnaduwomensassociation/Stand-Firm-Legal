@@ -3,18 +3,13 @@
  * HARMONY HEALING OASIS — brand, tabs and catalogue
  * ============================================================
  * The fourth brand in the group. Three counters for now — Dhoobam
- * sales, classes and registration, and the lineage of the masters —
+ * sales, classes and registration, and the story of the founder —
  * with room for the rest once the client has written it.
  *
- * ⚠️  TWO KINDS OF PLACEHOLDER IN THIS FILE, AND THEY ARE DIFFERENT
+ * ⚠️  PLACEHOLDERS IN THIS FILE
  *
  *   `/* TODO stock *\/`   prices and pack sizes we were not given.
  *                         Replace before selling.
- *   `/* TODO history *\/` biographical detail about the masters.
- *                         Only the client can supply this — do not
- *                         write it from a web search. Getting a
- *                         lineage wrong in print is a serious
- *                         discourtesy in this tradition.
  *
  * ⚠️  A NOTE ON CLAIMS, WHICH MATTERS MORE THAN THE PRICES
  *
@@ -67,11 +62,11 @@ export const harmonyTabs: HarmonyTab[] = [
     en: "About Pranic Healing and Masters",
     ta: "பிராணிக் ஹீலிங் & குருமார்கள் பற்றி",
     icon: "ScrollText",
-    kicker: "The lineage",
+    kicker: "The founder",
     blurb:
-      "The teachers this practice descends from, and how the tradition reached Chennai. Written from the centre's own records.",
+      "The life, vision and teachings of Grand Master Choa Kok Sui, the founder of Modern Pranic Healing.",
     blurbTa:
-      "இந்தப் பயிற்சி வந்த வழி — ஆசான்கள் மற்றும் இந்த மரபு சென்னையை அடைந்த விதம்.",
+      "நவீன பிராணிக் ஹீலிங்கின் நிறுவனரைப் பற்றியும், அவர் வகுத்த போதனைகள் பற்றியும்.",
   },
   {
     slug: "classes",
@@ -216,23 +211,23 @@ export const courses: HarmonyCourse[] = [
 /* Supplied by the centre for the "About Pranic Healing and Masters" tab. */
 
 export const founder = {
-  heading: "About Founder of Pranic Healing",
+  heading: "The Visionary Behind Pranic Healing",
   photo: "/media/harmony-founder.jpg",
   photoAlt: "Grand Master Choa Kok Sui",
   intro:
-    "Grand Master Choa Kok Sui (1952–2007) was the Founder and Originator of Modern Pranic Healing® and Arhatic Yoga®. He was born in Cebu City, Philippines, on 15 August 1952.",
+    "Grand Master Choa Kok Sui (1952–2007) was the Founder and Originator of Modern Pranic Healing® and Arhatic Yoga®. Born in Cebu City, Philippines, on 15 August 1952, he gave the world a clear, systematic path into working with Prana, the vital life force.",
   sections: [
     {
-      title: "🙏 Who was Grand Master Choa Kok Sui?",
+      title: "A Scientist with a Seeker's Heart",
       paragraphs: [
-        "He was a chemical engineer, businessman, author, spiritual teacher and philanthropist. His scientific training and lifelong interest in spirituality and energy healing led him to develop a systematic approach to working with Prana — the vital life force.",
-        "After years of research, experimentation and synthesis of different healing traditions, he developed the modern Pranic Healing system. His first major book, The Ancient Science and Art of Pranic Healing, was published in 1987 and later became known as Miracles Through Pranic Healing.",
+        "Chemical engineer, businessman, author, spiritual teacher and philanthropist — Grand Master Choa wore many hats, yet one thread ran through them all. His scientific training and lifelong fascination with spirituality and energy healing came together in a methodical way of working with Prana.",
+        "Through years of research, experimentation and the gathering of many healing traditions into one coherent system, he shaped what is known today as Modern Pranic Healing. In 1987 came his first major book, The Ancient Science and Art of Pranic Healing, later known as Miracles Through Pranic Healing.",
       ],
     },
     {
-      title: "🌈 His Teachings",
+      title: "A Path in Many Chapters",
       paragraphs: [
-        "Grand Master Choa Kok Sui taught techniques based on the concept of cleansing and energising the energy body. His system also developed specialised teachings including:",
+        "At the heart of his teaching lies one simple, powerful idea: cleansing and energising the energy body. From that root grew a family of specialised teachings:",
       ],
       list: [
         "Basic Pranic Healing",
@@ -244,65 +239,23 @@ export const founder = {
         "Meditations for Soul Realization",
       ],
       after:
-        "His teachings combine practical energy-healing techniques with meditation, spiritual development and personal transformation.",
+        "Together, they weave practical energy techniques with meditation, spiritual growth and personal transformation.",
     },
     {
-      title: "🌍 His Global Mission",
+      title: "A Journey Across Six Continents",
       paragraphs: [
-        "For around 20 years, Grand Master Choa travelled internationally, teaching students in more than 60 countries across six continents. Before his passing on 19 March 2007, his teachings had expanded to Pranic Healing centres in many countries, and his books had been translated into numerous languages.",
-        "He also established organisations including the World Pranic Healing Foundation and the Institute for Inner Studies, supporting the worldwide dissemination of his teachings. His charitable legacy includes food distribution, medical assistance and disaster-relief initiatives.",
+        "For some twenty years, Grand Master Choa travelled the world as a teacher, reaching students in more than 60 countries. By the time of his passing on 19 March 2007, Pranic Healing centres had taken root in many lands and his books had been translated into numerous languages.",
+        "Among the organisations he established are the World Pranic Healing Foundation and the Institute for Inner Studies, created to carry his teachings far and wide. His generosity reached beyond the classroom, through food distribution, medical assistance and disaster-relief efforts.",
       ],
     },
     {
-      title: "✨ His Vision",
+      title: "A Vision for Everyone",
       paragraphs: [
-        "One of the central ideas associated with his mission was to empower ordinary people to learn self-healing, help others, develop spiritually and serve humanity.",
-        "His teachings continue through Pranic Healing centres, instructors, meditation groups and charitable organisations around the world.",
+        "Central to his mission was a generous belief: that ordinary people can be empowered to look after their own well-being, to help others, to grow spiritually and to serve humanity.",
+        "That vision lives on today through Pranic Healing centres, instructors, meditation groups and charitable organisations around the world.",
       ],
     },
   ] as { title: string; paragraphs: string[]; list?: string[]; after?: string }[],
 };
-
-
-/* ---------------- LINEAGE ---------------- */
-
-export const masters = [
-  {
-    name: "Master Choa Kok Sui",
-    years: "1952 – 2007",
-    role: "Founder of Modern Pranic Healing",
-    note:
-      "An engineer and businessman from the Philippines who spent decades testing energy-healing techniques against results and setting down only what could be taught and repeated. Modern Pranic Healing is the system that came out of that work, and the reason it can be learned in a weekend rather than a lifetime.",
-    /* TODO history — the centre may wish to add its own recollection here. */
-  },
-  {
-    name: "The Lineage Before",
-    years: "—",
-    role: "Teachers of the tradition",
-    note:
-      "Master Choa always described the system as a compilation rather than an invention — drawn from esoteric teachings, from Chinese and Indian energy practices, and from the teachers he studied under.",
-    /* TODO history — names and detail to come from the centre's records. */
-  },
-  {
-    /*
-      This entry used to carry a note that ended with a `/* TODO *\/`
-      marker INSIDE the string rather than beside it — so the reminder
-      was not a note to us, it was a paragraph on the public page. A
-      placeholder that renders is worse than no paragraph at all.
-
-      What replaces it says only what is true of this centre and can be
-      stated without anyone's records: what is taught here, on what
-      terms, and where the practice it teaches comes from. When the
-      centre writes its own account — who brought the practice to
-      Chennai, who has taught here since — it replaces this text, and
-      nothing else has to change.
-    */
-    name: "Harmony Healing Oasis, Chennai",
-    years: "—",
-    role: "This centre",
-    note:
-      "The Chennai centre teaches the system as it was set down — Levels I through III and Psychotherapy, in that order, because each level assumes the one before it. The weekly Meditation on Twin Hearts is free and open to anyone, whether or not they have taken a course, and it is deliberately the easiest door into the practice. Nothing taught here is offered as medical treatment: it sits alongside a doctor's care and never in place of it.",
-  },
-];
 
 export const findTab = (slug: string) => harmonyTabs.find((t) => t.slug === slug);
