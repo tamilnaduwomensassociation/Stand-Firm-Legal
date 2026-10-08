@@ -10,7 +10,7 @@
  */
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Flame, GraduationCap, Mail, MapPin, Phone, ScrollText, type LucideIcon } from "lucide-react";
+import { Flame, GraduationCap, Mail, MapPin, Phone, ScrollText, Smartphone, type LucideIcon } from "lucide-react";
 import { harmony, harmonyTabs } from "@/config/harmonic.config";
 import { useLang } from "@/lib/i18n";
 import { useContent } from "@/lib/useContent";
@@ -97,6 +97,7 @@ export function HarmonyFooter() {
   const phone1 = c("phone1", harmony.phones[0]);
   const email = c("email", harmony.email);
   const address = c("address", harmony.address);
+  const gpay = c("gpay", harmony.gpay);
 
   return (
     <footer className="border-t border-gold/15 bg-obsidian-deep">
@@ -114,6 +115,9 @@ export function HarmonyFooter() {
               <a href={`tel:+91${phone1.replace(/\D/g, "").slice(-10)}`} className="flex items-center gap-2 transition-colors hover:text-gold">
                 <Phone size={14} className="text-gold" /> {phone1}
               </a>
+            </li>
+            <li className="flex items-center gap-2">
+              <Smartphone size={14} className="text-gold" /> GPay: {gpay.replace(/\D/g, "").slice(-10).replace(/(\d{5})(\d{5})/, "$1 $2")}
             </li>
             <li>
               <a href={`mailto:${email}`} className="flex items-center gap-2 break-all transition-colors hover:text-gold">
