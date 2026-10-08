@@ -38,8 +38,9 @@ export const harmony = {
   phones: ["+91 89396 26242"],
   whatsapp: "918939626242",
   whatsappDisplay: "+91 89396 26242",
-  email: "advocate.mjenifer@zoho.com",   /* One address across all four brands. */
-  address: "Armenian Street, Parrys, Chennai — 600 001",
+  email: "hho4rightpath@gmail.com",   /* Harmony's own address. */
+  gpay: "8939626242",              /* Google Pay number shown in the footer. */
+  address: "26/105, 1st Floor, Armenian Street, Parrys, Chennai — 600 001",
 
   /** Shown at the foot of every Harmony page. Do not remove. */
   disclaimer:
@@ -113,6 +114,7 @@ export const dhoobamGroups = [
   { id: "sticks", en: "Sticks & Cups", ta: "குச்சி & கப்" },
   { id: "resin", en: "Resin & Sambrani", ta: "சாம்பிராணி" },
   { id: "kits", en: "Kits & Combos", ta: "தொகுப்புகள்" },
+  { id: "candles", en: "Glass Candles", ta: "கண்ணாடி மெழுகுவர்த்திகள்" },
 ];
 
 export const dhoobamCatalogue: HarmonyItem[] = [
@@ -159,6 +161,13 @@ export const dhoobamCatalogue: HarmonyItem[] = [
     pack: "One month's supply", packTa: "ஒரு மாத அளவு",
     desc: "Sticks, cups and resin in the quantities a daily practice actually uses in a month.",
     descTa: "தினசரி பயிற்சிக்கு ஒரு மாதத்திற்கு தேவையான அளவு.",
+  },
+  {
+    id: "dhoobam-glass-candle-small", en: "Glass Candle — Small", ta: "கண்ணாடி மெழுகுவர்த்தி — சிறியது",
+    group: "candles", price: 50,
+    pack: "Small", packTa: "சிறியது",
+    desc: "A small candle in a glass holder, for the altar or the practice space.",
+    descTa: "பூஜை இடம் அல்லது பயிற்சி இடத்திற்கான கண்ணாடிக் குவளையில் சிறிய மெழுகுவர்த்தி.",
   },
 ];
 
