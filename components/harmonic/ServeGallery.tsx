@@ -34,6 +34,13 @@ export type ServeCard = {
   back: string;
   image: string;
   alt: string;
+  /** Optional: "01"… shown as a small badge on the front */
+  number?: string;
+  /** Optional second picture shown at the top of the back (decorative) */
+  backImage?: string;
+  backPos?: string;
+  /** Label of the main back button (it still opens the same WhatsApp chat) */
+  cta?: string;
   /** object-position, so the people in the picture are not cropped out */
   pos: string;
   w: number;
@@ -82,7 +89,10 @@ function FlipCard({ card, wa, tel, phone }: { card: ServeCard; wa: string; tel: 
             aria-label={`${card.title} — turn the card over for more`}
             className="group flex h-full w-full flex-col overflow-hidden rounded-2xl border border-[var(--hairline)] bg-obsidian-soft text-left shadow-[0_10px_30px_-18px_rgba(76,29,149,0.45)] transition-shadow duration-500 hover:shadow-[0_18px_40px_-18px_rgba(76,29,149,0.55)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2"
           >
-            <div className="aspect-[4/3] w-full overflow-hidden bg-obsidian-deep">
+            <div className="relative aspect-[4/3] w-full overflow-hidden bg-obsidian-deep">
+              {card.number && (
+                <span className="absolute left-3 top-3 z-10 rounded-full bg-white/90 px-2.5 py-1 font-serif text-sm text-gold shadow" aria-hidden>{card.number}</span>
+              )}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={card.image} alt={card.alt} width={card.w} height={card.h}
@@ -103,7 +113,15 @@ function FlipCard({ card, wa, tel, phone }: { card: ServeCard; wa: string; tel: 
 
         {/* ---------------- back ---------------- */}
         <div className="flip-face flip-face-back" inert={!flipped}>
-          <div className="flex h-full flex-col rounded-2xl border border-gold/40 bg-obsidian-soft p-6 shadow-[0_18px_40px_-18px_rgba(76,29,149,0.55)]">
+          <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-gold/40 bg-obsidian-soft shadow-[0_18px_40px_-18px_rgba(76,29,149,0.55)]">
+            {card.backImage && (
+              <div className="h-24 w-full shrink-0 overflow-hidden sm:h-28" aria-hidden>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={card.backImage} alt="" width={504} height={300} loading="lazy" decoding="async"
+                  style={{ objectPosition: card.backPos ?? "50% 40%" }} className="h-full w-full object-cover" />
+              </div>
+            )}
+            <div className="flex flex-1 flex-col p-6">
             <h4 className="font-serif text-xl leading-snug text-ivory">{card.title}</h4>
             <span className="mt-3 block h-0.5 w-10 bg-gold" aria-hidden />
             <p className="mt-4 flex-1 font-sans text-[14px] leading-relaxed text-ivory-dim">{card.back}</p>
@@ -115,7 +133,7 @@ function FlipCard({ card, wa, tel, phone }: { card: ServeCard; wa: string; tel: 
                 href={wa} target="_blank" rel="noopener noreferrer"
                 className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-full bg-gold px-4 py-2.5 font-sans text-[11px] font-bold uppercase tracking-[0.12em] text-white transition-all hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2"
               >
-                <MessageCircle size={15} aria-hidden /> WhatsApp Us
+                <MessageCircle size={15} aria-hidden /> {card.cta ?? "WhatsApp Us"}
               </a>
               <a
                 href={tel}
@@ -130,6 +148,7 @@ function FlipCard({ card, wa, tel, phone }: { card: ServeCard; wa: string; tel: 
             >
               <RotateCcw size={13} aria-hidden /> Flip back
             </button>
+            </div>
           </div>
         </div>
       </div>

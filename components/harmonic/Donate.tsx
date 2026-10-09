@@ -14,20 +14,41 @@ import { harmony } from "@/config/harmonic.config";
 import { useContent } from "@/lib/useContent";
 import ServeGallery, { type ServeCard } from "@/components/harmonic/ServeGallery";
 
-const ways = [
-  { n: "01", title: "Food for the Hungry", text: "Providing rice boxes, food packets and essential groceries to people in need." },
-  { n: "02", title: "Clothing Support", text: "Providing new clothes and essential clothing items to underprivileged individuals and families." },
-  { n: "03", title: "Medicines & Medical Support", text: "Supporting the medical needs of deserving people, including medicines and essential healthcare assistance." },
-  { n: "04", title: "Support for Senior Citizens", text: "Providing medicines, food, groceries and other essential requirements to elderly people and old-age homes." },
-  { n: "05", title: "Essential Needs & Relief Support", text: "Helping families and individuals with basic necessities during times of difficulty." },
-  { n: "06", title: "Centre Development & Service Activities", text: "Your contribution can also support the development of Harmony Healing Oasis – Pranic Healing Centre and help us conduct more healing, meditation, charitable and community service activities." },
+/* The six "Ways You Can Support" — the centre's own wording, now shown as image flip cards.
+   Clothing has no photo of clothing in the supplied set, so its picture is a
+   volunteer handing a box to children (alt text says only that). */
+const IMG = "/media/harmony/serve";
+const ways: ServeCard[] = [
+  { id: "w-food", number: "01", title: "Food for the Hungry", front: "Rice boxes, food packets and groceries.",
+    back: "Providing rice boxes, food packets and essential groceries to people in need.",
+    image: `${IMG}/01_food_meal_distribution.jpg`, alt: "Women volunteers in purple and white serving hot food from steel vessels", pos: "40% 40%", w: 504, h: 369,
+    backImage: `${IMG}/08_food_donation_packing.jpg`, backPos: "50% 55%", cta: "Support This Cause" },
+  { id: "w-clothing", number: "02", title: "Clothing Support", front: "Essentials for individuals and families.",
+    back: "Providing new clothes and essential clothing items to underprivileged individuals and families.",
+    image: `${IMG}/07_community_outreach.jpg`, alt: "A volunteer in an apron giving a box to children gathered beside a van", pos: "40% 45%", w: 504, h: 335,
+    backImage: `${IMG}/09_tree_planting.jpg`, backPos: "50% 55%", cta: "Support This Cause" },
+  { id: "w-medical", number: "03", title: "Medicines & Medical Support", front: "Medicines and essential healthcare assistance.",
+    back: "Supporting the medical needs of deserving people, including medicines and essential healthcare assistance.",
+    image: `${IMG}/05_community_healthcare.jpg`, alt: "A health worker with a stethoscope checking an older woman", pos: "50% 35%", w: 510, h: 296,
+    backImage: `${IMG}/03_meals_for_elderly.jpg`, backPos: "50% 40%", cta: "Support This Cause" },
+  { id: "w-seniors", number: "04", title: "Support for Senior Citizens", front: "Care for the elderly and old-age homes.",
+    back: "Providing medicines, food, groceries and other essential requirements to elderly people and old-age homes.",
+    image: `${IMG}/03_meals_for_elderly.jpg`, alt: "A volunteer handing a packed meal to an elderly man seated outdoors", pos: "55% 40%", w: 501, h: 369,
+    backImage: `${IMG}/01_food_meal_distribution.jpg`, backPos: "40% 40%", cta: "Support This Cause" },
+  { id: "w-relief", number: "05", title: "Essential Needs & Relief Support", front: "Basic necessities in times of difficulty.",
+    back: "Helping families and individuals with basic necessities during times of difficulty.",
+    image: `${IMG}/02_grocery_donation_supplies.jpg`, alt: "A volunteer holding a bag of grains beside a box of groceries and cooking oil", pos: "45% 55%", w: 510, h: 369,
+    backImage: `${IMG}/08_food_donation_packing.jpg`, backPos: "50% 55%", cta: "Support This Cause" },
+  { id: "w-centre", number: "06", title: "Centre Development & Service Activities", front: "Healing, meditation, charitable and community service.",
+    back: "Your contribution can also support the development of Harmony Healing Oasis – Pranic Healing Centre and help us conduct more healing, meditation, charitable and community service activities.",
+    image: `${IMG}/04_education_support.jpg`, alt: "A volunteer handing books to a smiling schoolgirl", pos: "50% 40%", w: 504, h: 296,
+    backImage: `${IMG}/06_womens_empowerment.jpg`, backPos: "50% 45%", cta: "Support This Cause" },
 ];
 
 /* The pictures for "Service in Pictures". Wording describes the picture and
    the category only — no figures, results or donation destinations.
    Where the centre supplied wording ("Ways You Can Support" above), the
    back repeats it. The pictures themselves are in public/media/harmony/serve. */
-const IMG = "/media/harmony/serve";
 const serveCards: ServeCard[] = [
   { id: "food", title: "Food & Meal Distribution", front: "Sharing meals with people in need.",
     back: "Providing rice boxes, food packets and essential groceries to people in need.",
@@ -151,27 +172,7 @@ export default function Donate() {
             <h3 className="font-serif text-2xl text-ivory md:text-4xl">Your donations can be contributed towards</h3>
           </div>
 
-          <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {ways.map((w, i) => (
-              <motion.article
-                key={w.n}
-                variants={fade} initial="hidden" whileInView="show"
-                viewport={{ once: true, margin: "-60px" }}
-                transition={{ delay: (i % 3) * 0.08 }}
-                className="group relative flex flex-col overflow-hidden rounded-2xl glass gold-border p-7 transition-all duration-500 hover:-translate-y-1 hover:border-gold/70 hover:shadow-[0_20px_50px_-20px_rgba(199,110,220,0.35)]"
-              >
-                <span
-                  className="pointer-events-none absolute -right-2 -top-4 select-none font-serif text-8xl font-bold leading-none text-gold/10 transition-colors duration-500 group-hover:text-gold/25"
-                  aria-hidden
-                >
-                  {w.n}
-                </span>
-                <span className="mb-5 block h-0.5 w-10 bg-gold transition-all duration-500 group-hover:w-20" aria-hidden />
-                <h4 className="relative font-serif text-xl leading-snug text-ivory md:text-[22px]">{w.title}</h4>
-                <p className="relative mt-3 flex-1 font-sans text-[14px] leading-relaxed text-ivory-dim">{w.text}</p>
-              </motion.article>
-            ))}
-          </div>
+          <ServeGallery cards={ways} wa={wa} tel={tel} phone={phone1} className="mt-12" />
         </div>
       </section>
 

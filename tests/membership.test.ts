@@ -227,6 +227,14 @@ describe("claim codes and tokens (test 12)", () => {
     const re = await M.issueClaim(no, "tester");
     assert.ok((await M.redeemClaim(no, re.claim.code)).token);
   });
+  it("free download basis: card status is created only after the server makes the card; forged tokens never pass", async () => {
+    const { no, code } = await approvedMember({ photo: PNG_1PX });
+    const { token } = await M.redeemClaim(no, code);
+    assert.equal((await M.loadCardContext(token)).cardStatus, "not_created");
+    await M.createCardWithToken(token, { blood: "B+ve", emergency: "9444000111", photo: PNG_1PX });
+    assert.equal((await M.loadCardContext(token)).cardStatus, "created");
+    await rejects(M.loadCardContext("forged.token"), "BAD_TOKEN", 401);
+  });
   it("reissuing invalidates tokens from the old code", async () => {
     const { no, code } = await approvedMember();
     const { token } = await M.redeemClaim(no, code);

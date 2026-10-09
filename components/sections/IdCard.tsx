@@ -423,9 +423,23 @@ export default function IdCardSection({
        preview, the flip/rotate — works freely without paying a
        thing; only the actual print-quality export is held back, and
        only until /api/payments/verify has confirmed money moved. */
-    if (!paid) return;
+    const free = !!claim && created;
+    if (!paid && !free) return;
     setBusy(true);
     try {
+      if (free) {
+        /* Verified existing members pay nothing — but the server, not this
+           page, decides: it re-checks the claim token and that the card exists. */
+        const auth = await fetch("/api/members/card", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: claim!.token, action: "authorize-download" }),
+        }).catch(() => null);
+        if (!auth || !auth.ok) {
+          const d = auth ? await auth.json().catch(() => ({})) : {};
+          setCreateMsg({ ok: false, text: d.error || (lang === "ta" ? "பதிவிறக்கத்தை அங்கீகரிக்க முடியவில்லை." : "The download could not be authorised. Nothing was downloaded.") });
+          return;
+        }
+      }
       const html2canvas = (await import("html2canvas")).default;
 
       /* The card faces use Manrope/Cormorant via next/font with
@@ -700,8 +714,18 @@ export default function IdCardSection({
                 className="flex w-full items-center justify-center gap-2 rounded-full bg-gold px-6 py-3.5 font-sans text-xs uppercase tracking-widest text-black transition-all hover:bg-gold-bright">
                 <CreditCard size={14} /> {lang === "ta" ? "கட்டணத்திற்குச் செல்லவும்" : "Continue to Payment"}
               </button>
+            ) : claim ? (
+              created ? (
+                <button onClick={download} disabled={busy}
+                  className="flex w-full items-center justify-center gap-2 rounded-full bg-gold px-6 py-3.5 font-sans text-xs uppercase tracking-widest text-black transition-all hover:bg-gold-bright disabled:opacity-50">
+                  <Download size={14} />{" "}
+                  {busy
+                    ? lang === "ta" ? "தயாராகிறது…" : "Preparing…"
+                    : lang === "ta" ? "தற்போதைய உறுப்பினர் அட்டை பதிவிறக்கம் — இலவசம்" : "DOWNLOAD EXISTING MEMBER ID CARD — FREE"}
+                </button>
+              ) : null
             ) : paid ? (
-              <button onClick={download} disabled={busy || (!!claim && !created)}
+              <button onClick={download} disabled={busy}
                 className="flex w-full items-center justify-center gap-2 rounded-full bg-gold px-6 py-3.5 font-sans text-xs uppercase tracking-widest text-black transition-all hover:bg-gold-bright disabled:opacity-50">
                 <Download size={14} />{" "}
                 {busy
@@ -709,7 +733,7 @@ export default function IdCardSection({
                   : lang === "ta" ? "PNG பதிவிறக்கு" : "Download PNG"}
               </button>
             ) : (
-              <button onClick={startCardPayment} disabled={payBusy || (!!claim && !created)}
+              <button onClick={startCardPayment} disabled={payBusy}
                 className="flex w-full items-center justify-center gap-2 rounded-full bg-gold px-6 py-3.5 font-sans text-xs uppercase tracking-widest text-black transition-all hover:bg-gold-bright disabled:opacity-50">
                 <CreditCard size={14} />{" "}
                 {payBusy
@@ -745,7 +769,7 @@ export default function IdCardSection({
               {lang === "ta" ? "நேராக்கு" : "Reset view"}
             </button>
 
-            {!embedded && !paid && (
+            {!embedded && !paid && !claim && (
               <p className="flex w-full items-center justify-center gap-1.5 font-sans text-[11px] text-ivory-faint">
                 <Lock size={12} />
                 {lang === "ta"
@@ -753,10 +777,16 @@ export default function IdCardSection({
                   : `Download unlocks after payment — ₹${ID_CARD_FEE}, one time, per card.`}
               </p>
             )}
-            {!embedded && paid && (
+            {!embedded && paid && !claim && (
               <p className="flex w-full items-center justify-center gap-1.5 font-sans text-[11px] text-gold">
                 <ShieldCheck size={12} />
                 {lang === "ta" ? "கட்டணம் சரிபார்க்கப்பட்டது — பதிவிறக்கம் திறக்கப்பட்டது." : "Payment verified — download unlocked."}
+              </p>
+            )}
+            {claim && (
+              <p className="flex w-full items-center justify-center gap-1.5 font-sans text-[11px] text-gold">
+                <ShieldCheck size={12} />
+                {lang === "ta" ? "சரிபார்க்கப்பட்ட தற்போதைய உறுப்பினர்களுக்குக் கட்டணம் இல்லை." : "No payment for verified existing members."}
               </p>
             )}
             {payMsg && (
