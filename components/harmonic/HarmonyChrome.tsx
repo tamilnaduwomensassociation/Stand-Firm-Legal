@@ -4,20 +4,20 @@
  * Header, tab strip and footer for the Harmony brand.
  *
  * Kept deliberately light. This brand is new and its content is still
- * being written, so the chrome carries the mark, the three tabs and
+ * being written, so the chrome carries the mark, the tabs and
  * the disclaimer — which is the one element on these pages that is not
  * optional. See the note at the top of harmonic.config.ts for why.
  */
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Flame, GraduationCap, Mail, MapPin, Phone, ScrollText, Smartphone, type LucideIcon } from "lucide-react";
+import { Flame, GraduationCap, HeartHandshake, Mail, MapPin, Phone, ScrollText, Smartphone, type LucideIcon } from "lucide-react";
 import { harmony, harmonyTabs } from "@/config/harmonic.config";
 import { useLang } from "@/lib/i18n";
 import { useContent } from "@/lib/useContent";
 import { cn } from "@/lib/utils";
 import BackToAssociation from "@/components/ui/BackToAssociation";
 
-const icons: Record<string, LucideIcon> = { Flame, GraduationCap, ScrollText };
+const icons: Record<string, LucideIcon> = { Flame, GraduationCap, HeartHandshake, ScrollText };
 
 export function HarmonyHeader() {
   const pathname = usePathname();
