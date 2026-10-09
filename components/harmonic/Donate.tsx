@@ -9,7 +9,7 @@
  * any claim to treat, cure or prevent illness (see harmonic.config.ts).
  */
 import { motion } from "framer-motion";
-import { MessageCircle, Phone } from "lucide-react";
+import { ArrowRight, HeartHandshake, MessageCircle, Phone } from "lucide-react";
 import { harmony } from "@/config/harmonic.config";
 import { useContent } from "@/lib/useContent";
 import ServeGallery, { type ServeCard } from "@/components/harmonic/ServeGallery";
@@ -31,28 +31,31 @@ const IMG = "/media/harmony/serve";
 const serveCards: ServeCard[] = [
   { id: "food", title: "Food & Meal Distribution", front: "Sharing meals with people in need.",
     back: "Providing rice boxes, food packets and essential groceries to people in need.",
-    image: `${IMG}/serve-01-food-distribution.jpg`, alt: "A man serving food from a steel pot to people seated on the floor, with plates in front of them", pos: "40% 45%", w: 603, h: 452 },
+    image: `${IMG}/01_food_meal_distribution.jpg`, alt: "Women volunteers in purple and white serving hot food from steel vessels to people waiting in line", pos: "40% 40%", w: 504, h: 369 },
   { id: "grocery", title: "Grocery & Essential Supplies", front: "Packing essential groceries for families.",
     back: "Helping families and individuals with groceries and basic necessities during times of difficulty.",
-    image: `${IMG}/serve-02-grocery-boxes.jpg`, alt: "Volunteers in masks and hair nets filling cardboard boxes with grocery packets", pos: "60% 50%", w: 1000, h: 666 },
+    image: `${IMG}/02_grocery_donation_supplies.jpg`, alt: "A volunteer holding a bag of grains beside a cardboard box of groceries and cooking oil", pos: "45% 55%", w: 510, h: 369 },
   { id: "elderly", title: "Helping Elderly People", front: "Food and care for senior citizens.",
     back: "Providing medicines, food, groceries and other essential requirements to elderly people and old-age homes.",
-    image: `${IMG}/serve-03-elderly-meals.jpg`, alt: "A volunteer serving a meal from a steel pail to three elderly women seated in chairs", pos: "55% 40%", w: 977, h: 733 },
+    image: `${IMG}/03_meals_for_elderly.jpg`, alt: "A volunteer handing a packed meal to an elderly man seated outdoors", pos: "55% 40%", w: 501, h: 369 },
   { id: "education", title: "Education Support for Children", front: "Books and encouragement for young learners.",
     back: "Supporting children's learning. Please contact us to know how you can take part.",
-    image: `${IMG}/serve-04-children-education.jpg`, alt: "Volunteers handing picture books to smiling schoolchildren in a classroom", pos: "50% 55%", w: 1000, h: 1000 },
+    image: `${IMG}/04_education_support.jpg`, alt: "A volunteer handing books to a smiling schoolgirl with classmates behind her", pos: "50% 40%", w: 504, h: 296 },
   { id: "health", title: "Community Healthcare", front: "Health support within the community.",
     back: "Supporting the medical needs of deserving people, including medicines and essential healthcare assistance.",
-    image: `${IMG}/serve-05-community-healthcare.jpg`, alt: "A health worker with a stethoscope checking an older woman's arm outdoors", pos: "50% 30%", w: 1000, h: 1000 },
-  { id: "women", title: "Women’s Empowerment & Community Outreach", front: "Women learning and growing together.",
-    back: "A community gathering of women. Please contact us to know more about outreach activities and how to contribute.",
-    image: `${IMG}/serve-06-women-gathering.jpg`, alt: "A group of women seated on the ground outdoors, many raising their hands, as a woman standing speaks to them", pos: "50% 55%", w: 592, h: 444 },
+    image: `${IMG}/05_community_healthcare.jpg`, alt: "A health worker with a stethoscope checking an older woman, with community members behind them", pos: "50% 35%", w: 510, h: 296 },
+  { id: "women", title: "Women’s Empowerment", front: "Women learning and growing together.",
+    back: "A community gathering of women. Please contact us to know more about these activities and how to contribute.",
+    image: `${IMG}/06_womens_empowerment.jpg`, alt: "A woman addressing a seated group of women beside a board reading Empower, Support, Learn, Grow Together", pos: "50% 45%", w: 501, h: 296 },
+  { id: "outreach", title: "Community Outreach", front: "Reaching out to children and families.",
+    back: "Community outreach in the neighbourhood. Please contact us to know how you can join or contribute.",
+    image: `${IMG}/07_community_outreach.jpg`, alt: "A volunteer in an apron giving a food box to children gathered beside a van", pos: "40% 45%", w: 504, h: 335 },
   { id: "packing", title: "Food Donation Packing", front: "Volunteers preparing food supplies.",
     back: "Volunteers sorting and packing food supplies so they can reach people in need.",
-    image: `${IMG}/serve-07-food-packing.jpg`, alt: "Volunteers in masks and hair nets packing food items into a cardboard box at a long table", pos: "50% 40%", w: 1000, h: 666 },
+    image: `${IMG}/08_food_donation_packing.jpg`, alt: "Volunteers packing grains, oil, fruit and vegetables into a cardboard box", pos: "50% 55%", w: 510, h: 335 },
   { id: "trees", title: "Tree Planting & Environmental Care", front: "Planting saplings, caring for nature.",
     back: "Caring for the environment together. Please contact us to know how you can join or contribute.",
-    image: `${IMG}/serve-08-tree-planting.jpg`, alt: "Women and children in gloves planting a young sapling in a park", pos: "50% 50%", w: 748, h: 748 },
+    image: `${IMG}/09_tree_planting.jpg`, alt: "A woman and two children planting a young sapling in the soil", pos: "50% 55%", w: 501, h: 335 },
 ];
 
 const mantra = ["Donate", "Serve", "Heal", "Transform"];
@@ -72,6 +75,48 @@ export default function Donate() {
 
   return (
     <>
+      {/* ---------- Hero ---------- */}
+      <section className="relative overflow-hidden bg-obsidian-deep" aria-labelledby="donate-hero">
+        <div className="pointer-events-none absolute -left-24 top-0 h-80 w-80 rounded-full bg-gold/10 blur-3xl" aria-hidden />
+        <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-5 py-14 md:grid-cols-2 md:gap-12 md:py-20">
+          <motion.div variants={fade} initial="hidden" animate="show">
+            <p className="kicker mb-4 inline-flex items-center gap-2"><HeartHandshake size={15} aria-hidden /> Donate &amp; Serve</p>
+            <h2 id="donate-hero" className="font-serif text-4xl leading-[1.1] gold-text md:text-5xl">
+              Give with Compassion. Serve with Purpose.
+            </h2>
+            <p className="mt-5 max-w-xl font-sans text-[15px] leading-relaxed text-ivory-dim">
+              Your contribution can help Harmony Healing Oasis reach people facing difficult circumstances with
+              food, care and essential support, and help us hold more healing, meditation and community service activities.
+            </p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <a
+                href="#support-contact"
+                className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full bg-gold px-7 py-3 font-sans text-[12px] font-bold uppercase tracking-[0.14em] text-white transition-all hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2"
+              >
+                Support Our Mission <ArrowRight size={15} aria-hidden />
+              </a>
+              <a
+                href="#serve-heading"
+                className="gold-border inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full px-7 py-3 font-sans text-[12px] font-bold uppercase tracking-[0.14em] text-gold transition-all hover:bg-gold hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2"
+              >
+                Explore Ways to Serve
+              </a>
+            </div>
+          </motion.div>
+          <motion.div variants={fade} initial="hidden" animate="show" className="relative">
+            <div className="overflow-hidden rounded-3xl border border-gold/30 shadow-[0_30px_60px_-30px_rgba(76,29,149,0.55)]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={`${IMG}/06_womens_empowerment.jpg`} width={501} height={296} fetchPriority="high" decoding="async"
+                alt="A woman addressing a seated group of women beside a board reading Empower, Support, Learn, Grow Together"
+                className="aspect-[4/3] h-full w-full object-cover" style={{ objectPosition: "50% 45%" }}
+              />
+            </div>
+            <p className="mt-2 text-center font-sans text-[10px] uppercase tracking-[0.16em] text-ivory-faint">Illustrative image</p>
+          </motion.div>
+        </div>
+      </section>
+
       {/* ---------- Opening ---------- */}
       <section className="bg-obsidian section-pad">
         <motion.div
@@ -135,9 +180,9 @@ export default function Donate() {
         <div className="mx-auto max-w-6xl">
           <div className="text-center">
             <p className="kicker mb-3">Serve</p>
-            <h3 id="serve-heading" className="font-serif text-2xl text-ivory md:text-4xl">Service &amp; Community Care</h3>
+            <h3 id="serve-heading" className="scroll-mt-28 font-serif text-2xl text-ivory md:text-4xl">Service &amp; Community Care</h3>
             <p className="mx-auto mt-4 max-w-2xl font-sans text-[14px] leading-relaxed text-ivory-dim">
-              Turn a card over to read more and to reach us about contributing.
+              Turn a card over to read more and to reach us about contributing. Pictures are illustrative.
             </p>
           </div>
           <ServeGallery cards={serveCards} wa={wa} tel={tel} phone={phone1} className="mt-12" />
@@ -192,7 +237,7 @@ export default function Donate() {
             Serving Humanity Through Healing, Compassion &amp; Selfless Service
           </p>
 
-          <div className="mx-auto mt-12 max-w-xl rounded-2xl glass gold-border p-8">
+          <div id="support-contact" className="mx-auto mt-12 max-w-xl scroll-mt-28 rounded-2xl glass gold-border p-8">
             <p className="kicker mb-3">For Donations &amp; Contributions</p>
             <p className="font-sans text-[15px] leading-relaxed text-ivory-dim">
               Please contact us for donation details and available contribution options.

@@ -189,11 +189,18 @@ export default function ExistingMemberForm({ initialSerial = "", onBack }: { ini
       <button type="button" onClick={onBack} className="mb-4 inline-flex items-center gap-1.5 font-sans text-xs text-ivory-dim hover:text-gold">
         <ArrowLeft size={13} /> {t("Back", "பின்செல்")}
       </button>
-      <h3 className="font-serif text-2xl gold-text">{t("Add Existing Member Details", "தற்போதைய உறுப்பினர் விவரங்களைச் சேர்க்கவும்")}</h3>
-      <p className="mt-2 mb-5 font-sans text-[13px] leading-relaxed text-ivory-dim">
-        {t("Submit your existing membership information for verification. Nothing here creates a card — the office checks it against its records first.",
-           "உங்கள் தற்போதைய உறுப்பினர் விவரங்களைச் சரிபார்ப்புக்குச் சமர்ப்பிக்கவும். இது அட்டையை உருவாக்காது — அலுவலகம் முதலில் பதிவுகளுடன் சரிபார்க்கும்.")}
+      <StepStrip t={t} />
+      <p className="mt-6 font-sans text-[11px] uppercase tracking-luxe text-gold">{t("Existing member", "தற்போதைய உறுப்பினர்")}</p>
+      <h3 className="font-serif text-2xl gold-text">{t("Step 7/8 — ID Card", "படி 7/8 — அடையாள அட்டை")}</h3>
+      <p className="mt-2 mb-3 font-sans text-[13px] leading-relaxed text-ivory-dim">
+        {t("You do not need to repeat Steps 1–6, and there is no payment for existing members. Give the details below so the office can match you to its records.",
+           "1–6 படிகளை மீண்டும் நிரப்ப வேண்டியதில்லை; தற்போதைய உறுப்பினர்களுக்குக் கட்டணம் இல்லை. அலுவலகம் உங்களைப் பதிவுகளுடன் பொருத்த கீழ்க்காணும் விவரங்களை அளிக்கவும்.")}
       </p>
+      <ol className="mb-5 space-y-1.5 rounded-xl border border-[var(--hairline)] bg-obsidian-soft/50 px-4 py-3 font-sans text-xs leading-relaxed text-ivory-dim">
+        <li><span className="text-gold">1.</span> {t("Submit these details for verification.", "இவ்விவரங்களைச் சரிபார்ப்புக்குச் சமர்ப்பிக்கவும்.")}</li>
+        <li><span className="text-gold">2.</span> {t("The office checks them against its own records and approves.", "அலுவலகம் தனது பதிவுகளுடன் சரிபார்த்து அங்கீகரிக்கும்.")}</li>
+        <li><span className="text-gold">3.</span> {t("You receive a one-time code; add your photo and emergency details, then download your ID card.", "ஒரு முறை குறியீடு கிடைக்கும்; புகைப்படம், அவசர விவரங்களைச் சேர்த்து அடையாள அட்டையைப் பதிவிறக்கவும்.")}</li>
+      </ol>
 
       {banner && <p role="alert" className="mb-4 rounded-xl border border-red-400/40 bg-red-500/10 px-4 py-3 font-sans text-xs text-red-300">{banner}</p>}
 
@@ -324,5 +331,27 @@ function FilePick({
       <p className="mt-1 font-sans text-[10px] text-ivory-faint">{hint}</p>
       {error && <p id={`emf-${k}-err`} className="mt-1 font-sans text-[11px] text-red-400">{error}</p>}
     </div>
+  );
+}
+
+/** The registration's eight steps, with 1–6 and 8 marked as not applicable to existing members. */
+function StepStrip({ t }: { t: (en: string, tm: string) => string }) {
+  const names = ["Personal", "Contact", "Education", "Practice", "Declaration", "Documents", "ID Card", "Payment"];
+  return (
+    <ol aria-label={t("Registration steps", "பதிவு படிகள்")} className="grid grid-cols-8 gap-1.5">
+      {names.map((n, i) => {
+        const active = i === 6;
+        const skipped = i !== 6;
+        return (
+          <li key={n} aria-current={active ? "step" : undefined} className="min-w-0">
+            <div className={cn("h-1 rounded-full", active ? "bg-gold" : "bg-white/10")} />
+            <p className={cn("mt-1.5 truncate font-sans text-[9px] uppercase tracking-wider", active ? "text-gold" : "text-ivory-faint")} title={skipped ? t("Not needed for existing members", "தற்போதைய உறுப்பினர்களுக்குத் தேவையில்லை") : undefined}>
+              {n}
+            </p>
+            {skipped && <span className="sr-only">{t("not needed for existing members", "தேவையில்லை")}</span>}
+          </li>
+        );
+      })}
+    </ol>
   );
 }

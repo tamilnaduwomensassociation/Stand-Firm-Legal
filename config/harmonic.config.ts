@@ -186,6 +186,7 @@ export const dhoobamCatalogue: HarmonyItem[] = [
     pack: "One month's supply", packTa: "ஒரு மாத அளவு",
     desc: "Sticks, cups and resin in the quantities a daily practice actually uses in a month.",
     descTa: "தினசரி பயிற்சிக்கு ஒரு மாதத்திற்கு தேவையான அளவு.",
+    image: "/media/harmony/dhoobam/10_monthly_box_contents.jpg", imageAlt: "The kinds of items in the box: incense sticks, dhoobam cones and resin", imagePos: "center 50%",
   },
   {
     id: "dhoobam-glass-candle-small", en: "Glass Candle — Small", ta: "கண்ணாடி மெழுகுவர்த்தி — சிறியது",
