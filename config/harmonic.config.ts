@@ -91,6 +91,17 @@ export const harmonyTabs: HarmonyTab[] = [
     blurbTa:
       "மூலிகைகள் மற்றும் சாம்பிராணியில் இருந்து சிறிய அளவில் தயாரிக்கப்படும் கையால் சுற்றப்பட்ட தூப குச்சிகள், கப்புகள் மற்றும் பிசின் கலவைகள்.",
   },
+  {
+    slug: "donate",
+    en: "Donate & Serve",
+    ta: "நன்கொடை & சேவை",
+    icon: "HeartHandshake",
+    kicker: "Make a difference",
+    blurb:
+      "Your contribution can bring hope, healing and happiness to people facing difficult circumstances.",
+    blurbTa:
+      "உங்கள் பங்களிப்பு, கடினமான சூழலில் உள்ளவர்களுக்கு நம்பிக்கையையும் ஆறுதலையும் மகிழ்ச்சியையும் கொண்டு வரும்.",
+  },
 ];
 
 /* ---------------- DHOOBAM CATALOGUE ---------------- */
