@@ -6,6 +6,7 @@ import { findTab, harmony, harmonyTabs } from "@/config/harmonic.config";
 const DhoobamShop = dynamic(() => import("@/components/harmonic/DhoobamShop"));
 const Classes = dynamic(() => import("@/components/harmonic/Classes"));
 const Masters = dynamic(() => import("@/components/harmonic/Masters"));
+const Donate = dynamic(() => import("@/components/harmonic/Donate"));
 
 export const dynamicParams = false;
 
@@ -46,6 +47,7 @@ export default async function HarmonyTabPage({ params }: { params: Promise<{ tab
       {t.slug === "dhoobam" && <DhoobamShop />}
       {t.slug === "classes" && <Classes />}
       {t.slug === "masters" && <Masters />}
+      {t.slug === "donate" && <Donate />}
     </main>
   );
 }
