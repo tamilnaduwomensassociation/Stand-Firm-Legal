@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight, Flame, GraduationCap, ScrollText, type LucideIcon } from "lucide-react";
+import { ArrowUpRight, Flame, GraduationCap, HeartHandshake, ScrollText, type LucideIcon } from "lucide-react";
 import { harmony, harmonyTabs } from "@/config/harmonic.config";
 import { useLang } from "@/lib/i18n";
 import LoopVideoHero from "@/components/ui/LoopVideoHero";
 
-const icons: Record<string, LucideIcon> = { Flame, GraduationCap, ScrollText };
+const icons: Record<string, LucideIcon> = { Flame, GraduationCap, HeartHandshake, ScrollText };
 
 export default function HarmonyHome() {
   const { lang } = useLang();
@@ -27,7 +27,7 @@ export default function HarmonyHome() {
         <h1 className="sr-only">{harmony.name} — {harmony.tagline}</h1>
         <p className="mx-auto max-w-2xl font-sans text-[13px] leading-relaxed text-ivory/90 md:text-[15px]">
           {ta
-            ? "தூபம் மற்றும் பூஜைப் பொருட்கள், வகுப்புகள் மற்றும் பதிவு, மற்றும் இந்த மரபின் குருபரம்பரை."
+            ? "தூபம் மற்றும் பூஜைப் பொருட்கள், வகுப்புகள் மற்றும் பதிவு, நன்கொடை & சேவை, மற்றும் இந்த மரபின் குருபரம்பரை."
             : "Dhoobam and ritual supplies, classes and registration, and the lineage this practice descends from."}
         </p>
       </LoopVideoHero>
@@ -42,7 +42,7 @@ export default function HarmonyHome() {
           />
           <p className="kicker mb-3 mt-8">{harmony.tagline}</p>
           <h2 className="font-serif text-3xl gold-text md:text-5xl">
-            {ta ? "மூன்று பிரிவுகள்" : "Three Counters"}
+            {ta ? "நான்கு பிரிவுகள்" : "Four Counters"}
           </h2>
           <p className="mt-4 font-sans text-sm leading-relaxed text-ivory-dim">
             {ta
@@ -51,7 +51,7 @@ export default function HarmonyHome() {
           </p>
         </div>
 
-        <div className="mx-auto mt-12 grid max-w-5xl gap-5 md:grid-cols-3">
+        <div className="mx-auto mt-12 grid max-w-6xl gap-5 md:grid-cols-2 lg:grid-cols-4">
           {harmonyTabs.map((t) => {
             const Icon = icons[t.icon] ?? Flame;
             return (
