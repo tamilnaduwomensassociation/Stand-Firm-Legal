@@ -35,7 +35,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import {
-  BookOpen, CalendarDays, ClipboardList, FileText, IndianRupee, LayoutGrid, Link2, Loader2, LogOut,
+  BookOpen, CalendarDays, Users, ClipboardList, FileText, IndianRupee, LayoutGrid, Link2, Loader2, LogOut,
   Moon, Package, Newspaper, Palette, PenLine, Radio, RefreshCw, Search, Settings2, Sun,
 } from "lucide-react";
 import { brands, type BrandId } from "@/config/brands.config";
@@ -52,6 +52,7 @@ import BlogPanel from "@/components/admin/BlogPanel";
 import BooksPanel from "@/components/admin/BooksPanel";
 import LiveUpdatesPanel from "@/components/admin/LiveUpdatesPanel";
 import LinkPanel from "@/components/admin/LinkPanel";
+import MembersPanel from "@/components/admin/MembersPanel";
 import { cn } from "@/lib/utils";
 
 /**
@@ -68,7 +69,7 @@ const WishesPanel = dynamic(() => import("@/components/features/WishesPanel"));
 
 export type Row = Record<string, unknown> & { id: string; createdAt: string };
 
-type PanelId = "overview" | "orders" | "enquiries" | "content" | "pricing" | "events" | "theme" | "letterhead" | "blog" | "books" | "live-updates" | "link";
+type PanelId = "overview" | "orders" | "enquiries" | "content" | "pricing" | "events" | "theme" | "letterhead" | "blog" | "books" | "live-updates" | "link" | "members";
 
 /* The portal chrome, in both languages. The panels themselves stay in
    English: they are operational tools, and a half-translated table is
@@ -88,6 +89,7 @@ const T = {
   books:    { en: "Books",       ta: "புத்தகங்கள்" },
   live:     { en: "Live Activity", ta: "நேரடி செயல்பாடுகள்" },
   link:     { en: "Link", ta: "இணைப்பு" },
+  members:  { en: "Members", ta: "உறுப்பினர்கள்" },
   theme:    { en: "Appearance",  ta: "தோற்றம்" },
   letter:   { en: "Letterhead",  ta: "கடிதத்தாள்" },
 } as const;
@@ -183,6 +185,7 @@ export default function Portal({
   const panels: { id: PanelId; label: string; icon: typeof LayoutGrid; show: boolean }[] = [
     { id: "overview", label: tr("overview"), icon: LayoutGrid, show: true },
     { id: "events", label: tr("sessions"), icon: CalendarDays, show: current.panels.includes("events") },
+    { id: "members", label: tr("members"), icon: Users, show: current.panels.includes("members") },
     { id: "orders", label: tr("orders"), icon: Package, show: current.panels.includes("orders") },
     /* Only the two brands that actually sell things carry a price list. */
     { id: "pricing", label: tr("pricing"), icon: IndianRupee, show: hasPricing(brand) },
@@ -349,6 +352,7 @@ export default function Portal({
         )}
         {activePanel === "enquiries" && <EnquiriesPanel rows={brandEnquiries} query={query} />}
         {activePanel === "events" && <EventsPanel rows={events} onChanged={refresh} />}
+        {activePanel === "members" && <MembersPanel />}
         {activePanel === "blog" && <BlogPanel />}
         {activePanel === "books" && <BooksPanel />}
         {activePanel === "live-updates" && <LiveUpdatesPanel />}

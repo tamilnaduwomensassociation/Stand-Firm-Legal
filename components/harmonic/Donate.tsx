@@ -12,6 +12,7 @@ import { motion } from "framer-motion";
 import { MessageCircle, Phone } from "lucide-react";
 import { harmony } from "@/config/harmonic.config";
 import { useContent } from "@/lib/useContent";
+import ServeGallery, { type ServeCard } from "@/components/harmonic/ServeGallery";
 
 const ways = [
   { n: "01", title: "Food for the Hungry", text: "Providing rice boxes, food packets and essential groceries to people in need." },
@@ -20,6 +21,38 @@ const ways = [
   { n: "04", title: "Support for Senior Citizens", text: "Providing medicines, food, groceries and other essential requirements to elderly people and old-age homes." },
   { n: "05", title: "Essential Needs & Relief Support", text: "Helping families and individuals with basic necessities during times of difficulty." },
   { n: "06", title: "Centre Development & Service Activities", text: "Your contribution can also support the development of Harmony Healing Oasis – Pranic Healing Centre and help us conduct more healing, meditation, charitable and community service activities." },
+];
+
+/* The pictures for "Service in Pictures". Wording describes the picture and
+   the category only — no figures, results or donation destinations.
+   Where the centre supplied wording ("Ways You Can Support" above), the
+   back repeats it. The pictures themselves are in public/media/harmony/serve. */
+const IMG = "/media/harmony/serve";
+const serveCards: ServeCard[] = [
+  { id: "food", title: "Food & Meal Distribution", front: "Sharing meals with people in need.",
+    back: "Providing rice boxes, food packets and essential groceries to people in need.",
+    image: `${IMG}/serve-01-food-distribution.jpg`, alt: "A man serving food from a steel pot to people seated on the floor, with plates in front of them", pos: "40% 45%", w: 603, h: 452 },
+  { id: "grocery", title: "Grocery & Essential Supplies", front: "Packing essential groceries for families.",
+    back: "Helping families and individuals with groceries and basic necessities during times of difficulty.",
+    image: `${IMG}/serve-02-grocery-boxes.jpg`, alt: "Volunteers in masks and hair nets filling cardboard boxes with grocery packets", pos: "60% 50%", w: 1000, h: 666 },
+  { id: "elderly", title: "Helping Elderly People", front: "Food and care for senior citizens.",
+    back: "Providing medicines, food, groceries and other essential requirements to elderly people and old-age homes.",
+    image: `${IMG}/serve-03-elderly-meals.jpg`, alt: "A volunteer serving a meal from a steel pail to three elderly women seated in chairs", pos: "55% 40%", w: 977, h: 733 },
+  { id: "education", title: "Education Support for Children", front: "Books and encouragement for young learners.",
+    back: "Supporting children's learning. Please contact us to know how you can take part.",
+    image: `${IMG}/serve-04-children-education.jpg`, alt: "Volunteers handing picture books to smiling schoolchildren in a classroom", pos: "50% 55%", w: 1000, h: 1000 },
+  { id: "health", title: "Community Healthcare", front: "Health support within the community.",
+    back: "Supporting the medical needs of deserving people, including medicines and essential healthcare assistance.",
+    image: `${IMG}/serve-05-community-healthcare.jpg`, alt: "A health worker with a stethoscope checking an older woman's arm outdoors", pos: "50% 30%", w: 1000, h: 1000 },
+  { id: "women", title: "Women’s Empowerment & Community Outreach", front: "Women learning and growing together.",
+    back: "A community gathering of women. Please contact us to know more about outreach activities and how to contribute.",
+    image: `${IMG}/serve-06-women-gathering.jpg`, alt: "A group of women seated on the ground outdoors, many raising their hands, as a woman standing speaks to them", pos: "50% 55%", w: 592, h: 444 },
+  { id: "packing", title: "Food Donation Packing", front: "Volunteers preparing food supplies.",
+    back: "Volunteers sorting and packing food supplies so they can reach people in need.",
+    image: `${IMG}/serve-07-food-packing.jpg`, alt: "Volunteers in masks and hair nets packing food items into a cardboard box at a long table", pos: "50% 40%", w: 1000, h: 666 },
+  { id: "trees", title: "Tree Planting & Environmental Care", front: "Planting saplings, caring for nature.",
+    back: "Caring for the environment together. Please contact us to know how you can join or contribute.",
+    image: `${IMG}/serve-08-tree-planting.jpg`, alt: "Women and children in gloves planting a young sapling in a park", pos: "50% 50%", w: 748, h: 748 },
 ];
 
 const mantra = ["Donate", "Serve", "Heal", "Transform"];
@@ -94,6 +127,20 @@ export default function Donate() {
               </motion.article>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ---------- Service in pictures — flip cards ---------- */}
+      <section className="bg-obsidian section-pad" aria-labelledby="serve-heading">
+        <div className="mx-auto max-w-6xl">
+          <div className="text-center">
+            <p className="kicker mb-3">Serve</p>
+            <h3 id="serve-heading" className="font-serif text-2xl text-ivory md:text-4xl">Service &amp; Community Care</h3>
+            <p className="mx-auto mt-4 max-w-2xl font-sans text-[14px] leading-relaxed text-ivory-dim">
+              Turn a card over to read more and to reach us about contributing.
+            </p>
+          </div>
+          <ServeGallery cards={serveCards} wa={wa} tel={tel} phone={phone1} className="mt-12" />
         </div>
       </section>
 

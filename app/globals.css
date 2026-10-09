@@ -394,3 +394,32 @@ html { font-size: calc(16px * var(--type-scale)); }
 /* The loupe follows the pointer; nothing inside it should be selectable
    or draggable, and it must never become a scroll target. */
 .sheet-stage * { -webkit-user-drag: none; }
+
+/* ------------------------------------------------------------------
+   Harmony — Donate & Serve flip cards (components/harmonic/ServeGallery.tsx)
+
+   Two faces stacked in ONE grid cell, so the card is as tall as the
+   taller face and neither is ever clipped. The 3D turn lasts 560 ms.
+   Reduced motion removes the turn altogether: the faces swap at once.
+   ------------------------------------------------------------------ */
+.flip-card { perspective: 1200px; }
+.flip-inner {
+  display: grid;
+  transform-style: preserve-3d;
+  transition: transform 560ms cubic-bezier(0.4, 0.15, 0.2, 1);
+}
+.flip-card[data-flipped="true"] .flip-inner { transform: rotateY(180deg); }
+.flip-face {
+  grid-area: 1 / 1;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.flip-face-back { transform: rotateY(180deg); }
+@media (prefers-reduced-motion: reduce) {
+  .flip-card { perspective: none; }
+  .flip-inner { transform-style: flat; transition: none; transform: none !important; }
+  .flip-face-back { transform: none; }
+  .flip-card .flip-face { visibility: visible; }
+  .flip-card[data-flipped="false"] .flip-face-back,
+  .flip-card[data-flipped="true"] .flip-face-front { visibility: hidden; }
+}

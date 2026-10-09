@@ -32,6 +32,7 @@ import { cn } from "@/lib/utils";
 import { CardBack, CardFront, CARD_H, CARD_W, DEFAULT_VERIFY_URL, type CardData } from "@/components/ui/IdCardFaces";
 import { ID_CARD_FEE, toSerial } from "@/config/membership.config";
 import { loadRazorpay } from "@/lib/loadRazorpay";
+import { shrinkImage } from "@/lib/shrinkImage";
 
 const inputCls =
   "w-full rounded-xl bg-obsidian-soft/60 border border-[var(--hairline)] px-4 py-2.5 font-sans text-xs text-ivory placeholder:text-ivory-faint focus:border-gold/60 focus:outline-none focus:ring-1 focus:ring-gold/30 transition-all";
@@ -54,6 +55,7 @@ export default function IdCardSection({
   initialData,
   initialPhoto = null,
   onContinue,
+  claim,
 }: {
   /* Embedded inside the membership registration wizard (Step 7 of 8) —
      same builder, same live flip preview, just without the standalone
@@ -64,32 +66,45 @@ export default function IdCardSection({
   initialData?: Partial<CardData>;
   initialPhoto?: string | null;
   onContinue?: () => void;
+  /* EXISTING-MEMBER MODE. Set by /membership/id-card after a member has
+     proved who they are with the office's claim code. Identity fields
+     (name, numbers, designation, district, mobile, validity) come from
+     the verified record and are read-only; the member may set only
+     blood group, emergency contact, address and photograph. "Create My
+     ID Card" replaces "Save to directory" and is idempotent on the
+     server. See lib/server/membership.ts. */
+  claim?: {
+    token: string;
+    member: Partial<CardData> & { photo?: string };
+    cardStatus: "not_created" | "created" | "revoked";
+  };
 } = {}) {
   const { lang } = useLang();
   const frontRef = useRef<HTMLDivElement>(null);
   const backRef = useRef<HTMLDivElement>(null);
 
+  const cm = claim?.member;
   const [data, setData] = useState<CardData>({
-    cardNo: "",
-    memberName: initialData?.memberName ?? "",
-    membershipNo: "TNWLA-M",
-    enrollmentNo: "",
-    designation: "Member",
-    district: initialData?.district ?? "Chennai",
-    blood: initialData?.blood ?? "",
-    mobile: initialData?.mobile ?? "",
-    validUpTo: defaultValidity(),
-    address: initialData?.address ?? site.address,
+    cardNo: cm?.cardNo ?? "",
+    memberName: cm?.memberName ?? initialData?.memberName ?? "",
+    membershipNo: cm?.membershipNo ?? "TNWLA-M",
+    enrollmentNo: cm?.enrollmentNo ?? "",
+    designation: cm?.designation ?? "Member",
+    district: cm?.district ?? initialData?.district ?? "Chennai",
+    blood: cm?.blood ?? initialData?.blood ?? "",
+    mobile: cm?.mobile ?? initialData?.mobile ?? "",
+    validUpTo: cm?.validUpTo || defaultValidity(),
+    address: cm?.address || (initialData?.address ?? site.address),
     phone: site.phones[0],
     email: site.email,
-    emergency: "",
+    emergency: cm?.emergency ?? "",
     /* Scanning the printed card should land a visitor directly on the
        "Verify Your Membership" tool, not just the bare home page — the
        actual lookup happens there. Still an editable field below, in
        case a future print run needs a different landing link. */
     verifyUrl: "https://www.tnwla-madras.com/#verify-membership",
   });
-  const [photo, setPhoto] = useState<string | null>(initialPhoto);
+  const [photo, setPhoto] = useState<string | null>(cm?.photo || initialPhoto);
   const [busy, setBusy] = useState(false);
 
   /* The QR printed on the back must point at THIS member, not a
@@ -245,17 +260,22 @@ export default function IdCardSection({
      backspaced or half-deleted, and the card, the directory save and
      the QR link all silently disagree with each other from then on).
      Only the serial is state; the full membershipNo is derived. */
-  const [memberPrefix, setMemberPrefix] = useState("TNWLA-M");
-  const [memberSerial, setMemberSerial] = useState("");
+  const [memberPrefix, setMemberPrefix] = useState(cm?.membershipNo ? cm.membershipNo.replace(/[^/]*$/, "") : "TNWLA-M");
+  const [memberSerial, setMemberSerial] = useState(cm?.membershipNo ? toSerial(cm.membershipNo) : "");
   useEffect(() => {
+    if (claim) return; // the verified number is fixed
     setData((d) => ({ ...d, membershipNo: `${memberPrefix}${memberSerial}` }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [memberPrefix, memberSerial]);
 
   /* Enrollment is "<number>/<year>" — the year is picked, not typed */
-  const [enrolNo, setEnrolNo] = useState("");
-  const [enrolYear, setEnrolYear] = useState(String(new Date().getFullYear()));
+  const enrolParts = /^(\d+)\/(\d{4})$/.exec(cm?.enrollmentNo ?? "");
+  const [enrolNo, setEnrolNo] = useState(enrolParts?.[1] ?? "");
+  const [enrolYear, setEnrolYear] = useState(enrolParts?.[2] ?? String(new Date().getFullYear()));
   useEffect(() => {
+    if (claim) return; // the verified enrolment number is fixed
     setData((d) => ({ ...d, enrollmentNo: enrolNo ? `${enrolNo}/${enrolYear}` : "" }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enrolNo, enrolYear]);
 
   const onPointerDown = (e: React.PointerEvent) => {
@@ -284,11 +304,11 @@ export default function IdCardSection({
 
   const set = (k: keyof CardData, v: string) => setData((d) => ({ ...d, [k]: v }));
 
+  /* Photographs are scaled down and re-encoded so they fit the server's
+     150 KB limit — see lib/shrinkImage.ts. */
   const readImage = (file: File | undefined | null, to: (v: string) => void) => {
     if (!file) return;
-    const r = new FileReader();
-    r.onload = () => to(String(r.result));
-    r.readAsDataURL(file);
+    shrinkImage(file).then(to).catch(() => undefined);
   };
 
   /* toBlob rather than a data URI: a 1920px card is a few megabytes and
@@ -337,7 +357,7 @@ export default function IdCardSection({
       const res = await fetch("/api/members", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, enrollmentNo: `${enrolNo}/${enrolYear}`, photo: photo ?? "" }),
+        body: JSON.stringify({ ...data, serial: memberSerial, enrollmentNo: `${enrolNo}/${enrolYear}`, photo: photo ?? "" }),
       });
       const d = await res.json();
       if (res.status === 401) {
@@ -355,6 +375,47 @@ export default function IdCardSection({
       setSaveMsg({ ok: false, text: lang === "ta" ? "இணைப்பு பிழை." : "Could not reach the directory." });
     }
     setSaving(false);
+  };
+
+  /**
+   * EXISTING-MEMBER MODE — create the card on the server.
+   *
+   * The server decides. It checks the claim token, the membership's
+   * status, and whether a card already exists; asking twice (double
+   * click, refresh, retry) returns the card that is already there with
+   * `created: false`. Only the four member-editable fields are sent.
+   */
+  const [created, setCreated] = useState(claim?.cardStatus === "created");
+  const [creating, setCreating] = useState(false);
+  const [createMsg, setCreateMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const createMyCard = async () => {
+    if (!claim || creating || created) return;
+    setCreating(true);
+    setCreateMsg(null);
+    try {
+      const res = await fetch("/api/members/card", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token: claim.token,
+          action: "create",
+          card: { blood: data.blood, emergency: data.emergency, address: data.address, photo: photo?.startsWith("data:") ? photo : "" },
+        }),
+      });
+      const d = await res.json();
+      if (!res.ok) {
+        const first = d.fields ? Object.values(d.fields as Record<string, string>)[0] : "";
+        setCreateMsg({ ok: false, text: first || d.error || "Could not create the card." });
+      } else {
+        setCreated(true);
+        setCreateMsg({ ok: true, text: d.created
+          ? (lang === "ta" ? "உங்கள் அடையாள அட்டை உருவாக்கப்பட்டது." : "Your ID card has been created.")
+          : (lang === "ta" ? "உங்கள் அடையாள அட்டை ஏற்கனவே உருவாக்கப்பட்டுள்ளது — மற்றொன்று உருவாக்க முடியாது." : "Your ID card was already created — another one cannot be made.") });
+      }
+    } catch {
+      setCreateMsg({ ok: false, text: lang === "ta" ? "இணைப்பு பிழை." : "Could not reach the server. Nothing was changed." });
+    }
+    setCreating(false);
   };
 
   const download = async () => {
@@ -442,7 +503,7 @@ export default function IdCardSection({
               </p>
               <div className="grid gap-5 sm:grid-cols-2">
                 <div className="sm:col-span-2">
-                  <Field data={data} set={set} k="memberName" label={lang === "ta" ? "உறுப்பினர் பெயர்" : "Member Name"} />
+                  <Field data={data} set={set} k="memberName" locked={!!claim} label={lang === "ta" ? "உறுப்பினர் பெயர்" : "Member Name"} />
                 </div>
                 {/* The prefix is PART OF THE FIELD, not part of the value —
                     same pattern as the public "Verify Your Membership" box.
@@ -458,6 +519,7 @@ export default function IdCardSection({
                       <input
                         value={memberPrefix}
                         onChange={(e) => setMemberPrefix(e.target.value)}
+                        readOnly={!!claim}
                         aria-label="Membership number prefix"
                         placeholder="TNWLA-M"
                         className="w-24 shrink-0 border-r border-[var(--hairline)] bg-obsidian/50 px-4 py-2.5 font-sans text-xs text-gold placeholder:text-gold/50 focus:outline-none"
@@ -465,6 +527,7 @@ export default function IdCardSection({
                       <input
                         value={memberSerial}
                         onChange={(e) => setMemberSerial(e.target.value.replace(/[^0-9A-Za-z-]/g, ""))}
+                        readOnly={!!claim}
                         inputMode="numeric"
                         aria-label={`Membership number, after ${memberPrefix}`}
                         placeholder="57"
@@ -489,6 +552,7 @@ export default function IdCardSection({
                       <input
                         value={enrolNo}
                         onChange={(e) => setEnrolNo(e.target.value)}
+                        readOnly={!!claim}
                         placeholder="1080"
                         aria-label="Enrollment number"
                         className="w-full min-w-0 bg-transparent px-4 py-2.5 font-sans text-xs text-ivory placeholder:text-ivory-faint focus:outline-none"
@@ -497,6 +561,7 @@ export default function IdCardSection({
                       <select
                         value={enrolYear}
                         onChange={(e) => setEnrolYear(e.target.value)}
+                        disabled={!!claim}
                         aria-label="Enrollment year"
                         className="shrink-0 border-l border-[var(--hairline)] bg-obsidian/50 px-3 py-2.5 font-sans text-xs text-gold focus:outline-none"
                       >
@@ -505,8 +570,8 @@ export default function IdCardSection({
                     </div>
                   </label>
                 </div>
-                <Field data={data} set={set} k="designation" label={lang === "ta" ? "பதவி" : "Designation"} placeholder="President" />
-                <Field data={data} set={set} k="district" label={lang === "ta" ? "மாவட்டம்" : "District"} placeholder="Chennai" />
+                <Field data={data} set={set} k="designation" locked={!!claim} label={lang === "ta" ? "பதவி" : "Designation"} placeholder="President" />
+                <Field data={data} set={set} k="district" locked={!!claim} label={lang === "ta" ? "மாவட்டம்" : "District"} placeholder="Chennai" />
                 <label className="block">
                   <span className="mb-1.5 block font-sans text-[11px] uppercase tracking-widest text-ivory-dim">
                     {lang === "ta" ? "இரத்தப் பிரிவு" : "Blood Group"}
@@ -516,9 +581,9 @@ export default function IdCardSection({
                     {BLOOD_GROUPS.map((b) => <option key={b} value={b}>{b}</option>)}
                   </select>
                 </label>
-                <Field data={data} set={set} k="mobile" label={lang === "ta" ? "கைபேசி எண்" : "Mobile No."} />
-                <Field data={data} set={set} k="validUpTo" label={lang === "ta" ? "செல்லுபடி வரை" : "Valid Up To"} placeholder="June 2027" />
-                <Field data={data} set={set} k="cardNo" label={lang === "ta" ? "அட்டை வரிசை எண்" : "Card Serial"} placeholder="08" />
+                <Field data={data} set={set} k="mobile" locked={!!claim} label={lang === "ta" ? "கைபேசி எண்" : "Mobile No."} />
+                <Field data={data} set={set} k="validUpTo" locked={!!claim} label={lang === "ta" ? "செல்லுபடி வரை" : "Valid Up To"} placeholder="June 2027" />
+                <Field data={data} set={set} k="cardNo" locked={!!claim} label={lang === "ta" ? "அட்டை வரிசை எண்" : "Card Serial"} placeholder="08" />
                 <div className="sm:col-span-2">
                   <Field data={data} set={set} k="emergency" label={lang === "ta" ? "அவசர தொடர்பு" : "Emergency Contact"} />
                 </div>
@@ -540,13 +605,13 @@ export default function IdCardSection({
                   </label>
                 </div>
                 <div className="sm:col-span-2">
-                  <Field data={data} set={set} k="phone" label={lang === "ta" ? "தொலைபேசி" : "Phone"} />
+                  <Field data={data} set={set} k="phone" locked={!!claim} label={lang === "ta" ? "தொலைபேசி" : "Phone"} />
                 </div>
                 <div className="sm:col-span-2">
-                  <Field data={data} set={set} k="email" label={lang === "ta" ? "மின்னஞ்சல்" : "Email"} />
+                  <Field data={data} set={set} k="email" locked={!!claim} label={lang === "ta" ? "மின்னஞ்சல்" : "Email"} />
                 </div>
                 <div className="sm:col-span-2">
-                  <Field data={data} set={set} k="verifyUrl" label={lang === "ta" ? "QR சரிபார்ப்பு இணைப்பு" : "QR verification link"} />
+                  <Field data={data} set={set} k="verifyUrl" locked={!!claim} label={lang === "ta" ? "QR சரிபார்ப்பு இணைப்பு" : "QR verification link"} />
                 </div>
                 <div className="sm:col-span-2">
                   <Drop
@@ -636,7 +701,7 @@ export default function IdCardSection({
                 <CreditCard size={14} /> {lang === "ta" ? "கட்டணத்திற்குச் செல்லவும்" : "Continue to Payment"}
               </button>
             ) : paid ? (
-              <button onClick={download} disabled={busy}
+              <button onClick={download} disabled={busy || (!!claim && !created)}
                 className="flex w-full items-center justify-center gap-2 rounded-full bg-gold px-6 py-3.5 font-sans text-xs uppercase tracking-widest text-black transition-all hover:bg-gold-bright disabled:opacity-50">
                 <Download size={14} />{" "}
                 {busy
@@ -644,7 +709,7 @@ export default function IdCardSection({
                   : lang === "ta" ? "PNG பதிவிறக்கு" : "Download PNG"}
               </button>
             ) : (
-              <button onClick={startCardPayment} disabled={payBusy}
+              <button onClick={startCardPayment} disabled={payBusy || (!!claim && !created)}
                 className="flex w-full items-center justify-center gap-2 rounded-full bg-gold px-6 py-3.5 font-sans text-xs uppercase tracking-widest text-black transition-all hover:bg-gold-bright disabled:opacity-50">
                 <CreditCard size={14} />{" "}
                 {payBusy
@@ -652,6 +717,17 @@ export default function IdCardSection({
                   : lang === "ta" ? `₹${ID_CARD_FEE} செலுத்தி பதிவிறக்கு` : `Pay ₹${ID_CARD_FEE} to Download`}
               </button>
             )}
+            {claim ? (
+              <button onClick={createMyCard} disabled={creating || created}
+                className="flex w-full items-center justify-center gap-2 rounded-full bg-gold px-6 py-3.5 font-sans text-xs uppercase tracking-widest text-black transition-all hover:bg-gold-bright disabled:cursor-not-allowed disabled:opacity-50">
+                <IdCardIcon size={14} />{" "}
+                {created
+                  ? lang === "ta" ? "அட்டை உருவாக்கப்பட்டது" : "ID card created"
+                  : creating
+                    ? lang === "ta" ? "உருவாக்குகிறது…" : "Creating…"
+                    : lang === "ta" ? "என் அடையாள அட்டையை உருவாக்கு" : "Create My ID Card"}
+              </button>
+            ) : (
             <button onClick={saveToDirectory} disabled={saving}
               className="flex items-center gap-2 rounded-full gold-border px-6 py-3 font-sans text-xs uppercase tracking-widest text-gold transition-all hover:bg-gold hover:text-black disabled:opacity-50">
               <Save size={14} />{" "}
@@ -659,6 +735,7 @@ export default function IdCardSection({
                 ? lang === "ta" ? "சேமிக்கிறது…" : "Saving…"
                 : lang === "ta" ? "பதிவேட்டில் சேமி" : "Save to directory"}
             </button>
+            )}
             <button onClick={flip}
               className="flex items-center gap-2 rounded-full gold-border px-6 py-3 font-sans text-xs uppercase tracking-widest text-gold transition-all hover:bg-gold hover:text-black">
               <RotateCcw size={14} /> {lang === "ta" ? "திருப்பு" : "Flip"}
@@ -690,6 +767,18 @@ export default function IdCardSection({
                 {payMsg.text}
               </p>
             )}
+            {claim && !created && (
+              <p className="w-full text-center font-sans text-[11px] text-ivory-faint">
+                {lang === "ta"
+                  ? "முதலில் அட்டையை உருவாக்கவும்; அதன் பிறகே பதிவிறக்கம் திறக்கும். சரிபார்க்கப்பட்ட விவரங்களை மாற்ற முடியாது."
+                  : "Create the card first — download unlocks after that. Your verified details cannot be edited; only blood group, emergency contact, address and photograph can."}
+              </p>
+            )}
+            {createMsg && (
+              <p role="status" className={cn("w-full text-center font-sans text-[12px] leading-relaxed", createMsg.ok ? "text-gold" : "text-amber-300/90")}>
+                {createMsg.text}
+              </p>
+            )}
             {saveMsg && (
               <p className={cn(
                 "w-full text-center font-sans text-[12px] leading-relaxed",
@@ -713,21 +802,25 @@ export default function IdCardSection({
  * keeps the identity stable and the caret where the typist left it.
  */
 function Field({
-  data, set, k, label, placeholder,
+  data, set, k, label, placeholder, locked = false,
 }: {
   data: CardData;
   set: (k: keyof CardData, v: string) => void;
   k: keyof CardData;
   label: string;
   placeholder?: string;
+  /* verified details in existing-member mode: shown, not editable */
+  locked?: boolean;
 }) {
   return (
     <label className="block">
       <span className="mb-1.5 block font-sans text-[11px] uppercase tracking-widest text-ivory-dim">{label}</span>
       <input
-        className={inputCls}
+        className={cn(inputCls, locked && "cursor-not-allowed opacity-70")}
         value={data[k]}
         placeholder={placeholder}
+        readOnly={locked}
+        aria-readonly={locked || undefined}
         onChange={(e) => set(k, e.target.value)}
       />
     </label>

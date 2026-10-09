@@ -2,7 +2,7 @@
   "name": "tsjh-portals",
   "version": "1.0.0",
   "private": true,
-  "description": "TNWLA Madras \u00b7 Stand Firm Legal Associates \u00b7 Jeni Enterprises \u00b7 Harmony Healing Oasis \u2014 four brands, one Next.js application.",
+  "description": "TNWLA Madras · Stand Firm Legal Associates · Jeni Enterprises · Harmony Healing Oasis — four brands, one Next.js application.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -10,7 +10,8 @@
     "prebuild": "node scripts/fetch-news.mjs",
     "news": "node scripts/fetch-news.mjs",
     "hash-password": "node scripts/hash-password.mjs",
-    "auth-check": "node scripts/auth-check.mjs"
+    "auth-check": "node scripts/auth-check.mjs",
+    "test": "TSX_TSCONFIG_PATH=tests/tsconfig.json tsx --test --test-concurrency=1 tests/*.test.ts tests/*.test.tsx"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
@@ -28,13 +29,18 @@
     "tailwind-merge": "^2.6.0"
   },
   "devDependencies": {
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/react": "^16.1.0",
+    "@types/jsdom": "^21.1.7",
     "@types/node": "^22.10.10",
     "@types/qrcode": "^1.5.5",
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
     "autoprefixer": "^10.4.20",
+    "jsdom": "^25.0.1",
     "postcss": "^8.5.1",
     "tailwindcss": "^3.4.17",
+    "tsx": "^4.19.2",
     "typescript": "^5.7.3"
   }
 }

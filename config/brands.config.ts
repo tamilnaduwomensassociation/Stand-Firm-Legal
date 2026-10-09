@@ -14,14 +14,14 @@ export type Brand = {
   site: string;
   accent: string;
   /** Which panels make sense for this brand */
-  panels: ("orders" | "enquiries" | "content" | "events" | "theme" | "letterhead" | "blog" | "books" | "live-updates" | "link")[];
+  panels: ("orders" | "enquiries" | "content" | "events" | "theme" | "letterhead" | "blog" | "books" | "live-updates" | "link" | "members")[];
 };
 
 export const brands: Brand[] = [
   {
     id: "tnwla", name: "TNWLA — Madras", short: "TNWLA",
     mark: "/media/marks/start-mark.png", site: "/",
-    accent: "#c9a24b", panels: ["events", "enquiries", "content", "blog", "books", "live-updates", "letterhead"],
+    accent: "#c9a24b", panels: ["events", "members", "enquiries", "content", "blog", "books", "live-updates", "letterhead"],
   },
   {
     id: "stand-firm", name: "Stand Firm Legal Associates", short: "Stand Firm",

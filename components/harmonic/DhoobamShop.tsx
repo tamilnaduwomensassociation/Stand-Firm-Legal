@@ -12,7 +12,7 @@
  * there) and an email draft, rather than a bare acknowledgement line.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, Download, Loader2, Mail, MessageCircle, Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
+import { Check, Download, Flower2, Loader2, Mail, MessageCircle, Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
 import { dhoobamCatalogue as shippedDhoobam, dhoobamGroups, harmony, type HarmonyItem } from "@/config/harmonic.config";
 import { usePrices } from "@/lib/usePrices";
 import { paymentConfig } from "@/config/forms.config";
@@ -195,7 +195,28 @@ export default function DhoobamShop() {
         {visible.map((i) => {
           const q = qtyOf(i.id);
           return (
-            <article key={i.id} className="flex flex-col rounded-2xl glass gold-border p-6 transition-all duration-500 hover:border-gold/70">
+            <article key={i.id} className="group/card flex flex-col overflow-hidden rounded-2xl glass gold-border transition-all duration-500 hover:-translate-y-0.5 hover:border-gold/70 hover:shadow-[0_18px_40px_-20px_rgba(76,29,149,0.45)] motion-reduce:transition-none motion-reduce:hover:translate-y-0">
+              {/* Picture: one fixed 3:2 frame for every card so the grid lines up.
+                  A product with no photo yet gets a quiet placeholder, never a
+                  borrowed picture of something else. */}
+              <div className="aspect-[3/2] w-full overflow-hidden bg-obsidian-deep">
+                {i.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={i.image} alt={i.imageAlt ?? i.en} width={504} height={336}
+                    loading="lazy" decoding="async"
+                    style={{ objectPosition: i.imagePos ?? "center" }}
+                    className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover/card:scale-105 motion-reduce:transition-none motion-reduce:group-hover/card:scale-100"
+                  />
+                ) : (
+                  <div role="img" aria-label={`${i.en} — photograph coming soon`}
+                    className="flex h-full w-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-gold-faint to-obsidian-soft text-gold/70">
+                    <Flower2 size={34} strokeWidth={1.25} aria-hidden />
+                    <span className="font-sans text-[10px] uppercase tracking-[0.2em]">{ta ? "படம் விரைவில்" : "Photo coming soon"}</span>
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-1 flex-col p-6">
               <div className="flex items-start justify-between gap-3">
                 <h3 className="font-serif text-lg leading-snug text-ivory">{ta ? i.ta : i.en}</h3>
                 {i.featured && (
@@ -232,7 +253,7 @@ export default function DhoobamShop() {
                     <MessageCircle size={12} /> {ta ? "விலை கேள்" : "Ask price"}
                   </button>
                 ) : q === 0 ? (
-                  <button onClick={() => add(i)} className="flex items-center gap-1.5 rounded-full bg-gold px-4 py-2 font-sans text-[10px] uppercase tracking-widest text-black transition-all hover:bg-gold-bright">
+                  <button onClick={() => add(i)} className="flex min-h-[40px] items-center gap-1.5 rounded-full bg-gold px-5 py-2 font-sans text-[11px] font-bold uppercase tracking-widest text-black transition-all hover:bg-gold-bright focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2">
                     <Plus size={12} /> {ta ? "சேர்" : "Add"}
                   </button>
                 ) : (
@@ -243,10 +264,14 @@ export default function DhoobamShop() {
                   </div>
                 )}
               </div>
+              </div>
             </article>
           );
         })}
       </div>
+      <p className="mx-auto mt-6 max-w-6xl text-center font-sans text-[11px] text-ivory-faint">
+        {ta ? "படங்கள் விளக்கத்திற்காக மட்டுமே; உண்மையான பொருள் மாறுபடலாம்." : "Pictures are illustrative; the product you receive may look different."}
+      </p>
 
       {/* floating basket */}
       {count > 0 && !open && (

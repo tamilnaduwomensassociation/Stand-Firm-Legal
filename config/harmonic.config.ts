@@ -119,6 +119,12 @@ export type HarmonyItem = {
   descTa: string;
   marks?: string[];
   featured?: boolean;
+  /** Public path under /media/harmony/dhoobam. Omitted = the card shows a "photo coming soon" placeholder. */
+  image?: string;
+  /** What the picture shows — not a claim about the product. */
+  imageAlt?: string;
+  /** CSS object-position, so the subject is not cropped away. */
+  imagePos?: string;
 };
 
 export const dhoobamGroups = [
@@ -140,6 +146,7 @@ export const dhoobamCatalogue: HarmonyItem[] = [
     desc: "Hand-rolled on bamboo with a herb and benzoin blend. Burns for roughly forty minutes.",
     descTa: "மூலிகை மற்றும் சாம்பிராணி கலவையுடன் மூங்கிலில் கையால் சுற்றப்பட்டது. சுமார் நாற்பது நிமிடம் எரியும்.",
     marks: ["Hand-rolled", "No synthetic fragrance"], featured: true,
+    image: "/media/harmony/dhoobam/01_classic_dhoobam_sticks.jpg", imageAlt: "Bundles of brown incense sticks tied with twine, with lavender and white flowers", imagePos: "center 55%",
   },
   {
     id: "dhoobam-cups", en: "Dhoobam Cups", ta: "தூப கப்",
@@ -147,6 +154,7 @@ export const dhoobamCatalogue: HarmonyItem[] = [
     pack: "Pack of 12", packTa: "12 கப்",
     desc: "Compressed cones that sit in a burner — for a closed room where a stick is too much.",
     descTa: "மூடிய அறைக்கு ஏற்ற, எரிப்பானில் வைக்கும் அழுத்தப்பட்ட கூம்புகள்.",
+    image: "/media/harmony/dhoobam/02_dhoobam_cups.jpg", imageAlt: "Dhoobam cones in a wooden bowl beside a brass burner with smoke rising", imagePos: "center 55%",
   },
   {
     id: "dhoobam-loose-resin", en: "Sambrani Resin", ta: "சாம்பிராணி",
@@ -154,6 +162,7 @@ export const dhoobamCatalogue: HarmonyItem[] = [
     pack: "100 g jar", packTa: "100 கி ஜாடி",
     desc: "Graded gum benzoin resin for charcoal burning, cleaned and sifted.",
     descTa: "கரி மீது எரிக்க, சுத்தம் செய்யப்பட்ட தரம் பிரிக்கப்பட்ட சாம்பிராணி.",
+    image: "/media/harmony/dhoobam/03_sambrani_resin.jpg", imageAlt: "A glass jar of amber resin granules with a wooden scoop", imagePos: "center 50%",
   },
   {
     id: "dhoobam-herbal-blend", en: "Herbal Smudge Blend", ta: "மூலிகை கலவை",
@@ -169,6 +178,7 @@ export const dhoobamCatalogue: HarmonyItem[] = [
     desc: "Everything needed to begin: a brass burner, a roll of charcoal, resin and a pack of sticks.",
     descTa: "தொடங்க தேவையான அனைத்தும் — பித்தளை எரிப்பான், கரி, சாம்பிராணி மற்றும் ஒரு பாக்கெட் குச்சிகள்.",
     featured: true,
+    image: "/media/harmony/dhoobam/04_practice_starter_kit.jpg", imageAlt: "An open box holding a brass burner, charcoal discs, incense sticks, resin and herbs", imagePos: "center 50%",
   },
   {
     id: "dhoobam-monthly-box", en: "Monthly Box", ta: "மாதாந்திர பெட்டி",
@@ -183,6 +193,7 @@ export const dhoobamCatalogue: HarmonyItem[] = [
     pack: "Small", packTa: "சிறியது",
     desc: "A small candle in a glass holder, for the altar or the practice space.",
     descTa: "பூஜை இடம் அல்லது பயிற்சி இடத்திற்கான கண்ணாடிக் குவளையில் சிறிய மெழுகுவர்த்தி.",
+    image: "/media/harmony/dhoobam/05_glass_candles.jpg", imageAlt: "Three lit white candles in glass holders among flowers", imagePos: "center 50%",
   },
   /* price: 0 = "Price on request" on the shop card (Ask button -> WhatsApp).
      Set the real price here, or in Superadmin > Pricing, to open it for sale. */
@@ -192,6 +203,7 @@ export const dhoobamCatalogue: HarmonyItem[] = [
     pack: "Pack", packTa: "பாக்கெட்",
     desc: "Doop sticks for the altar or the practice space.",
     descTa: "பூஜை இடம் அல்லது பயிற்சி இடத்திற்கான தூப் குச்சிகள்.",
+    image: "/media/harmony/dhoobam/06_incense_sticks.jpg", imageAlt: "A bundle of incense sticks beside a ceramic holder with one lit stick", imagePos: "center 55%",
   },
   {
     id: "dhoobam-dhoobam", en: "Dhoobam", ta: "தூபம்",
@@ -199,6 +211,7 @@ export const dhoobamCatalogue: HarmonyItem[] = [
     pack: "Pack", packTa: "பாக்கெட்",
     desc: "Dhoobam for the altar or the practice space.",
     descTa: "பூஜை இடம் அல்லது பயிற்சி இடத்திற்கான தூபம்.",
+    image: "/media/harmony/dhoobam/07_dhoobam_burner.jpg", imageAlt: "A brass burner with glowing charcoal and rising smoke", imagePos: "center 40%",
   },
   {
     id: "dhoobam-sp-liquid-bottle", en: "S. P. Liquid Bottle", ta: "S. P. திரவ பாட்டில்",
@@ -206,6 +219,7 @@ export const dhoobamCatalogue: HarmonyItem[] = [
     pack: "Bottle", packTa: "பாட்டில்",
     desc: "S. P. liquid, supplied in a bottle.",
     descTa: "பாட்டிலில் வழங்கப்படும் S. P. திரவம்.",
+    image: "/media/harmony/dhoobam/08_sp_liquid_bottle.jpg", imageAlt: "A small glass bottle of amber liquid with a blank label", imagePos: "center 50%",
   },
   {
     id: "dhoobam-bathing-salts", en: "Bathing Salts", ta: "குளியல் உப்பு",
@@ -213,6 +227,7 @@ export const dhoobamCatalogue: HarmonyItem[] = [
     pack: "Pack", packTa: "பாக்கெட்",
     desc: "Salts for the bath.",
     descTa: "குளியலுக்கான உப்பு.",
+    image: "/media/harmony/dhoobam/09_bathing_salts.jpg", imageAlt: "A glass jar of pink bathing salts with rose petals and a wooden scoop", imagePos: "center 50%",
   },
 ];
 

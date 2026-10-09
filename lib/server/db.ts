@@ -46,13 +46,18 @@ export type Collection =
   | "posts"       // weekly blog drafts awaiting review
   | "books"       // superadmin-added titles, layered on top of the static catalogue
   | "live-updates" // homepage Live Updates strip — image + text, published straight from Superadmin
+  | "member-requests" // existing-member verification requests (pending → approved / rejected)
+  | "member-docs" // supporting documents for a request — private, Superadmin-only
+  | "idcards"     // one row per issued ID card; the id is derived from the membership number
+  | "claims"      // hashed one-time claim codes that let a verified member create their card
+  | "uniq"        // unique-key reservations (file driver); the KV driver uses SET NX instead
   | "audit";      // who changed what, from Superadmin
 
 const KV_URL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL || "";
 const KV_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || "";
 const useKV = Boolean(KV_URL && KV_TOKEN);
 
-const FILE = path.join(process.cwd(), ".data", "db.json");
+const FILE = process.env.TSJH_DB_FILE || path.join(process.cwd(), ".data", "db.json");
 const key = (c: Collection) => `tsjh:${c}`;
 
 let announced = false;
@@ -127,10 +132,26 @@ async function writeAll(col: Collection, rows: Rec[]): Promise<void> {
     await kv(["SET", key(col), JSON.stringify(rows)]);
     return;
   }
-  const data = await readFile();
-  data[col] = rows;
-  await writeFile(data);
+  /* The file holds every collection, so writing one is a read-modify-
+     write of all of them. Two writes to DIFFERENT collections used to
+     interleave and one would silently undo the other. Serialised. */
+  await inProcess("file-write", async () => {
+    const data = await readFile();
+    data[col] = rows;
+    await writeFile(data);
+  });
 }
+
+/**
+ * Every write is read-all → change → write-all, so two writes to the
+ * same collection used to interleave: both read the old array and the
+ * second write erased the first (two orders in the same instant, one
+ * order). Writes to one collection now queue behind each other. This
+ * covers a single process — the file driver, and one serverless
+ * instance. Across instances use withLock() (below) for anything that
+ * must not lose an update.
+ */
+const mutate = <T,>(col: Collection, fn: () => Promise<T>) => inProcess(`col:${col}`, fn);
 
 /** Newest first, optionally narrowed to one brand and/or capped. */
 export async function list(
@@ -150,12 +171,14 @@ export async function get(col: Collection, id: string): Promise<Rec | null> {
 
 /** Insert, or replace wholesale if the id already exists. */
 export async function put(col: Collection, rec: Rec): Promise<Rec> {
-  const rows = await readAll(col);
-  const at = rows.findIndex((r) => r.id === rec.id);
-  if (at === -1) rows.push(rec);
-  else rows[at] = rec;
-  await writeAll(col, rows);
-  return rec;
+  return mutate(col, async () => {
+    const rows = await readAll(col);
+    const at = rows.findIndex((r) => r.id === rec.id);
+    if (at === -1) rows.push(rec);
+    else rows[at] = rec;
+    await writeAll(col, rows);
+    return rec;
+  });
 }
 
 /** Merge fields into an existing row. Returns null if it is not there. */
@@ -164,20 +187,24 @@ export async function patch(
   id: string,
   fields: Record<string, unknown>
 ): Promise<Rec | null> {
-  const rows = await readAll(col);
-  const at = rows.findIndex((r) => r.id === id);
-  if (at === -1) return null;
-  rows[at] = { ...rows[at], ...fields, id, updatedAt: new Date().toISOString() };
-  await writeAll(col, rows);
-  return rows[at];
+  return mutate(col, async () => {
+    const rows = await readAll(col);
+    const at = rows.findIndex((r) => r.id === id);
+    if (at === -1) return null;
+    rows[at] = { ...rows[at], ...fields, id, updatedAt: new Date().toISOString() };
+    await writeAll(col, rows);
+    return rows[at];
+  });
 }
 
 export async function remove(col: Collection, id: string): Promise<boolean> {
-  const rows = await readAll(col);
-  const next = rows.filter((r) => r.id !== id);
-  if (next.length === rows.length) return false;
-  await writeAll(col, next);
-  return true;
+  return mutate(col, async () => {
+    const rows = await readAll(col);
+    const next = rows.filter((r) => r.id !== id);
+    if (next.length === rows.length) return false;
+    await writeAll(col, next);
+    return true;
+  });
 }
 
 /**
@@ -216,11 +243,126 @@ export function newId(prefix: string): string {
  * rewritten, such as a brand's content overrides.
  */
 export async function insert(col: Collection, rec: Rec): Promise<Rec> {
-  const rows = await readAll(col);
-  if (rows.some((r) => r.id === rec.id)) {
-    throw Object.assign(new Error(`Duplicate id in ${col}: ${rec.id}`), { status: 409 });
+  return mutate(col, async () => {
+    const rows = await readAll(col);
+    if (rows.some((r) => r.id === rec.id)) {
+      throw Object.assign(new Error(`Duplicate id in ${col}: ${rec.id}`), { status: 409 });
+    }
+    rows.push(rec);
+    await writeAll(col, rows);
+    return rec;
+  });
+}
+
+
+/* ------------------------------------------------------------------ */
+/* locks and unique keys                                               */
+/* ------------------------------------------------------------------ */
+
+/**
+ * In-process mutex. Every caller with the same name runs one at a
+ * time, in arrival order. A rejected task does not poison the chain.
+ */
+const chains = new Map<string, Promise<unknown>>();
+function inProcess<T>(name: string, fn: () => Promise<T>): Promise<T> {
+  const prev = chains.get(name) ?? Promise.resolve();
+  const run = prev.then(fn, fn);
+  const tail = run.catch(() => undefined);
+  chains.set(name, tail);
+  /* Forget the chain once it drains so the map cannot grow forever. */
+  tail.then(() => { if (chains.get(name) === tail) chains.delete(name); });
+  return run;
+}
+
+/**
+ * Run `fn` while holding the named lock.
+ *
+ * This store has no transactions: a collection is read whole, changed
+ * and written whole, so two writers can each read the old array and the
+ * second write erases the first. Anything that must not lose an update
+ * — creating a member, issuing a card — takes this lock first.
+ *
+ *   · file driver: an in-process mutex. One Node process owns the file.
+ *   · KV driver: the same mutex PLUS a `SET NX PX` lock in Redis, so
+ *     separate serverless instances exclude one another too.
+ *
+ * The lock expires on its own (30 s) so a crashed instance cannot
+ * wedge the system. A caller that cannot get it in ~10 s gets a 503 it
+ * can retry, rather than proceeding unprotected.
+ */
+export function withLock<T>(name: string, fn: () => Promise<T>): Promise<T> {
+  return inProcess(`lock:${name}`, async () => {
+    if (!useKV) return fn();
+    const token = crypto.randomBytes(12).toString("hex");
+    const k = `tsjh:lock:${name}`;
+    const deadline = Date.now() + 10_000;
+    for (;;) {
+      const got = await kv(["SET", k, token, "NX", "PX", 30_000]);
+      if (got === "OK") break;
+      if (Date.now() > deadline) {
+        throw Object.assign(new Error("The system is busy — please try again in a moment."), { status: 503 });
+      }
+      await new Promise((r) => setTimeout(r, 60 + Math.random() * 90));
+    }
+    try {
+      return await fn();
+    } finally {
+      try {
+        if ((await kv(["GET", k])) === token) await kv(["DEL", k]);
+      } catch { /* the lock expires by itself */ }
+    }
+  });
+}
+
+/**
+ * Reserve a unique key. Returns false if somebody already holds it.
+ *
+ * This is the closest this store gets to a UNIQUE index. On KV it is a
+ * single atomic `SET NX`; on the file driver it is an insert into the
+ * `uniq` collection under a lock, and `insert` refuses a repeated id.
+ * Either way two simultaneous callers cannot both get `true`.
+ */
+export async function claimUnique(scope: string, keyValue: string, owner: string): Promise<boolean> {
+  announce();
+  const id = `${scope}:${keyValue}`;
+  if (useKV) return (await kv(["SET", `tsjh:uniq:${id}`, owner, "NX"])) === "OK";
+  return inProcess("uniq", async () => {
+    try {
+      await insert("uniq", { id, createdAt: new Date().toISOString(), owner });
+      return true;
+    } catch (e) {
+      if ((e as { status?: number }).status === 409) return false;
+      throw e;
+    }
+  });
+}
+
+export async function releaseUnique(scope: string, keyValue: string): Promise<void> {
+  const id = `${scope}:${keyValue}`;
+  if (useKV) { await kv(["DEL", `tsjh:uniq:${id}`]); return; }
+  await inProcess("uniq", async () => { await remove("uniq", id); });
+}
+
+/**
+ * Fixed-window counter for rate limiting. Returns the count INCLUDING
+ * this hit. KV: INCR + EXPIRE, shared by every instance. File/dev: a
+ * per-process map — good enough for one box, and honest about it.
+ */
+const windows = new Map<string, { n: number; reset: number }>();
+export async function hit(bucket: string, windowSec: number): Promise<number> {
+  if (useKV) {
+    const k = `tsjh:rl:${bucket}`;
+    const n = Number(await kv(["INCR", k]));
+    if (n === 1) await kv(["EXPIRE", k, windowSec]);
+    return n;
   }
-  rows.push(rec);
-  await writeAll(col, rows);
-  return rec;
+  const now = Date.now();
+  const w = windows.get(bucket);
+  if (!w || w.reset <= now) {
+    if (windows.size > 5000) for (const [k2, v] of windows) if (v.reset <= now) windows.delete(k2);
+    windows.set(bucket, { n: 1, reset: now + windowSec * 1000 });
+    return 1;
+  }
+  w.n += 1;
+  return w.n;
 }
