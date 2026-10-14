@@ -13,42 +13,37 @@ import { ArrowRight, HeartHandshake, MessageCircle, Phone } from "lucide-react";
 import { harmony } from "@/config/harmonic.config";
 import { useContent } from "@/lib/useContent";
 import ServeGallery, { type ServeCard } from "@/components/harmonic/ServeGallery";
+import WaysFlip, { type Way } from "@/components/harmonic/WaysFlip";
 
-/* The six "Ways You Can Support" — the centre's own wording, now shown as image flip cards.
-   Clothing has no photo of clothing in the supplied set, so its picture is a
-   volunteer handing a box to children (alt text says only that). */
 const IMG = "/media/harmony/serve";
-const ways: ServeCard[] = [
-  { id: "w-food", number: "01", title: "Food for the Hungry", front: "Rice boxes, food packets and groceries.",
-    back: "Providing rice boxes, food packets and essential groceries to people in need.",
-    image: `${IMG}/01_food_meal_distribution.jpg`, alt: "Women volunteers in purple and white serving hot food from steel vessels", pos: "40% 40%", w: 504, h: 369,
-    backImage: `${IMG}/08_food_donation_packing.jpg`, backPos: "50% 55%", cta: "Support This Cause" },
-  { id: "w-clothing", number: "02", title: "Clothing Support", front: "Essentials for individuals and families.",
-    back: "Providing new clothes and essential clothing items to underprivileged individuals and families.",
-    image: `${IMG}/07_community_outreach.jpg`, alt: "A volunteer in an apron giving a box to children gathered beside a van", pos: "40% 45%", w: 504, h: 335,
-    backImage: `${IMG}/09_tree_planting.jpg`, backPos: "50% 55%", cta: "Support This Cause" },
-  { id: "w-medical", number: "03", title: "Medicines & Medical Support", front: "Medicines and essential healthcare assistance.",
-    back: "Supporting the medical needs of deserving people, including medicines and essential healthcare assistance.",
-    image: `${IMG}/05_community_healthcare.jpg`, alt: "A health worker with a stethoscope checking an older woman", pos: "50% 35%", w: 510, h: 296,
-    backImage: `${IMG}/03_meals_for_elderly.jpg`, backPos: "50% 40%", cta: "Support This Cause" },
-  { id: "w-seniors", number: "04", title: "Support for Senior Citizens", front: "Care for the elderly and old-age homes.",
-    back: "Providing medicines, food, groceries and other essential requirements to elderly people and old-age homes.",
-    image: `${IMG}/03_meals_for_elderly.jpg`, alt: "A volunteer handing a packed meal to an elderly man seated outdoors", pos: "55% 40%", w: 501, h: 369,
-    backImage: `${IMG}/01_food_meal_distribution.jpg`, backPos: "40% 40%", cta: "Support This Cause" },
-  { id: "w-relief", number: "05", title: "Essential Needs & Relief Support", front: "Basic necessities in times of difficulty.",
-    back: "Helping families and individuals with basic necessities during times of difficulty.",
-    image: `${IMG}/02_grocery_donation_supplies.jpg`, alt: "A volunteer holding a bag of grains beside a box of groceries and cooking oil", pos: "45% 55%", w: 510, h: 369,
-    backImage: `${IMG}/08_food_donation_packing.jpg`, backPos: "50% 55%", cta: "Support This Cause" },
-  { id: "w-centre", number: "06", title: "Centre Development & Service Activities", front: "Healing, meditation, charitable and community service.",
-    back: "Your contribution can also support the development of Harmony Healing Oasis – Pranic Healing Centre and help us conduct more healing, meditation, charitable and community service activities.",
-    image: `${IMG}/04_education_support.jpg`, alt: "A volunteer handing books to a smiling schoolgirl", pos: "50% 40%", w: 504, h: 296,
-    backImage: `${IMG}/06_womens_empowerment.jpg`, backPos: "50% 45%", cta: "Support This Cause" },
+
+/* "Ways You Can Support" — the centre's own wording, word for word.
+   The picture on the back of each box illustrates the kind of help; there
+   is no supplied photograph of clothing, so that box shows people being
+   handed supplies, and nothing in the page claims more than that. */
+const ways: Way[] = [
+  { id: "food", n: "01", emoji: "🍚", title: "Food for the Hungry",
+    text: "Providing rice boxes, food packets and essential groceries to people in need.",
+    image: `${IMG}/01_food_meal_distribution.jpg`, pos: "40% 40%", w: 504, h: 369 },
+  { id: "clothing", n: "02", emoji: "👕", title: "Clothing Support",
+    text: "Providing new clothes and essential clothing items to underprivileged individuals and families.",
+    image: `${IMG}/07_community_outreach.jpg`, pos: "40% 45%", w: 504, h: 335 },
+  { id: "medical", n: "03", emoji: "💊", title: "Medicines & Medical Support",
+    text: "Supporting the medical needs of deserving people, including medicines and essential healthcare assistance.",
+    image: `${IMG}/05_community_healthcare.jpg`, pos: "50% 35%", w: 510, h: 296 },
+  { id: "seniors", n: "04", emoji: "👵", title: "Support for Senior Citizens",
+    text: "Providing medicines, food, groceries and other essential requirements to elderly people and old-age homes.",
+    image: `${IMG}/03_meals_for_elderly.jpg`, pos: "55% 40%", w: 501, h: 369 },
+  { id: "relief", n: "05", emoji: "🏠", title: "Essential Needs & Relief Support",
+    text: "Helping families and individuals with basic necessities during times of difficulty.",
+    image: `${IMG}/02_grocery_donation_supplies.jpg`, pos: "45% 55%", w: 510, h: 369 },
+  { id: "centre", n: "06", emoji: "🌸", title: "Centre Development & Service Activities",
+    text: "Your contribution can also support the development of Harmony Healing Oasis – Pranic Healing Centre and help us conduct more healing, meditation, charitable and community service activities.",
+    image: `${IMG}/06_womens_empowerment.jpg`, pos: "50% 45%", w: 501, h: 296 },
 ];
 
-/* The pictures for "Service in Pictures". Wording describes the picture and
-   the category only — no figures, results or donation destinations.
-   Where the centre supplied wording ("Ways You Can Support" above), the
-   back repeats it. The pictures themselves are in public/media/harmony/serve. */
+/* The pictures for "Service & Community Care". Wording describes the picture and
+   the category only — no figures, results or donation destinations. */
 const serveCards: ServeCard[] = [
   { id: "food", title: "Food & Meal Distribution", front: "Sharing meals with people in need.",
     back: "Providing rice boxes, food packets and essential groceries to people in need.",
@@ -106,8 +101,8 @@ export default function Donate() {
               Give with Compassion. Serve with Purpose.
             </h2>
             <p className="mt-5 max-w-xl font-sans text-[15px] leading-relaxed text-ivory-dim">
-              Your contribution can help Harmony Healing Oasis reach people facing difficult circumstances with
-              food, care and essential support, and help us hold more healing, meditation and community service activities.
+              Your generous contribution can help us reach people who are facing difficult circumstances and
+              provide them with essential support.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <a
@@ -117,7 +112,7 @@ export default function Donate() {
                 Support Our Mission <ArrowRight size={15} aria-hidden />
               </a>
               <a
-                href="#serve-heading"
+                href="#ways-heading"
                 className="gold-border inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full px-7 py-3 font-sans text-[12px] font-bold uppercase tracking-[0.14em] text-gold transition-all hover:bg-gold hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2"
               >
                 Explore Ways to Serve
@@ -160,19 +155,18 @@ export default function Donate() {
         </motion.div>
       </section>
 
-      {/* ---------- Ways to support ---------- */}
-      <section className="relative overflow-hidden bg-obsidian-deep section-pad">
-        <div
-          className="pointer-events-none absolute left-1/2 top-0 h-72 w-[40rem] -translate-x-1/2 rounded-full bg-gold/10 blur-3xl"
-          aria-hidden
-        />
+      {/* ---------- Ways to support — boxes that turn over ---------- */}
+      <section className="relative overflow-hidden bg-obsidian-deep section-pad" aria-labelledby="ways-heading">
+        <div className="pointer-events-none absolute left-1/2 top-0 h-72 w-[40rem] -translate-x-1/2 rounded-full bg-gold/10 blur-3xl" aria-hidden />
+        <div className="pointer-events-none absolute -right-20 bottom-10 h-72 w-72 rounded-full bg-gold/10 blur-3xl" aria-hidden />
         <div className="relative mx-auto max-w-6xl">
           <div className="text-center">
-            <p className="kicker mb-3">Ways You Can Support</p>
-            <h3 className="font-serif text-2xl text-ivory md:text-4xl">Your donations can be contributed towards</h3>
+            <p className="kicker mb-3"><span aria-hidden>🌿</span> Ways You Can Support</p>
+            <h3 id="ways-heading" className="scroll-mt-28 font-serif text-2xl text-ivory md:text-4xl">Your donations can be contributed towards:</h3>
+            <span className="mx-auto mt-5 block h-px w-24 bg-gradient-to-r from-transparent via-gold to-transparent" aria-hidden />
+            <p className="mx-auto mt-4 max-w-xl font-sans text-[13px] text-ivory-faint">Turn a box over to see a picture and to reach us.</p>
           </div>
-
-          <ServeGallery cards={ways} wa={wa} tel={tel} phone={phone1} className="mt-12" />
+          <WaysFlip ways={ways} wa={wa} tel={tel} phone={phone1} className="mt-12" />
         </div>
       </section>
 
@@ -194,23 +188,21 @@ export default function Donate() {
       <section className="bg-obsidian section-pad">
         <motion.div
           variants={fade} initial="hidden" whileInView="show" viewport={{ once: true, margin: "-80px" }}
-          className="relative mx-auto max-w-4xl overflow-hidden rounded-3xl glass gold-border px-6 py-14 text-center md:px-16 md:py-20"
+          className="relative mx-auto max-w-5xl overflow-hidden rounded-3xl border border-gold/30 shadow-[0_30px_60px_-30px_rgba(76,29,149,0.6)]"
         >
-          <span className="pointer-events-none absolute -left-4 -top-10 select-none font-serif text-[10rem] leading-none text-gold/10" aria-hidden>
-            &ldquo;
-          </span>
-          <p className="kicker mb-4">Every Contribution Counts</p>
-          <p className="relative font-serif text-2xl leading-snug text-ivory md:text-4xl">
-            A small gift or a large one, it can become a meal, a garment, a medicine, a moment of care and a
-            reason to hope for someone in need.
-          </p>
-          <p className="prose-justify relative mx-auto mt-6 max-w-2xl text-center font-sans text-[15px] leading-relaxed text-ivory-dim">
-            Whether it is a small contribution or a larger donation, your support can become a source of food,
-            care, healing and hope for someone in need.
-          </p>
-          <p className="relative mt-8 font-serif text-xl gold-text md:text-2xl">
-            Together, we can serve humanity with love and compassion.
-          </p>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={`${IMG}/09_tree_planting.jpg`} alt="" width={501} height={335} loading="lazy" decoding="async"
+            className="absolute inset-0 h-full w-full object-cover" style={{ objectPosition: "50% 55%" }} aria-hidden />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#2e1065]/90 via-[#4c1d95]/80 to-[#6d28d9]/70" aria-hidden />
+          <div className="relative px-6 py-14 text-center text-white md:px-16 md:py-20">
+            <p className="mb-4 font-sans text-[12px] uppercase tracking-[0.3em] text-white/80"><span aria-hidden>✨</span> Every Contribution Counts</p>
+            <p className="font-serif text-2xl leading-snug md:text-4xl">
+              Whether it is a small contribution or a larger donation, your support can become a source of food,
+              care, healing and hope for someone in need.
+            </p>
+            <span className="mx-auto mt-8 block h-px w-24 bg-white/50" aria-hidden />
+            <p className="mt-6 font-serif text-xl md:text-2xl">Together, we can serve humanity with love and compassion.</p>
+          </div>
         </motion.div>
       </section>
 
@@ -225,7 +217,7 @@ export default function Donate() {
                 viewport={{ once: true }} transition={{ delay: i * 0.18, duration: 0.6 }}
                 className="flex items-center gap-4 font-serif text-3xl tracking-[0.14em] gold-text uppercase md:gap-7 md:text-5xl"
               >
-                {w}
+                {i === 0 && <span aria-hidden>🙏</span>}{w}
                 {i < mantra.length - 1 && <span className="h-1.5 w-1.5 rounded-full bg-gold" aria-hidden />}
               </motion.span>
             ))}
