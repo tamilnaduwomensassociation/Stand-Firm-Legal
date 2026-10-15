@@ -16,30 +16,30 @@ import ServeGallery, { type ServeCard } from "@/components/harmonic/ServeGallery
 import WaysFlip, { type Way } from "@/components/harmonic/WaysFlip";
 
 const IMG = "/media/harmony/serve";
+const W = "/media/harmony/ways";
 
-/* "Ways You Can Support" — the centre's own wording, word for word.
-   The picture on the back of each box illustrates the kind of help; there
-   is no supplied photograph of clothing, so that box shows people being
-   handed supplies, and nothing in the page claims more than that. */
+/* "Ways You Can Support" — the centre's own wording, word for word, on the
+   front. The back of each box shows its illustration (public/media/harmony/ways),
+   a finished card with its own title and words. */
 const ways: Way[] = [
   { id: "food", n: "01", emoji: "🍚", title: "Food for the Hungry",
     text: "Providing rice boxes, food packets and essential groceries to people in need.",
-    image: `${IMG}/01_food_meal_distribution.jpg`, pos: "40% 40%", w: 504, h: 369 },
+    image: `${W}/01_food_for_the_hungry.webp`, alt: "Food for the Hungry: hands passing a box of groceries, rice and oil to an elderly person", w: 499, h: 481 },
   { id: "clothing", n: "02", emoji: "👕", title: "Clothing Support",
     text: "Providing new clothes and essential clothing items to underprivileged individuals and families.",
-    image: `${IMG}/07_community_outreach.jpg`, pos: "40% 45%", w: 504, h: 335 },
+    image: `${W}/02_clothing_support.webp`, alt: "Clothing Support: a neat stack of folded clothes beside a box marked with a heart", w: 499, h: 481 },
   { id: "medical", n: "03", emoji: "💊", title: "Medicines & Medical Support",
     text: "Supporting the medical needs of deserving people, including medicines and essential healthcare assistance.",
-    image: `${IMG}/05_community_healthcare.jpg`, pos: "50% 35%", w: 510, h: 296 },
+    image: `${W}/03_medicines_medical_support.webp`, alt: "Medicines & Medical Support: a first-aid box, stethoscope and medicine bottles", w: 499, h: 481 },
   { id: "seniors", n: "04", emoji: "👵", title: "Support for Senior Citizens",
     text: "Providing medicines, food, groceries and other essential requirements to elderly people and old-age homes.",
-    image: `${IMG}/03_meals_for_elderly.jpg`, pos: "55% 40%", w: 501, h: 369 },
+    image: `${W}/04_support_for_senior_citizens.webp`, alt: "Support for Senior Citizens: a smiling elderly woman with a younger woman beside her", w: 499, h: 501 },
   { id: "relief", n: "05", emoji: "🏠", title: "Essential Needs & Relief Support",
     text: "Helping families and individuals with basic necessities during times of difficulty.",
-    image: `${IMG}/02_grocery_donation_supplies.jpg`, pos: "45% 55%", w: 510, h: 369 },
+    image: `${W}/05_essential_needs_relief_support.webp`, alt: "Essential Needs & Relief Support: hands passing a box of water bottles and supplies", w: 499, h: 501 },
   { id: "centre", n: "06", emoji: "🌸", title: "Centre Development & Service Activities",
     text: "Your contribution can also support the development of Harmony Healing Oasis – Pranic Healing Centre and help us conduct more healing, meditation, charitable and community service activities.",
-    image: `${IMG}/06_womens_empowerment.jpg`, pos: "50% 45%", w: 501, h: 296 },
+    image: `${W}/06_centre_development_service_activities.webp`, alt: "Centre Development & Service Activities: an illustration of a white centre building with a lotus sign set in a garden", w: 499, h: 501 },
 ];
 
 /* The pictures for "Service & Community Care". Wording describes the picture and

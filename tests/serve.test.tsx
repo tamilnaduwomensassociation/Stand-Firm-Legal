@@ -20,7 +20,7 @@ afterEach(cleanup);
 describe("ServeGallery flip cards", () => {
   it("renders one card per entry with alt text, lazy images and the contact links", () => {
     const { container } = show();
-    assert.equal(container.querySelectorAll(".flip-card").length, 2);
+    assert.equal(container.querySelectorAll(".sflip").length, 2);
     const img = container.querySelector("img")!;
     assert.equal(img.getAttribute("alt"), "alt a");
     assert.equal(img.getAttribute("loading"), "lazy");
@@ -30,27 +30,27 @@ describe("ServeGallery flip cards", () => {
 
   it("starts on the front: back face inert, front not", () => {
     const { container } = show();
-    const card = container.querySelector(".flip-card")!;
+    const card = container.querySelector(".sflip")!;
     assert.equal(card.getAttribute("data-flipped"), "false");
-    assert.ok(card.querySelector(".flip-face-back")!.hasAttribute("inert"));
-    assert.ok(!card.querySelector(".flip-face-front")!.hasAttribute("inert"));
+    assert.ok(card.querySelector(".sflip-back")!.hasAttribute("inert"));
+    assert.ok(!card.querySelector(".sflip-front")!.hasAttribute("inert"));
   });
 
   it("click flips one card; the back button returns it", () => {
     const { container } = show();
-    const els = container.querySelectorAll(".flip-card");
-    fireEvent.click(els[0].querySelector(".flip-face-front button")!);
+    const els = container.querySelectorAll(".sflip");
+    fireEvent.click(els[0].querySelector(".sflip-front button")!);
     assert.equal(els[0].getAttribute("data-flipped"), "true");
     assert.equal(els[1].getAttribute("data-flipped"), "false");
-    assert.ok(els[0].querySelector(".flip-face-front")!.hasAttribute("inert"));
-    assert.ok(!els[0].querySelector(".flip-face-back")!.hasAttribute("inert"));
-    fireEvent.click(els[0].querySelector(".flip-face-back button")!);
+    assert.ok(els[0].querySelector(".sflip-front")!.hasAttribute("inert"));
+    assert.ok(!els[0].querySelector(".sflip-back")!.hasAttribute("inert"));
+    fireEvent.click(els[0].querySelector(".sflip-back button")!);
     assert.equal(els[0].getAttribute("data-flipped"), "false");
   });
 
   it("mouse hover flips and un-flips; touch hover does not", () => {
     const { container } = show();
-    const card = container.querySelector(".flip-card")!;
+    const card = container.querySelector(".sflip")!;
     fireEvent.pointerEnter(card, { pointerType: "mouse" });
     assert.equal(card.getAttribute("data-flipped"), "true");
     fireEvent.pointerLeave(card, { pointerType: "mouse" });
@@ -61,9 +61,9 @@ describe("ServeGallery flip cards", () => {
 
   it("Escape turns a flipped card back", () => {
     const { container } = show();
-    const card = container.querySelector(".flip-card")!;
-    fireEvent.click(card.querySelector(".flip-face-front button")!);
-    fireEvent.keyDown(card.querySelector(".flip-face-back a")!, { key: "Escape" });
+    const card = container.querySelector(".sflip")!;
+    fireEvent.click(card.querySelector(".sflip-front button")!);
+    fireEvent.keyDown(card.querySelector(".sflip-back a")!, { key: "Escape" });
     assert.equal(card.getAttribute("data-flipped"), "false");
   });
 });

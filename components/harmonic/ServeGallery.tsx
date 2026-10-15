@@ -20,7 +20,7 @@
  *             back, Esc or "Flip back" returns focus to the front.
  *   The hidden face is `inert`, so it can neither be tabbed to nor read
  *   out by a screen reader. Reduced motion: the turn is replaced by an
- *   instant swap (see .flip-card in app/globals.css).
+ *   instant swap (see .sflip in app/globals.css).
  */
 import { useEffect, useRef, useState } from "react";
 import { MessageCircle, Phone, RotateCcw } from "lucide-react";
@@ -65,15 +65,15 @@ function FlipCard({ card, wa, tel, phone }: { card: ServeCard; wa: string; tel: 
 
   return (
     <div
-      className="flip-card"
+      className="sflip"
       data-flipped={flipped}
       onPointerEnter={(e) => { if (e.pointerType === "mouse" && !blockHover.current) setHover(true); }}
       onPointerLeave={(e) => { if (e.pointerType === "mouse") { setHover(false); blockHover.current = false; } }}
       onKeyDown={(e) => { if (e.key === "Escape" && flipped) { e.stopPropagation(); turnBack(); } }}
     >
-      <div className="flip-inner">
+      <div className="sflip-inner">
         {/* ---------------- front ---------------- */}
-        <div className="flip-face flip-face-front" inert={flipped}>
+        <div className="sflip-face sflip-front" inert={flipped}>
           <button
             ref={front}
             type="button"
@@ -101,7 +101,7 @@ function FlipCard({ card, wa, tel, phone }: { card: ServeCard; wa: string; tel: 
         </div>
 
         {/* ---------------- back ---------------- */}
-        <div className="flip-face flip-face-back" inert={!flipped}>
+        <div className="sflip-face sflip-back" inert={!flipped}>
           <div className="flex h-full flex-col rounded-2xl border border-gold/40 bg-obsidian-soft p-6 shadow-[0_18px_40px_-18px_rgba(76,29,149,0.55)]">
             <h4 className="font-serif text-xl leading-snug text-ivory">{card.title}</h4>
             <span className="mt-3 block h-0.5 w-10 bg-gold" aria-hidden />
